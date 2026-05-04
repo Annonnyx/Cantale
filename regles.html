@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Règlement</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cinzel+Decorative:wght@400;700;900&family=Unbounded:wght@200;400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.rules-hero{
+  min-height:50vh;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:120px 20px 60px;position:relative;
+}
+.rules-hero .cta-bg-title{font-size:clamp(140px,25vw,350px)}
+.rules-title{
+  font-family:var(--ff-title);font-weight:900;
+  font-size:clamp(44px,7vw,90px);color:var(--cream);
+  letter-spacing:.04em;line-height:.9;
+}
+.rules-title span{color:var(--red3)}
+.rules-sub{
+  font-family:var(--ff-mono);font-size:13px;font-weight:300;
+  color:var(--dim);max-width:480px;margin:24px auto 0;
+  line-height:1.9;letter-spacing:.03em;
+}
+
+.rules-content{
+  max-width:800px;margin:0 auto;padding:0 60px 160px;
+}
+
+.rule-section{
+  margin-top:60px;
+}
+.rule-section-title{
+  font-family:var(--ff-display);font-weight:900;
+  font-size:clamp(24px,3vw,36px);color:var(--cream);
+  margin-bottom:24px;display:flex;align-items:center;gap:16px;
+}
+.rule-section-num{
+  font-family:var(--ff-block);font-size:60px;
+  color:rgba(176,16,32,.15);line-height:1;
+}
+
+.rule-list{
+  list-style:none;display:flex;flex-direction:column;gap:12px;
+}
+.rule-item{
+  padding:16px 20px;
+  background:rgba(255,255,255,.01);
+  border-left:2px solid rgba(176,16,32,.2);
+  font-size:13px;font-weight:300;color:var(--dim);
+  line-height:1.8;letter-spacing:.02em;
+  transition:border-color .3s,background .3s;
+}
+.rule-item:hover{
+  border-color:var(--red2);
+  background:rgba(176,16,32,.03);
+}
+.rule-item strong{color:var(--cream);font-weight:500}
+.rule-item .cmd{
+  font-family:var(--ff-mono);font-size:11px;
+  color:var(--red2);background:rgba(176,16,32,.08);
+  padding:2px 8px;letter-spacing:.1em;
+}
+
+.rule-warning{
+  margin-top:48px;padding:24px 28px;
+  border:1px solid rgba(224,24,44,.3);
+  background:rgba(176,16,32,.05);
+}
+.rule-warning-title{
+  font-family:var(--ff-display);font-weight:700;
+  font-size:16px;color:var(--red3);margin-bottom:8px;
+}
+.rule-warning-text{
+  font-size:13px;font-weight:300;color:var(--dim);
+  line-height:1.8;
+}
+
+@media(max-width:900px){
+  .rules-content{padding:0 20px 100px}
+  .rule-section-num{font-size:40px}
+  .rule-item{padding:12px 16px;font-size:12px}
+}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div id="cur"></div>
+<div id="cur-trail"></div>
+<div id="progress"></div>
+<canvas id="canvas-bg"></canvas>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <a href="index.html" class="nav-logo">CANT<b>A</b>LE</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="boutique.html">Boutique</a></li>
+    <li><a href="palliers.html">Palliers</a></li>
+    <li><a href="recrutement.html">Rejoindre</a></li>
+    <li><a href="regles.html">Règlement</a></li>
+  </ul>
+  <a href="index.html#join" class="nav-btn">Rejoindre</a>
+</nav>
+
+<!-- ═══ RULES HERO ═══ -->
+<section class="rules-hero">
+  <div class="cta-bg-title">RÈGLES</div>
+  <div class="glitch-line" style="top:30%;animation-delay:1s"></div>
+  <div class="glitch-line" style="top:70%;animation-delay:5s"></div>
+  <div class="cta-inner in">
+    <div class="cta-kicker">Le Règlement</div>
+    <h1 class="rules-title">LES <span>RÈGLES</span></h1>
+    <p class="rules-sub">
+      Le non-respect de ces règles entraîne des sanctions allant du mute au bannissement définitif. Aucune exception.
+    </p>
+  </div>
+</section>
+
+<!-- ═══ RULES ═══ -->
+<div class="rules-content">
+
+  <!-- Section 1: Général -->
+  <div class="rule-section s-reveal">
+    <div class="rule-section-title">
+      <span class="rule-section-num">01</span>
+      Règles Générales
+    </div>
+    <ul class="rule-list">
+      <li class="rule-item"><strong>Respectez tous les joueurs.</strong> Insultes, harcèlement, racisme, homophobie ou tout comportement toxique = sanction immédiate.</li>
+      <li class="rule-item"><strong>Pas de triche.</strong> Les clients modifiés (x-ray, fly hack, kill aura, etc.) sont interdits. Utilisation = bannissement permanent.</li>
+      <li class="rule-item"><strong>Pas d'exploitation de bugs.</strong> Si vous trouvez un bug, signalez-le. L'exploiter = sanction. Les dupes sont particulièrement visés.</li>
+      <li class="rule-item"><strong>Pas de spam ni flood.</strong> Le chat doit rester lisible. Publicité pour d'autres serveurs = bannissement.</li>
+      <li class="rule-item"><strong>Langue française.</strong> Le serveur est francophone. Le français est exigé dans le chat public.</li>
+    </ul>
+  </div>
+
+  <!-- Section 2: Gameplay -->
+  <div class="rule-section s-reveal">
+    <div class="rule-section-title">
+      <span class="rule-section-num">02</span>
+      Gameplay & Vies
+    </div>
+    <ul class="rule-list">
+      <li class="rule-item"><strong>3 vies, pas plus.</strong> Chaque mort retire une vie. À 0 vie = bannissement automatique. Les admins ne redonnent pas de vies sauf circonstances exceptionnelles.</li>
+      <li class="rule-item"><strong>Le PvP est ouvert.</strong> N'importe qui peut attaquer n'importe qui hors des zones protégées. C'est la loi de Cantale.</li>
+      <li class="rule-item"><strong>Les items custom ne sont pas craftables.</strong> Ils s'obtiennent uniquement via l'hôtel des ventes <span class="cmd">/ah</span>, les échanges <span class="cmd">/trade</span>, ou les récompenses de grade.</li>
+      <li class="rule-item"><strong>La falsification d'items custom est interdite.</strong> Renommer un item pour imiter un custom item = sanction.</li>
+      <li class="rule-item"><strong>Le système /wanted est légal.</strong> Mettre une prime sur quelqu'un fait partie du jeu. Les chasses à l'homme sont encouragées.</li>
+    </ul>
+  </div>
+
+  <!-- Section 3: Factions -->
+  <div class="rule-section s-reveal">
+    <div class="rule-section-title">
+      <span class="rule-section-num">03</span>
+      Factions & Territoire
+    </div>
+    <ul class="rule-list">
+      <li class="rule-item"><strong>Les noms de faction doivent être appropriés.</strong> Pas de noms offensants, racistes ou à connotation illégale.</li>
+      <li class="rule-item"><strong>Les claims sont définitifs sauf conquête.</strong> Utilisez <span class="cmd">/f claim</span> pour revendiquer. Unclaim est possible uniquement par les officiers.</li>
+      <li class="rule-item"><strong>Le mode PASDIC protège les chunks critiques.</strong> Il nécessite un vote de la faction. Voir <span class="cmd">/pasdic</span>.</li>
+      <li class="rule-item"><strong>Les banques de faction sont gérées par les officiers.</strong> Le retrait est soumis aux permissions du grade. Voir <span class="cmd">/f bank</span>.</li>
+      <li class="rule-item"><strong>Le mode secret dure 24h.</strong> Cooldown de 24h entre chaque activation. Voir <span class="cmd">/f secret</span>.</li>
+    </ul>
+  </div>
+
+  <!-- Section 4: Économie -->
+  <div class="rule-section s-reveal">
+    <div class="rule-section-title">
+      <span class="rule-section-num">04</span>
+      Économie & Échanges
+    </div>
+    <ul class="rule-list">
+      <li class="rule-item"><strong>Les Cantox sont la monnaie officielle.</strong> Utilisez <span class="cmd">/pay</span> pour payer, <span class="cmd">/balance</span> pour voir votre solde.</li>
+      <li class="rule-item"><strong>L'hôtel des ventes est régulé.</strong> Pas de listings abusifs ou trompeurs. Les admins se réservent le droit de retirer des annonces.</li>
+      <li class="rule-item"><strong>Les arnaques sont interdites.</strong> Tromper un joueur lors d'un échange <span class="cmd">/trade</span> = sanction.</li>
+      <li class="rule-item"><strong>Pas de commerce IRL.</strong> Vendre des items ou des Cantox contre de l'argent réel en dehors de la boutique officielle = bannissement.</li>
+    </ul>
+  </div>
+
+  <!-- Section 5: Grades -->
+  <div class="rule-section s-reveal">
+    <div class="rule-section-title">
+      <span class="rule-section-num">05</span>
+      Grades Premium
+    </div>
+    <ul class="rule-list">
+      <li class="rule-item"><strong>3 grades premium : Aventurier, VIP, Chèvre.</strong> Chaque grade inclut les avantages du grade inférieur. Consulte la boutique pour les détails.</li>
+      <li class="rule-item"><strong>Les avantages de grade sont personnels.</strong> Partager un coffre privé ou prêter un Statio-Lytra est toléré, mais l'abus sera sanctionné.</li>
+      <li class="rule-item"><strong>Le bonus Cantox est limité à 1× par jour.</strong> Se reconnecter ne donne pas de bonus supplémentaire.</li>
+      <li class="rule-item"><strong>Les Vies mensuelles sont des items consommables.</strong> 1/mois (Aventurier), 2/mois (VIP), 3/mois (Chèvre). Tu peux les stocker et les utiliser quand tu veux.</li>
+      <li class="rule-item"><strong>Le vol créatif (Chèvre) ne fonctionne que dans les claims de votre faction.</strong> Hors claims = chute.</li>
+      <li class="rule-item"><strong>Les items des coffres privés sont conservés 30 jours après l'expiration du grade.</strong> Au-delà, ils sont supprimés.</li>
+    </ul>
+  </div>
+
+  <!-- Section 6: Modération -->
+  <div class="rule-section s-reveal">
+    <div class="rule-section-title">
+      <span class="rule-section-num">06</span>
+      Modération
+    </div>
+    <ul class="rule-list">
+      <li class="rule-item"><strong>Les décisions du staff sont finales.</strong> Les contestations se font via Discord, pas en jeu.</li>
+      <li class="rule-item"><strong>Les sanctions sont progressives :</strong> Avertissement → Mute → Kick → Bannissement temporaire → Bannissement permanent.</li>
+      <li class="rule-item"><strong>Le bannissement à 0 vie est automatique.</strong> Ce n'est pas une sanction du staff, c'est le système de vies hardcore.</li>
+      <li class="rule-item"><strong>Les signalements se font via <span class="cmd">/moderation</span></strong> ou sur le Discord. Fournissez des preuves (screenshots, vidéo).</li>
+    </ul>
+  </div>
+
+  <div class="rule-warning s-reveal">
+    <div class="rule-warning-title">⚠ Avertissement</div>
+    <div class="rule-warning-text">
+      Ces règles peuvent évoluer. Tout changement est annoncé sur le Discord. L'ignorance des règles n'est pas une excuse. En jouant sur Cantale, vous acceptez ce règlement dans son intégralité.
+    </div>
+  </div>
+
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">CANT<span>A</span>LE</div>
+    <ul class="footer-links">
+      <li><a href="#">Discord</a></li>
+      <li><a href="#">Twitter / X</a></li>
+      <li><a href="boutique.html">Boutique</a></li>
+      <li><a href="palliers.html">Palliers</a></li>
+      <li><a href="regles.html">Règlement</a></li>
+    </ul>
+    <div class="footer-copy">© 2025 Cantale · Non affilié à Mojang Studios</div>
+  </div>
+</footer>
+
+<script src="scripts.js" defer></script>
+</body>
+</html>

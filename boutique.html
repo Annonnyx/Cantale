@@ -1,0 +1,717 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Boutique</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500;1,300&family=Cinzel+Decorative:wght@400;700;900&family=Unbounded:wght@200;400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+.boutique-hero{
+  min-height:60vh;display:flex;align-items:center;justify-content:center;
+  text-align:center;padding:120px 20px 60px;position:relative;
+}
+.boutique-hero .cta-bg-title{font-size:clamp(160px,30vw,400px)}
+.boutique-title{
+  font-family:var(--ff-title);font-weight:900;
+  font-size:clamp(48px,8vw,100px);color:var(--cream);
+  letter-spacing:.04em;line-height:.9;
+}
+.boutique-title span{color:var(--red3)}
+.boutique-sub{
+  font-family:var(--ff-mono);font-size:13px;font-weight:300;
+  color:var(--dim);max-width:480px;margin:24px auto 0;
+  line-height:1.9;letter-spacing:.03em;
+}
+
+/* Grade cards */
+.grades-section{
+  max-width:1200px;margin:0 auto;padding:0 60px 160px;
+}
+.grades-grid{
+  display:grid;grid-template-columns:repeat(3,1fr);gap:32px;
+  margin-top:80px;
+}
+.badge-aventurier{color:#4fc3f7;border:1px solid rgba(79,195,247,.35)}
+.aventurier-text{color:#4fc3f7}
+
+.grade-card{
+  background:rgba(255,255,255,.015);
+  border:1px solid rgba(176,16,32,.15);
+  position:relative;overflow:visible;
+  padding:48px 40px;
+  transition:border-color .3s,transform .3s;
+}
+.grade-card:hover{border-color:rgba(176,16,32,.5);transform:translateY(-4px)}
+
+.grade-card.featured{
+  border-color:rgba(240,184,74,.3);
+  background:rgba(240,184,74,.02);
+}
+.grade-card.featured::before{
+  content:'MEILLEURE OFFRE';position:absolute;top:0;left:0;right:0;
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+  font-family:var(--ff-mono);font-size:9px;letter-spacing:.3em;
+  text-transform:uppercase;color:var(--bg);text-align:center;padding:8px 0;
+}
+
+.grade-badge{
+  display:inline-block;
+  font-family:var(--ff-mono);font-size:9px;
+  letter-spacing:.3em;text-transform:uppercase;
+  padding:4px 14px;margin-bottom:20px;
+}
+.badge-vip{color:var(--red2);border:1px solid rgba(224,24,44,.35)}
+.badge-chevre{color:var(--gold2);border:1px solid rgba(240,184,74,.35)}
+
+.grade-name{
+  font-family:var(--ff-display);font-weight:900;
+  font-size:clamp(28px,4vw,48px);color:var(--cream);
+  letter-spacing:-.02em;line-height:1.1;margin-bottom:8px;
+  word-break:break-word;
+}
+.grade-name .goat{color:var(--gold2)}
+.grade-name .vip-text{color:var(--red3)}
+
+.grade-price{
+  font-family:var(--ff-block);font-size:48px;
+  color:var(--gold2);line-height:1;margin:20px 0 8px;
+}
+.grade-price small{font-size:20px;color:var(--dim)}
+
+.grade-period{
+  font-family:var(--ff-mono);font-size:10px;
+  letter-spacing:.2em;color:var(--dim);margin-bottom:32px;
+}
+
+.perks-list{
+  list-style:none;display:flex;flex-direction:column;gap:16px;
+}
+.perk-item{
+  display:flex;align-items:flex-start;gap:14px;
+  font-size:13px;font-weight:300;color:var(--cream);
+  line-height:1.6;letter-spacing:.02em;
+}
+.perk-icon{
+  flex-shrink:0;width:28px;height:28px;
+  display:flex;align-items:center;justify-content:center;
+  background:rgba(176,16,32,.1);border:1px solid rgba(176,16,32,.2);
+  font-size:14px;
+}
+.grade-card.featured .perk-icon{
+  background:rgba(240,184,74,.08);border-color:rgba(240,184,74,.2);
+}
+
+.perk-highlight{
+  color:var(--gold2);font-weight:500;
+}
+.perk-vip{color:var(--red2);font-weight:500}
+
+.grade-cta{
+  display:inline-block;margin-top:36px;
+  font-family:var(--ff-mono);font-size:11px;letter-spacing:.25em;
+  text-transform:uppercase;color:var(--bg);
+  background:var(--red2);padding:14px 36px;
+  text-decoration:none;transition:background .2s,box-shadow .3s;
+}
+.grade-card.featured .grade-cta{
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+}
+.grade-cta:hover{box-shadow:0 0 40px rgba(224,24,44,.4)}
+.grade-card.featured .grade-cta:hover{box-shadow:0 0 40px rgba(240,184,74,.4)}
+
+/* Comparison table */
+.compare-section{
+  background:var(--bg2);padding:100px 0;
+}
+
+/* Shop sections (Vies & Tools) */
+.shop-section{
+  max-width:1200px;margin:0 auto;padding:80px 60px 120px;
+}
+.shop-title{
+  font-family:var(--ff-display);font-weight:900;
+  font-size:clamp(28px,4vw,42px);color:var(--cream);
+  text-align:center;margin-bottom:12px;
+}
+.shop-title em{color:var(--red3);font-style:normal}
+.shop-sub{
+  font-family:var(--ff-mono);font-size:12px;font-weight:300;
+  color:var(--dim);text-align:center;max-width:500px;
+  margin:0 auto 60px;line-height:1.8;letter-spacing:.03em;
+}
+.shop-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:20px;
+}
+.shop-card{
+  background:rgba(255,255,255,.015);
+  border:1px solid rgba(176,16,32,.12);
+  padding:28px 20px;text-align:center;
+  transition:border-color .3s,transform .3s;
+}
+.shop-card:hover{border-color:rgba(176,16,32,.4);transform:translateY(-2px)}
+.shop-card.best{
+  border-color:rgba(240,184,74,.3);
+  background:rgba(240,184,74,.02);
+}
+.shop-card.best::after{
+  content:'MEILLEURE OFFRE';display:block;
+  font-family:var(--ff-mono);font-size:8px;letter-spacing:.2em;
+  color:var(--gold2);margin-top:12px;
+}
+.shop-icon{font-size:28px;margin-bottom:10px}
+.shop-name{
+  font-family:var(--ff-display);font-weight:700;
+  font-size:16px;color:var(--cream);margin-bottom:4px;
+}
+.shop-desc{
+  font-family:var(--ff-mono);font-size:10px;font-weight:300;
+  color:var(--dim);letter-spacing:.1em;margin-bottom:16px;
+}
+.shop-price{
+  font-family:var(--ff-block);font-size:28px;
+  color:var(--gold2);line-height:1;
+}
+.shop-price small{font-size:14px;color:var(--dim)}
+.shop-unit{
+  font-family:var(--ff-mono);font-size:9px;
+  color:var(--dim);margin-top:4px;letter-spacing:.1em;
+}
+.shop-save{
+  display:inline-block;font-family:var(--ff-mono);font-size:9px;
+  color:#4caf50;border:1px solid rgba(76,175,80,.3);
+  padding:2px 8px;margin-top:8px;letter-spacing:.1em;
+}
+.shop-cta{
+  display:inline-block;margin-top:16px;
+  font-family:var(--ff-mono);font-size:10px;letter-spacing:.2em;
+  text-transform:uppercase;color:var(--bg);
+  background:var(--red2);padding:10px 24px;
+  text-decoration:none;transition:box-shadow .2s;
+}
+.shop-card.best .shop-cta{
+  background:linear-gradient(90deg,var(--gold),var(--gold2));
+}
+.shop-cta:hover{box-shadow:0 0 30px rgba(224,24,44,.3)}
+.shop-card.best .shop-cta:hover{box-shadow:0 0 30px rgba(240,184,74,.3)}
+
+/* Tools packs */
+.tools-grid{
+  display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:24px;
+  margin-top:40px;
+}
+.tool-pack{
+  background:rgba(255,255,255,.015);
+  border:1px solid rgba(176,16,32,.12);
+  padding:32px 24px;
+  transition:border-color .3s,transform .3s;
+}
+.tool-pack:hover{border-color:rgba(176,16,32,.4);transform:translateY(-2px)}
+.tool-pack.featured{border-color:rgba(240,184,74,.3);background:rgba(240,184,74,.02)}
+.tool-pack-name{
+  font-family:var(--ff-display);font-weight:700;
+  font-size:18px;color:var(--cream);margin-bottom:8px;
+}
+.tool-pack-items{
+  font-family:var(--ff-mono);font-size:11px;font-weight:300;
+  color:var(--dim);line-height:1.8;letter-spacing:.03em;
+  margin-bottom:20px;
+}
+.tool-pack-price{
+  font-family:var(--ff-block);font-size:32px;
+  color:var(--gold2);line-height:1;
+}
+.tool-pack-price small{font-size:14px;color:var(--dim)}
+
+.compare-inner{max-width:900px;margin:0 auto;padding:0 60px}
+.compare-title{
+  font-family:var(--ff-display);font-weight:900;
+  font-size:clamp(32px,4vw,52px);color:var(--cream);
+  text-align:center;margin-bottom:60px;
+}
+.compare-title em{color:var(--red3);font-style:normal}
+
+.compare-table{
+  width:100%;border-collapse:collapse;
+  font-family:var(--ff-mono);font-size:12px;
+}
+.compare-table th{
+  padding:16px 20px;text-align:center;
+  letter-spacing:.2em;text-transform:uppercase;
+  font-size:10px;font-weight:500;
+  border-bottom:2px solid rgba(176,16,32,.2);
+}
+.compare-table th:first-child{text-align:left;color:var(--dim)}
+.compare-table th.col-vip{color:var(--red2)}
+.compare-table th.col-chevre{color:var(--gold2)}
+.compare-table td{
+  padding:14px 20px;text-align:center;
+  border-bottom:1px solid rgba(176,16,32,.07);
+  color:var(--dim);letter-spacing:.05em;
+}
+.compare-table td:first-child{text-align:left;color:var(--cream);font-weight:300}
+.compare-table .check{color:var(--red2);font-size:16px}
+.compare-table .check-gold{color:var(--gold2);font-size:16px}
+.compare-table .cross{color:rgba(232,221,208,.15);font-size:14px}
+
+/* FAQ */
+.faq-section{max-width:700px;margin:0 auto;padding:80px 60px 160px}
+.faq-title{
+  font-family:var(--ff-display);font-weight:900;
+  font-size:clamp(28px,3.5vw,42px);color:var(--cream);
+  text-align:center;margin-bottom:48px;
+}
+.faq-item{
+  border-bottom:1px solid rgba(176,16,32,.1);
+  padding:20px 0;
+}
+.faq-q{
+  font-family:var(--ff-display);font-weight:700;
+  font-size:15px;color:var(--cream);margin-bottom:8px;
+}
+.faq-a{
+  font-size:13px;font-weight:300;color:var(--dim);
+  line-height:1.8;letter-spacing:.02em;
+}
+
+@media(max-width:1000px){
+  .grades-grid{grid-template-columns:1fr 1fr;gap:24px}
+}
+@media(max-width:700px){
+  .grades-grid{grid-template-columns:1fr;gap:24px}
+  .grades-section{padding:0 20px 100px}
+  .grade-card{padding:32px 24px}
+  .grade-price{font-size:36px}
+  .compare-inner{padding:0 20px}
+  .compare-table{font-size:10px}
+  .compare-table th,.compare-table td{padding:10px 12px}
+  .faq-section{padding:60px 20px 100px}
+}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<div id="cur"></div>
+<div id="cur-trail"></div>
+<div id="progress"></div>
+<canvas id="canvas-bg"></canvas>
+
+<!-- ═══ NAV ═══ -->
+<nav>
+  <a href="index.html" class="nav-logo">CANT<b>A</b>LE</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="boutique.html">Boutique</a></li>
+    <li><a href="palliers.html">Palliers</a></li>
+    <li><a href="recrutement.html">Rejoindre</a></li>
+    <li><a href="regles.html">Règlement</a></li>
+  </ul>
+  <a href="index.html#join" class="nav-btn">Rejoindre</a>
+</nav>
+
+<!-- ═══ BOUTIQUE HERO ═══ -->
+<section class="boutique-hero">
+  <div class="cta-bg-title">BOUTIQUE</div>
+  <div class="glitch-line" style="top:30%;animation-delay:1s"></div>
+  <div class="glitch-line" style="top:70%;animation-delay:5s"></div>
+  <div class="cta-inner in">
+    <div class="cta-kicker">Grades & Avantages</div>
+    <h1 class="boutique-title">LA <span>BOUTIQUE</span></h1>
+    <p class="boutique-sub">
+      Soutiens le serveur et débloque des avantages exclusifs.<br>
+      Chaque grade offre des perks uniques pour dominer Cantale.
+    </p>
+  </div>
+</section>
+
+<!-- ═══ GRADES ═══ -->
+<div class="grades-section">
+  <div class="grades-grid">
+
+    <!-- AVENTURIER -->
+    <div class="grade-card s-reveal">
+      <div class="grade-badge badge-aventurier">Aventurier</div>
+      <div class="grade-name"><span class="aventurier-text">Aventurier</span></div>
+      <div class="grade-price">1.99€<small>/mois</small></div>
+      <div class="grade-period">Renouvellement mensuel</div>
+      <ul class="perks-list">
+        <li class="perk-item">
+          <div class="perk-icon">❤️</div>
+          <div><span style="color:#4fc3f7;font-weight:500">1 Vie/mois</span> — Item consommable pour gagner 1 vie hardcore</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">💰</div>
+          <div><span style="color:#4fc3f7;font-weight:500">2 500 Cantox/jour</span> — Bonus journalier à la connexion</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">🏠</div>
+          <div><span style="color:#4fc3f7;font-weight:500">5 homes</span> — Au lieu de 3</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">📈</div>
+          <div><span style="color:#4fc3f7;font-weight:500">5 ventes /ah</span> — Au lieu de 3</div>
+        </li>
+      </ul>
+      <a href="#" class="grade-cta" style="background:#4fc3f7">Devenir Aventurier</a>
+    </div>
+
+    <!-- VIP -->
+    <div class="grade-card s-reveal delay-1">
+      <div class="grade-badge badge-vip">Grade VIP</div>
+      <div class="grade-name"><span class="vip-text">VIP</span></div>
+      <div class="grade-price">6.99€<small>/mois</small></div>
+      <div class="grade-period">Renouvellement mensuel</div>
+      <ul class="perks-list">
+        <li class="perk-item">
+          <div class="perk-icon">❤️</div>
+          <div><span class="perk-vip">2 Vies/mois</span> — Items consommables pour gagner 2 vies hardcore</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">🪽</div>
+          <div><span class="perk-vip">1 Statio-Lytra/mois</span> — Vol créatif dans les claims de ta faction</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">💰</div>
+          <div><span class="perk-vip">10 000 Cantox/jour</span> — Bonus journalier ×4 vs Aventurier</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">�</div>
+          <div><span class="perk-vip">/pc 54 slots</span> — Coffre privé élargi</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">🏠</div>
+          <div><span class="perk-vip">10 homes</span></div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">📈</div>
+          <div><span class="perk-vip">12 ventes /ah</span></div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">�️</div>
+          <div><span class="perk-vip">Tous les avantages Aventurier inclus</span></div>
+        </li>
+      </ul>
+      <a href="#" class="grade-cta">Devenir VIP</a>
+    </div>
+
+    <!-- CHEVRE -->
+    <div class="grade-card featured s-reveal delay-2">
+      <div class="grade-badge badge-chevre">Grade Chèvre</div>
+      <div class="grade-name"><span class="goat">CHÈVRE</span> <span style="font-size:.5em;color:var(--dim)">(GOAT)</span></div>
+      <div class="grade-price">13.99€<small>/mois</small></div>
+      <div class="grade-period">Renouvellement mensuel</div>
+      <ul class="perks-list">
+        <li class="perk-item">
+          <div class="perk-icon">❤️</div>
+          <div><span class="perk-highlight">3 Vies/mois</span> — Items consommables pour gagner 3 vies hardcore</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">🪽</div>
+          <div><span class="perk-highlight">Vol illimité</span> dans les claims — Pas besoin de Statio-Lytra</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">💰</div>
+          <div><span class="perk-highlight">100 000 Cantox/jour</span> — 10× plus que le VIP</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">📦</div>
+          <div><span class="perk-highlight">/pc + /pc2</span> — 2 coffres privés de 54 slots (108 slots totaux)</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">⚡</div>
+          <div><span class="perk-highlight">Pas de cooldown de TP</span> — Téléportation instantanée sur /home, /warp, /spawn</div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">🏠</div>
+          <div><span class="perk-highlight">Homes illimités</span></div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">📈</div>
+          <div><span class="perk-highlight">20 ventes /ah</span></div>
+        </li>
+        <li class="perk-item">
+          <div class="perk-icon">🛡️</div>
+          <div><span class="perk-highlight">Tous les avantages VIP inclus</span> — Le grade ultime</div>
+        </li>
+      </ul>
+      <a href="#" class="grade-cta">Devenir Chèvre</a>
+    </div>
+
+  </div>
+</div>
+
+<!-- ═══ COMPARISON TABLE ═══ -->
+<div class="compare-section">
+  <div class="compare-inner">
+    <h2 class="compare-title s-reveal">Comparaison <em>des grades</em></h2>
+    <table class="compare-table s-reveal delay-1">
+      <thead>
+        <tr>
+          <th>Avantage</th>
+          <th style="color:#4fc3f7">Aventurier</th>
+          <th class="col-vip">VIP</th>
+          <th class="col-chevre">Chèvre</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Vies custom / mois</td>
+          <td style="color:#4fc3f7">1</td>
+          <td class="check">2</td>
+          <td class="check-gold">3</td>
+        </tr>
+        <tr>
+          <td>Statio-Lytra / mois</td>
+          <td class="cross">✕</td>
+          <td class="check">1</td>
+          <td class="check-gold">1</td>
+        </tr>
+        <tr>
+          <td>Vol illimité dans les claims</td>
+          <td class="cross">✕</td>
+          <td class="cross">✕</td>
+          <td class="check-gold">✓</td>
+        </tr>
+        <tr>
+          <td>Cantox / jour</td>
+          <td>2 500</td>
+          <td>10 000</td>
+          <td class="check-gold">100 000</td>
+        </tr>
+        <tr>
+          <td>Homes (/home)</td>
+          <td>5</td>
+          <td>10</td>
+          <td class="check-gold">∞</td>
+        </tr>
+        <tr>
+          <td>Ventes /ah</td>
+          <td>5</td>
+          <td>12</td>
+          <td class="check-gold">20</td>
+        </tr>
+        <tr>
+          <td>Coffre privé /pc</td>
+          <td>27 slots</td>
+          <td class="check">54 slots</td>
+          <td class="check-gold">54 slots</td>
+        </tr>
+        <tr>
+          <td>2ème coffre /pc2</td>
+          <td class="cross">✕</td>
+          <td class="cross">✕</td>
+          <td class="check-gold">54 slots</td>
+        </tr>
+        <tr>
+          <td>Pas de cooldown de TP</td>
+          <td class="cross">✕</td>
+          <td class="cross">✕</td>
+          <td class="check-gold">✓</td>
+        </tr>
+        <tr>
+          <td style="font-weight:700;color:var(--gold2)">Prix</td>
+          <td style="color:#4fc3f7">1.99€/mois</td>
+          <td style="color:var(--red2)">6.99€/mois</td>
+          <td style="color:var(--gold2)">13.99€/mois</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<!-- ═══ VIES SHOP ═══ -->
+<div class="shop-section">
+  <h2 class="shop-title s-reveal">Acheter des <em>Vies</em></h2>
+  <p class="shop-sub s-reveal delay-1">Les Vies sont des items consommables : clic-droit pour gagner 1 vie hardcore. Plus tu en achètes, plus le prix à l'unité baisse.</p>
+  <div class="shop-grid s-reveal delay-2">
+    <div class="shop-card">
+      <div class="shop-icon">❤️</div>
+      <div class="shop-name">1 Vie</div>
+      <div class="shop-desc">À L'UNITÉ</div>
+      <div class="shop-price">2€</div>
+      <div class="shop-unit">2.00€ / vie</div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">❤️</div>
+      <div class="shop-name">5 Vies</div>
+      <div class="shop-desc">PACK PETIT</div>
+      <div class="shop-price">9€</div>
+      <div class="shop-unit">1.80€ / vie</div>
+      <span class="shop-save">-10%</span>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">❤️</div>
+      <div class="shop-name">10 Vies</div>
+      <div class="shop-desc">PACK MOYEN</div>
+      <div class="shop-price">16€</div>
+      <div class="shop-unit">1.60€ / vie</div>
+      <span class="shop-save">-20%</span>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">❤️</div>
+      <div class="shop-name">30 Vies</div>
+      <div class="shop-desc">PACK GRAND</div>
+      <div class="shop-price">42€</div>
+      <div class="shop-unit">1.40€ / vie</div>
+      <span class="shop-save">-30%</span>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">❤️</div>
+      <div class="shop-name">50 Vies</div>
+      <div class="shop-desc">PACK MÉGA</div>
+      <div class="shop-price">60€</div>
+      <div class="shop-unit">1.20€ / vie</div>
+      <span class="shop-save">-40%</span>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card best">
+      <div class="shop-icon">❤️</div>
+      <div class="shop-name">100 Vies</div>
+      <div class="shop-desc">PACK ULTIME</div>
+      <div class="shop-price">100€</div>
+      <div class="shop-unit">1.00€ / vie</div>
+      <span class="shop-save">-50%</span>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ TOOLS SHOP ═══ -->
+<div class="shop-section" id="tools" style="background:var(--bg2);padding-top:100px;padding-bottom:120px">
+  <h2 class="shop-title s-reveal">Outils <em>Custom</em></h2>
+  <p class="shop-sub s-reveal delay-1">Des outils uniques avec des pouvoirs spéciaux. Achète-les à l'unité ou en packs avantageux.</p>
+
+  <!-- Individual tools -->
+  <div class="shop-grid s-reveal delay-2">
+    <div class="shop-card">
+      <div class="shop-icon">⛏️</div>
+      <div class="shop-name">Pickantise</div>
+      <div class="shop-desc">PIOCHE MULTIZONE</div>
+      <div class="shop-price">3€</div>
+      <div class="shop-unit">Fer / Diamant / Netherite</div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">🪓</div>
+      <div class="shop-name">Cantaxe</div>
+      <div class="shop-desc">HACHE MULTIZONE</div>
+      <div class="shop-price">3€</div>
+      <div class="shop-unit">Fer / Diamant / Netherite</div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">✂️</div>
+      <div class="shop-name">Multi-Cantool</div>
+      <div class="shop-desc">OUTIL POLYVALENT</div>
+      <div class="shop-price">4€</div>
+      <div class="shop-unit">Pioche+Hache+Pelle+Cisailles</div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">🪽</div>
+      <div class="shop-name">Statio-Lytra</div>
+      <div class="shop-desc">VOL CRÉATIF EN CLAIMS</div>
+      <div class="shop-price">5€</div>
+      <div class="shop-unit">Élytre mécanique légendaire</div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">⚔️</div>
+      <div class="shop-name">Cantalame</div>
+      <div class="shop-desc">ÉPÉE ÉVOLUTIVE</div>
+      <div class="shop-price">5€</div>
+      <div class="shop-unit">Netherite + rune évolutive</div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="shop-card">
+      <div class="shop-icon">📖</div>
+      <div class="shop-name">Rune Fortif.</div>
+      <div class="shop-desc">PROTECTION CLAIM</div>
+      <div class="shop-price">3€</div>
+      <div class="shop-unit">Renforce un claim 24h</div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+  </div>
+
+  <!-- Packs -->
+  <div class="tools-grid s-reveal delay-3">
+    <div class="tool-pack">
+      <div class="tool-pack-name">⛏ Pack Mineur</div>
+      <div class="tool-pack-items">1× Pickantise Fer 3×3<br>1× Cantaxe Fer<br>1× Multi-Cantool Fer</div>
+      <div class="tool-pack-price">7€ <small>au lieu de 10€</small></div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="tool-pack">
+      <div class="tool-pack-name">💎 Pack Moyen</div>
+      <div class="tool-pack-items">1× Pickantise Diamant 5×5<br>1× Cantaxe Diamant<br>1× Multi-Cantool Diamant<br>1× Statio-Lytra</div>
+      <div class="tool-pack-price">12€ <small>au lieu de 15€</small></div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+    <div class="tool-pack featured">
+      <div class="tool-pack-name">🔥 Pack Ultime</div>
+      <div class="tool-pack-items">1× Pickantise Netherite 7×7<br>1× Cantaxe Netherite<br>1× Multi-Cantool Netherite<br>1× Statio-Lytra<br>1× Cantalame<br>1× Rune de Fortification</div>
+      <div class="tool-pack-price">18€ <small>au lieu de 23€</small></div>
+      <a href="#" class="shop-cta">Acheter</a>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ FAQ ═══ -->
+<div class="faq-section" style="background:var(--bg);padding-top:100px;padding-bottom:120px">
+  <h2 class="faq-title s-reveal">Questions fréquentes</h2>
+
+  <div class="faq-item s-reveal delay-1">
+    <div class="faq-q">Les avantages sont-ils permanents ?</div>
+    <div class="faq-a">Les avantages sont actifs tant que ton grade est actif. Si tu annules ton abonnement, les perks sont retirées à la fin de la période en cours. Tes items dans les coffres privés sont conservés 30 jours après l'expiration.</div>
+  </div>
+
+  <div class="faq-item s-reveal delay-2">
+    <div class="faq-q">Comment fonctionne le bonus Cantox ?</div>
+    <div class="faq-a">À ta première connexion de la journée, tu reçois automatiquement le bonus sur ton compte. Une seule fois par jour, même si tu te déconnectes et reconnectes.</div>
+  </div>
+
+  <div class="faq-item s-reveal delay-3">
+    <div class="faq-q">Le vol créatif fonctionne-t-il partout ?</div>
+    <div class="faq-a">Non. Le vol créatif (Chèvre) et les Statio-Lytras fonctionnent uniquement dans les claims de ta propre faction. Hors des claims, tu retombes.</div>
+  </div>
+
+  <div class="faq-item s-reveal delay-4">
+    <div class="faq-q">Les coffres privés peuvent-ils être volés ?</div>
+    <div class="faq-a">Non. Les coffres /pc et /pc2 sont des inventaires virtuels liés à ton compte. Aucun autre joueur ne peut y accéder, même dans les claims.</div>
+  </div>
+
+  <div class="faq-item s-reveal delay-5">
+    <div class="faq-q">Puis-je passer de VIP à Chèvre ?</div>
+    <div class="faq-a">Oui, tu peux upgrader à tout moment. La différence de prix sera calculée au prorata de ta période restante.</div>
+  </div>
+
+  <div class="faq-item s-reveal delay-6">
+    <div class="faq-q">Comment fonctionnent les Vies mensuelles ?</div>
+    <div class="faq-a">À ta première connexion du mois, tu reçois automatiquement des items "Vie" (1 pour Aventurier, 2 pour VIP, 3 pour Chèvre). C'est un item consommable : fais un clic-droit pour gagner 1 vie hardcore. Tu peux les stocker et les utiliser quand tu veux.</div>
+  </div>
+</div>
+
+<!-- ═══ FOOTER ═══ -->
+<footer>
+  <div class="footer-inner">
+    <div class="footer-logo">CANT<span>A</span>LE</div>
+    <ul class="footer-links">
+      <li><a href="#">Discord</a></li>
+      <li><a href="#">Twitter / X</a></li>
+      <li><a href="boutique.html">Boutique</a></li>
+      <li><a href="palliers.html">Palliers</a></li>
+      <li><a href="regles.html">Règlement</a></li>
+    </ul>
+    <div class="footer-copy">© 2025 Cantale · Non affilié à Mojang Studios</div>
+  </div>
+</footer>
+
+<script src="scripts.js" defer></script>
+</body>
+</html>
