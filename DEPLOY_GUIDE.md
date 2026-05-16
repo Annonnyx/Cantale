@@ -1,10 +1,32 @@
 # Guide de Déploiement — Site Cantale (SFTP)
 
+## 🔴 Informations PixelHorizons (ton hébergeur)
+
+| Info | Valeur |
+|------|--------|
+| Domaine web | `https://cantale.pixelhorizons.fr` |
+| IP serveur | `82.66.173.236` |
+| Port backend | `3001` (attribué par le provider) |
+| Serveur MC | `play-cantale.pixelhorizons.fr` → `82.66.173.236:25580` |
+| Accès | SFTP (+ probablement SSH/panel pour démarrer Node.js) |
+
+**Ce que fait le provider :**
+- Le reverse proxy sur `cantale.pixelhorizons.fr` est géré par eux.
+- Ils attendent que ton backend écoute sur le port `3001`.
+- Le frontend (fichiers HTML/CSS/JS) est à uploader via SFTP dans ton dossier web.
+
+**Ce que tu dois faire :**
+1. Compiler le backend en local
+2. Uploader frontend + backend compilé via SFTP
+3. Démarrer le backend sur le port 3001 (SSH ou panel)
+
+---
+
 ## Architecture
 - **Frontend** : HTML/CSS/JS statiques (pas de framework)
 - **Backend** : Node.js + Express + TypeScript (API REST)
 - **Port** : 3001
-- **Hébergement** : Serveur dédié/mutualisé avec accès SFTP + SSH
+- **Hébergement** : PixelHorizons — accès SFTP + probablement panel SSH
 
 ---
 
@@ -38,6 +60,7 @@ recrutement.html
 regles.html
 style.css
 scripts.js
+config.js          ← config API base URL (pixelhorizons)
 api-client.js
 ```
 
@@ -49,6 +72,26 @@ backend/.env           (à créer sur le serveur, voir §3)
 ```
 
 > **Ne pas transférer** : `node_modules/`, `src/`, `tsconfig.json`, `.env.example`
+
+### C. Config API — `config.js`
+
+Le fichier `config.js` définit l'URL de l'API backend. Par défaut :
+
+```js
+window.CANTALE_API_BASE = '/api';
+```
+
+**Option 1 (la plus probable)** : Si le provider forward `/api` vers ton backend :
+- Laisser `/api` — ça fonctionne automatiquement.
+
+**Option 2** : Si le backend est accessible directement sur le port 3001 :
+- Changer dans `config.js` :
+```js
+window.CANTALE_API_BASE = 'https://cantale.pixelhorizons.fr:3001/api';
+```
+- ⚠️ Vérifie que le provider autorise le HTTPS sur le port 3001, sinon utiliser `http://` (risque de mixed-content).
+
+> **Test rapide** : après déploiement, ouvre `https://cantale.pixelhorizons.fr:3001/api/health` dans ton navigateur. Si tu vois `{"status":"ok"}`, l'Option 2 marche.
 
 ---
 
@@ -79,12 +122,14 @@ put -r /Users/Noe/Cantale/Site-Cantale/backend/dist /home/utilisateur/cantale-ba
 
 ---
 
-## 3. Configuration serveur (SSH)
+## 3. Configuration serveur (SSH / Panel)
 
-### A. Se connecter au serveur
+> **Si tu n'as que SFTP (pas de SSH shell)** : demande à PixelHorizons comment démarrer une app Node.js. Certains providers utilisent un panel (type Pterodactyl) où tu upload les fichiers et cliques "Start". Dans ce cas, compile en local, upload tout le dossier backend (avec `dist/` et `node_modules/` si possible), et démarre via le panel.
+
+### A. Se connecter au serveur (si SSH disponible)
 
 ```bash
-ssh utilisateur@ton-serveur.com
+ssh utilisateur@82.66.173.236
 ```
 
 ### B. Installer Node.js (si pas déjà présent)
@@ -123,7 +168,7 @@ PORT=3001
 
 # Base de données (même que le plugin Minecraft)
 DB_TYPE=sqlite
-DB_PATH=/home/utilisateur/cantale.db
+DB_PATH=./cantale.db
 # OU MySQL :
 # DB_TYPE=mysql
 # DB_HOST=localhost
@@ -136,10 +181,8 @@ DB_PATH=/home/utilisateur/cantale.db
 SESSION_SECRET=change_moi_par_une_chaine_longue_et_aleatoire_64_caracteres_min
 SESSION_MAX_AGE_DAYS=7
 
-# CORS (domaine de ton site)
-CORS_ORIGIN=https://ton-site.com
-# OU pour test :
-# CORS_ORIGIN=*
+# CORS — domaine PixelHorizons
+CORS_ORIGIN=https://cantale.pixelhorizons.fr
 
 # Shop
 SHOP_ENABLED=false
@@ -287,11 +330,11 @@ Certbot configure automatiquement Nginx pour HTTPS.
 
 | Étape | Commande / Test |
 |-------|-----------------|
-| Backend running | `pm2 status` → `cantale-backend` en vert |
+| Backend running | `pm2 status` → `cantale-backend` en vert (ou panel) |
 | Port 3001 ouvert | `curl http://127.0.0.1:3001/api/players/me` depuis le serveur |
-| API accessible | Depuis ton PC : `curl https://ton-site.com/api/players/me` |
-| Frontend OK | Ouvrir `https://ton-site.com` dans le navigateur |
-| Logs en cas de pb | `pm2 logs cantale-backend` |
+| API accessible | Depuis ton PC : `curl https://cantale.pixelhorizons.fr:3001/api/players/me` |
+| Frontend OK | Ouvrir `https://cantale.pixelhorizons.fr` dans le navigateur |
+| Logs en cas de pb | `pm2 logs cantale-backend` (ou panel du provider) |
 
 ---
 
