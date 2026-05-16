@@ -35,11 +35,11 @@ export const config = {
     type: (required("DB_TYPE", "sqlite") as DbType),
     sqlitePath: process.env.SQLITE_PATH ?? path.resolve(process.cwd(), "../../target/cantale.db"),
     mysql: {
-      host: process.env.MYSQL_HOST ?? "localhost",
-      port: num("MYSQL_PORT", 3306),
-      database: process.env.MYSQL_DATABASE ?? "cantale",
-      user: process.env.MYSQL_USER ?? "cantale",
-      password: process.env.MYSQL_PASSWORD ?? "",
+      host: process.env.DB_HOST || process.env.MYSQL_HOST || "localhost",
+      port: num("DB_PORT", process.env.MYSQL_PORT ? parseInt(process.env.MYSQL_PORT, 10) : 3306),
+      database: process.env.DB_NAME || process.env.MYSQL_DATABASE || "cantale",
+      user: process.env.DB_USER || process.env.MYSQL_USER || "cantale",
+      password: process.env.DB_PASSWORD || process.env.MYSQL_PASSWORD || "",
     },
   },
 
