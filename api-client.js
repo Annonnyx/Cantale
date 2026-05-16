@@ -14,8 +14,11 @@
 
   async function request(path, options = {}) {
     const url = API_BASE + path;
+    const ctrl = new AbortController();
+    const to = setTimeout(() => ctrl.abort(), 8000);
     const opts = {
       credentials: 'include',
+      signal: ctrl.signal,
       headers: {
         'Content-Type': 'application/json',
         ...(options.headers || {}),
@@ -25,16 +28,23 @@
     if (opts.body && typeof opts.body !== 'string') {
       opts.body = JSON.stringify(opts.body);
     }
-    const res = await fetch(url, opts);
-    const ct = res.headers.get('content-type') || '';
-    const data = ct.includes('application/json') ? await res.json() : await res.text();
-    if (!res.ok) {
-      const err = new Error((data && data.error) || `HTTP ${res.status}`);
-      err.status = res.status;
-      err.data = data;
-      throw err;
+    try {
+      const res = await fetch(url, opts);
+      clearTimeout(to);
+      const ct = res.headers.get('content-type') || '';
+      const data = ct.includes('application/json') ? await res.json() : await res.text();
+      if (!res.ok) {
+        const err = new Error((data && data.error) || `HTTP ${res.status}`);
+        err.status = res.status;
+        err.data = data;
+        throw err;
+      }
+      return data;
+    } catch (e) {
+      clearTimeout(to);
+      if (e.name === 'AbortError') throw new Error('Timeout : le backend ne répond pas');
+      throw e;
     }
-    return data;
   }
 
   const api = {
