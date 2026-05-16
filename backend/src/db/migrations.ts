@@ -13,14 +13,16 @@ export async function runMigrations(): Promise<void> {
   const isSqlite = config.db.type === "sqlite";
   const auto = isSqlite ? "INTEGER PRIMARY KEY AUTOINCREMENT" : "INT AUTO_INCREMENT PRIMARY KEY";
   const ts = isSqlite ? "INTEGER" : "BIGINT";
+  const str = isSqlite ? "TEXT" : "VARCHAR(255)";
+  const str36 = isSqlite ? "TEXT" : "VARCHAR(36)";
 
   // Codes de liaison in-game (court terme)
   await db.exec(`
     CREATE TABLE IF NOT EXISTS web_link_codes (
       id ${auto},
-      code TEXT NOT NULL UNIQUE,
-      player_uuid TEXT,
-      player_name TEXT,
+      code ${str} NOT NULL UNIQUE,
+      player_uuid ${str36},
+      player_name ${str},
       created_at ${ts} NOT NULL,
       expires_at ${ts} NOT NULL,
       consumed_at ${ts}
@@ -31,14 +33,14 @@ export async function runMigrations(): Promise<void> {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS web_sessions (
       id ${auto},
-      token TEXT NOT NULL UNIQUE,
-      player_uuid TEXT NOT NULL,
-      player_name TEXT NOT NULL,
+      token ${str} NOT NULL UNIQUE,
+      player_uuid ${str36} NOT NULL,
+      player_name ${str} NOT NULL,
       created_at ${ts} NOT NULL,
       expires_at ${ts} NOT NULL,
       last_seen_at ${ts} NOT NULL,
-      ip TEXT,
-      user_agent TEXT
+      ip ${str},
+      user_agent ${str}
     )
   `);
 
@@ -46,18 +48,34 @@ export async function runMigrations(): Promise<void> {
   await db.exec(`
     CREATE TABLE IF NOT EXISTS web_cart_items (
       id ${auto},
-      player_uuid TEXT NOT NULL,
-      item_id TEXT NOT NULL,
+      player_uuid ${str36} NOT NULL,
+      item_id ${str} NOT NULL,
       quantity INTEGER NOT NULL DEFAULT 1,
       added_at ${ts} NOT NULL
     )
   `);
 
   // Index utiles (idempotents)
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_sessions_token ON web_sessions(token)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_sessions_uuid  ON web_sessions(player_uuid)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_link_code      ON web_link_codes(code)`);
-  await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_cart_player    ON web_cart_items(player_uuid)`);
+  if (isSqlite) {
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_sessions_token ON web_sessions(token)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_sessions_uuid  ON web_sessions(player_uuid)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_link_code      ON web_link_codes(code)`);
+    await db.exec(`CREATE INDEX IF NOT EXISTS idx_web_cart_player    ON web_cart_items(player_uuid)`);
+  } else {
+    // MySQL/MariaDB : CREATE INDEX IF NOT EXISTS n'existe pas
+    try {
+      await db.exec(`CREATE INDEX idx_web_sessions_token ON web_sessions(token)`);
+    } catch (_) { /* already exists */ }
+    try {
+      await db.exec(`CREATE INDEX idx_web_sessions_uuid ON web_sessions(player_uuid)`);
+    } catch (_) { /* already exists */ }
+    try {
+      await db.exec(`CREATE INDEX idx_web_link_code ON web_link_codes(code)`);
+    } catch (_) { /* already exists */ }
+    try {
+      await db.exec(`CREATE INDEX idx_web_cart_player ON web_cart_items(player_uuid)`);
+    } catch (_) { /* already exists */ }
+  }
 
   console.log("[DB] Migrations web_* exécutées avec succès.");
 }
