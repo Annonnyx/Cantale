@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Mon profil</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Cinzel+Decorative:wght@400;700;900&family=Unbounded:wght@200;400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .profile-hero{padding:140px 20px 40px;text-align:center}
+  .profile-head{
+    display:flex;flex-direction:column;align-items:center;gap:16px;
+    margin-bottom:48px;
+  }
+  .profile-avatar{
+    width:128px;height:128px;background:var(--bg2);
+    border:3px solid var(--red2);image-rendering:pixelated;
+  }
+  .profile-name{
+    font-family:var(--ff-title);font-weight:900;font-size:clamp(40px,6vw,72px);
+    color:var(--cream);letter-spacing:.04em;
+  }
+  .profile-rank{
+    display:inline-block;font-family:var(--ff-mono);font-size:13px;letter-spacing:.2em;
+    text-transform:uppercase;padding:8px 20px;
+  }
+  .rank-NONE{background:#444;color:#aaa}
+  .rank-AVENTURIER{background:#4fc3f7;color:#000}
+  .rank-VIP{background:var(--red2);color:#fff}
+  .rank-CHEVRE{background:linear-gradient(90deg,#f0b84a,#f8d068);color:#000}
+
+  .stats-grid{
+    max-width:1100px;margin:0 auto;
+    display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:20px;
+    padding:0 20px;
+  }
+  .stat-card{
+    background:var(--bg2);padding:28px 20px;text-align:center;
+    border-top:2px solid var(--red2);
+  }
+  .stat-label{font-family:var(--ff-mono);font-size:10px;letter-spacing:.25em;text-transform:uppercase;color:var(--dim);margin-bottom:12px}
+  .stat-value{font-family:var(--ff-title);font-size:48px;font-weight:900;color:var(--cream);line-height:1}
+  .stat-extra{font-family:var(--ff-mono);font-size:11px;color:var(--dim);margin-top:6px}
+
+  .section-title{
+    max-width:1100px;margin:80px auto 24px;padding:0 20px;
+    font-family:var(--ff-title);font-size:32px;font-weight:900;color:var(--red3);letter-spacing:.04em;
+  }
+  .faction-card{
+    max-width:1100px;margin:0 auto;padding:32px;background:var(--bg2);
+    border-left:4px solid var(--red2);
+  }
+  .faction-empty{max-width:1100px;margin:0 auto;padding:40px;text-align:center;background:var(--bg2);font-family:var(--ff-mono);color:var(--dim)}
+
+  .vote-card{max-width:1100px;margin:0 auto;padding:32px;background:var(--bg2);display:grid;grid-template-columns:repeat(3,1fr);gap:24px;text-align:center}
+  .vote-card .stat-label{margin-bottom:8px}
+
+  .logout-zone{max-width:1100px;margin:80px auto 100px;padding:0 20px;text-align:right}
+  .logout-btn{
+    font-family:var(--ff-mono);font-size:12px;letter-spacing:.2em;
+    text-transform:uppercase;color:var(--dim);
+    background:transparent;border:1px solid var(--dim);
+    padding:12px 28px;cursor:pointer;
+  }
+  .logout-btn:hover{color:var(--red3);border-color:var(--red3)}
+  .loading{text-align:center;padding:60px;font-family:var(--ff-mono);color:var(--dim)}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<canvas id="canvas-bg"></canvas>
+
+<nav>
+  <a href="index.html" class="nav-logo">CANT<b>A</b>LE</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="#" class="shop-disabled" title="Boutique temporairement fermée">Boutique</a></li>
+    <li><a href="palliers.html">Palliers</a></li>
+    <li><a href="liste.html">Liste</a></li>
+    <li><a href="regles.html">Règlement</a></li>
+  </ul>
+  <span data-cantale-user class="nav-btn" style="background:transparent;border:1px solid var(--red2);padding:10px 18px">…</span>
+</nav>
+
+<div id="content" class="loading">Chargement…</div>
+
+<script src="api-client.js"></script>
+<script>
+function fmtNum(n) { return n.toLocaleString('fr-FR'); }
+
+async function render() {
+  let me;
+  try { me = await CantaleAPI.myProfile(); }
+  catch (e) {
+    if (e.status === 401) { window.location.href = 'login.html'; return; }
+    document.getElementById('content').innerHTML = `<p style="color:#f44">Erreur : ${e.message}</p>`;
+    return;
+  }
+
+  const avatarUrl = `https://mc-heads.net/avatar/${encodeURIComponent(me.username)}/128`;
+
+  const factionBlock = me.faction ? `
+    <h2 class="section-title">Ma faction</h2>
+    <div class="faction-card">
+      <div style="font-family:var(--ff-mono);font-size:11px;letter-spacing:.2em;color:var(--dim);margin-bottom:8px">[${me.faction.tag}] · ${me.faction.type}</div>
+      <div style="font-family:var(--ff-title);font-size:36px;color:var(--cream);font-weight:900">${me.faction.name}</div>
+      <div style="font-family:var(--ff-mono);font-size:12px;color:var(--dim);margin-top:8px">Mon rang : <strong style="color:var(--red3)">${me.faction.memberRank}</strong></div>
+      <div style="margin-top:20px">
+        <a href="factions.html?tag=${encodeURIComponent(me.faction.tag)}" style="font-family:var(--ff-mono);font-size:12px;letter-spacing:.2em;color:var(--red3);text-decoration:underline">Voir la faction →</a>
+      </div>
+    </div>
+  ` : `
+    <h2 class="section-title">Faction</h2>
+    <div class="faction-empty">Tu n'es dans aucune faction. Utilise <code>/f create &lt;nom&gt;</code> ou demande à être invité.</div>
+  `;
+
+  const voteBlock = me.voteStats ? `
+    <h2 class="section-title">Votes</h2>
+    <div class="vote-card">
+      <div><div class="stat-label">Total votes</div><div class="stat-value">${fmtNum(me.voteStats.total)}</div></div>
+      <div><div class="stat-label">Streak</div><div class="stat-value">${me.voteStats.streak}<span style="font-size:.5em">j</span></div></div>
+      <div><div class="stat-label">Dernier vote</div><div class="stat-value" style="font-size:18px;color:var(--dim);font-family:var(--ff-mono);font-weight:400">${me.voteStats.lastVoteAt ? new Date(me.voteStats.lastVoteAt*1000).toLocaleDateString('fr-FR') : '—'}</div></div>
+    </div>
+  ` : '';
+
+  document.getElementById('content').className = '';
+  document.getElementById('content').innerHTML = `
+    <section class="profile-hero">
+      <div class="profile-head">
+        <img class="profile-avatar" src="${avatarUrl}" alt="${me.username}">
+        <h1 class="profile-name">${me.username}</h1>
+        <span class="profile-rank rank-${me.rank}">${me.rank === 'NONE' ? 'Membre' : me.rank}</span>
+      </div>
+      <div class="stats-grid">
+        <div class="stat-card"><div class="stat-label">Vies</div><div class="stat-value" style="color:#ff6b6b">${me.lives}</div></div>
+        <div class="stat-card"><div class="stat-label">Cantox</div><div class="stat-value" style="color:#f0b84a">${fmtNum(Math.floor(me.balance))}</div></div>
+        <div class="stat-card"><div class="stat-label">Kills</div><div class="stat-value">${fmtNum(me.kills)}</div></div>
+        <div class="stat-card"><div class="stat-label">Morts</div><div class="stat-value">${fmtNum(me.deaths)}</div></div>
+        <div class="stat-card"><div class="stat-label">Streak kills</div><div class="stat-value">${fmtNum(me.kill_streak)}</div></div>
+        <div class="stat-card"><div class="stat-label">K/D</div><div class="stat-value">${me.deaths > 0 ? (me.kills/me.deaths).toFixed(2) : me.kills}</div></div>
+      </div>
+    </section>
+    ${factionBlock}
+    ${voteBlock}
+    <div class="logout-zone">
+      <button class="logout-btn" id="btn-logout">Se déconnecter</button>
+    </div>
+  `;
+  document.getElementById('btn-logout').addEventListener('click', async () => {
+    await CantaleAPI.logout();
+    window.location.href = 'index.html';
+  });
+}
+
+render();
+</script>
+<script src="scripts.js" defer></script>
+</body>
+</html>

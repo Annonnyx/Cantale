@@ -291,7 +291,15 @@
 }
 </style>
 </head>
-<body>
+<body class="has-shop-banner">
+
+<!-- Bannière de fermeture temporaire -->
+<div class="shop-closed-banner" role="alert">
+  <span class="banner-icon">🚫</span>
+  <strong>CHECKOUT TEMPORAIREMENT FERMÉ</strong>
+  &nbsp;—&nbsp; Les paiements sont indisponibles le temps de migrer notre prestataire. Tu peux constituer ton panier dès maintenant, il sera conservé. 🛒
+  &nbsp;<a href="cart.html" style="color:#fff;text-decoration:underline">Mon panier →</a>
+</div>
 
 <div class="noise"></div>
 <div id="cur"></div>
@@ -304,13 +312,13 @@
   <a href="index.html" class="nav-logo">CANT<b>A</b>LE</a>
   <ul class="nav-links">
     <li><a href="index.html">Accueil</a></li>
-    <li><a href="boutique.html">Boutique</a></li>
+    <li><a href="boutique.html" style="color:var(--red3)">Boutique <span style="font-size:.7em;opacity:.6">(checkout fermé)</span></a></li>
+    <li><a href="cart.html">🛒 Panier <span id="cart-count" style="display:none;background:var(--red2);color:#000;padding:1px 6px;border-radius:8px;font-size:10px;margin-left:4px"></span></a></li>
     <li><a href="palliers.html">Palliers</a></li>
-    <li><a href="recrutement.html">Rejoindre</a></li>
     <li><a href="liste.html">Liste</a></li>
     <li><a href="regles.html">Règlement</a></li>
   </ul>
-  <a href="index.html#join" class="nav-btn">Rejoindre</a>
+  <span data-cantale-user class="nav-btn" style="background:transparent;border:1px solid var(--red2);padding:10px 18px">…</span>
 </nav>
 
 <!-- ═══ BOUTIQUE HERO ═══ -->
@@ -356,7 +364,7 @@
           <div><span style="color:#4fc3f7;font-weight:500">5 ventes /ah</span> — Au lieu de 3</div>
         </li>
       </ul>
-      <a href="#" class="grade-cta" style="background:#4fc3f7">Devenir Aventurier</a>
+      <button class="grade-cta" data-add-cart="grade_aventurier" style="background:#4fc3f7;border:none;cursor:pointer">Ajouter au panier</button>
     </div>
 
     <!-- VIP -->
@@ -395,7 +403,7 @@
           <div><span class="perk-vip">Tous les avantages Aventurier inclus</span></div>
         </li>
       </ul>
-      <a href="#" class="grade-cta">Devenir VIP</a>
+      <button class="grade-cta" data-add-cart="grade_vip" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
 
     <!-- CHEVRE -->
@@ -438,7 +446,7 @@
           <div><span class="perk-highlight">Tous les avantages VIP inclus</span> — Le grade ultime</div>
         </li>
       </ul>
-      <a href="#" class="grade-cta">Devenir Chèvre</a>
+      <button class="grade-cta" data-add-cart="grade_chevre" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
 
   </div>
@@ -534,7 +542,7 @@
       <div class="shop-desc">À L'UNITÉ</div>
       <div class="shop-price">2€</div>
       <div class="shop-unit">2.00€ / vie</div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="lives_1" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">❤️</div>
@@ -543,7 +551,7 @@
       <div class="shop-price">9€</div>
       <div class="shop-unit">1.80€ / vie</div>
       <span class="shop-save">-10%</span>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="lives_5" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">❤️</div>
@@ -552,7 +560,7 @@
       <div class="shop-price">16€</div>
       <div class="shop-unit">1.60€ / vie</div>
       <span class="shop-save">-20%</span>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="lives_10" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">❤️</div>
@@ -561,7 +569,7 @@
       <div class="shop-price">42€</div>
       <div class="shop-unit">1.40€ / vie</div>
       <span class="shop-save">-30%</span>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="lives_30" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">❤️</div>
@@ -570,7 +578,7 @@
       <div class="shop-price">60€</div>
       <div class="shop-unit">1.20€ / vie</div>
       <span class="shop-save">-40%</span>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="lives_50" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card best">
       <div class="shop-icon">❤️</div>
@@ -579,7 +587,7 @@
       <div class="shop-price">100€</div>
       <div class="shop-unit">1.00€ / vie</div>
       <span class="shop-save">-50%</span>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="lives_100" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
   </div>
 </div>
@@ -597,7 +605,7 @@
       <div class="shop-desc">PIOCHE MULTIZONE</div>
       <div class="shop-price">3€</div>
       <div class="shop-unit">Fer / Diamant / Netherite</div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="tool_pickantaxe" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">🪓</div>
@@ -605,7 +613,7 @@
       <div class="shop-desc">HACHE MULTIZONE</div>
       <div class="shop-price">3€</div>
       <div class="shop-unit">Fer / Diamant / Netherite</div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="tool_cantaxe" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">✂️</div>
@@ -613,7 +621,7 @@
       <div class="shop-desc">OUTIL POLYVALENT</div>
       <div class="shop-price">4€</div>
       <div class="shop-unit">Pioche+Hache+Pelle+Cisailles</div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="tool_multicantool" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">🪽</div>
@@ -621,7 +629,7 @@
       <div class="shop-desc">VOL CRÉATIF EN CLAIMS</div>
       <div class="shop-price">5€</div>
       <div class="shop-unit">Élytre mécanique légendaire</div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="tool_statiolytras" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">⚔️</div>
@@ -629,7 +637,7 @@
       <div class="shop-desc">ÉPÉE ÉVOLUTIVE</div>
       <div class="shop-price">5€</div>
       <div class="shop-unit">Netherite + rune évolutive</div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="tool_cantalame" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="shop-card">
       <div class="shop-icon">📖</div>
@@ -637,7 +645,7 @@
       <div class="shop-desc">PROTECTION CLAIM</div>
       <div class="shop-price">3€</div>
       <div class="shop-unit">Renforce un claim 24h</div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="tool_rune" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
   </div>
 
@@ -647,19 +655,19 @@
       <div class="tool-pack-name">⛏ Pack Mineur</div>
       <div class="tool-pack-items">1× Pickantaxe Fer 3×3<br>1× Cantaxe Fer<br>1× Multi-Cantool Fer</div>
       <div class="tool-pack-price">7€ <small>au lieu de 10€</small></div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="pack_mineur" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="tool-pack">
       <div class="tool-pack-name">💎 Pack Moyen</div>
       <div class="tool-pack-items">1× Pickantaxe Diamant 5×5<br>1× Cantaxe Diamant<br>1× Multi-Cantool Diamant<br>1× Statio-Lytra</div>
       <div class="tool-pack-price">12€ <small>au lieu de 15€</small></div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="pack_moyen" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
     <div class="tool-pack featured">
       <div class="tool-pack-name">🔥 Pack Ultime</div>
       <div class="tool-pack-items">1× Pickantaxe Netherite 7×7<br>1× Cantaxe Netherite<br>1× Multi-Cantool Netherite<br>1× Statio-Lytra<br>1× Cantalame<br>1× Rune de Fortification</div>
       <div class="tool-pack-price">18€ <small>au lieu de 23€</small></div>
-      <a href="#" class="shop-cta">Acheter</a>
+      <button class="shop-cta" data-add-cart="pack_ultime" style="border:none;cursor:pointer">Ajouter au panier</button>
     </div>
   </div>
 </div>
@@ -706,7 +714,7 @@
     <ul class="footer-links">
       <li><a href="#">Discord</a></li>
       <li><a href="#">Twitter / X</a></li>
-      <li><a href="boutique.html">Boutique</a></li>
+      <li><a href="boutique.html" style="color:var(--red3)">Boutique <span style="font-size:.7em;opacity:.6">(fermée)</span></a></li>
       <li><a href="palliers.html">Palliers</a></li>
       <li><a href="regles.html">Règlement</a></li>
     </ul>
@@ -714,6 +722,80 @@
   </div>
 </footer>
 
+<script src="api-client.js"></script>
+<script>
+// ═══ Boutique : Ajouter au panier ═══
+(async function () {
+  // Met à jour le compteur dans la nav
+  async function refreshCartCount() {
+    try {
+      const c = await CantaleAPI.getCart();
+      const badge = document.getElementById('cart-count');
+      const count = c.lines.reduce((s, l) => s + l.quantity, 0);
+      if (count > 0) {
+        badge.textContent = count;
+        badge.style.display = 'inline-block';
+      } else {
+        badge.style.display = 'none';
+      }
+    } catch (e) {
+      // Pas connecté : silent
+    }
+  }
+
+  // Petit toast
+  function toast(msg, type = 'ok') {
+    const el = document.createElement('div');
+    el.textContent = msg;
+    el.style.cssText = `
+      position:fixed;bottom:32px;right:32px;z-index:10000;
+      background:${type === 'ok' ? '#1a3a1a' : '#3a1a1a'};
+      color:${type === 'ok' ? '#7f7' : '#f88'};
+      border-left:3px solid ${type === 'ok' ? '#0f0' : '#f44'};
+      padding:14px 20px;font-family:'DM Mono',monospace;font-size:13px;
+      box-shadow:0 8px 24px rgba(0,0,0,.4);
+      animation:slideInRight .3s ease-out;
+    `;
+    document.body.appendChild(el);
+    setTimeout(() => el.style.opacity = '0', 2500);
+    setTimeout(() => el.remove(), 2800);
+  }
+
+  // Style pour l'animation
+  const s = document.createElement('style');
+  s.textContent = `@keyframes slideInRight{from{transform:translateX(120%);opacity:0}to{transform:translateX(0);opacity:1}}`;
+  document.head.appendChild(s);
+
+  // Câbler tous les boutons
+  document.querySelectorAll('[data-add-cart]').forEach((btn) => {
+    btn.addEventListener('click', async (e) => {
+      e.preventDefault();
+      const itemId = btn.dataset.addCart;
+      const oldText = btn.textContent;
+      btn.textContent = 'Ajout…';
+      btn.disabled = true;
+      try {
+        await CantaleAPI.addToCart(itemId, 1);
+        toast('✓ Ajouté au panier');
+        await refreshCartCount();
+        btn.textContent = '✓ Ajouté';
+        setTimeout(() => { btn.textContent = oldText; btn.disabled = false; }, 1500);
+      } catch (err) {
+        if (err.status === 401) {
+          toast('Connecte-toi pour ajouter au panier', 'err');
+          setTimeout(() => window.location.href = 'login.html', 1500);
+        } else {
+          toast('Erreur : ' + err.message, 'err');
+        }
+        btn.textContent = oldText;
+        btn.disabled = false;
+      }
+    });
+  });
+
+  refreshCartCount();
+})();
+</script>
 <script src="scripts.js" defer></script>
 </body>
 </html>

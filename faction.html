@@ -1,0 +1,129 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Faction</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Cinzel+Decorative:wght@400;700;900&family=Unbounded:wght@200;400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .f-hero{padding:140px 20px 30px;max-width:1100px;margin:0 auto}
+  .f-back{font-family:var(--ff-mono);font-size:11px;color:var(--dim);letter-spacing:.2em;text-decoration:none;display:inline-block;margin-bottom:20px}
+  .f-back:hover{color:var(--red3)}
+  .f-tag{font-family:var(--ff-mono);font-size:13px;letter-spacing:.3em;color:var(--red3)}
+  .f-name{font-family:var(--ff-title);font-size:clamp(40px,6vw,72px);font-weight:900;color:var(--cream);letter-spacing:.04em;margin:8px 0}
+  .f-type{display:inline-block;font-family:var(--ff-mono);font-size:11px;letter-spacing:.2em;text-transform:uppercase;padding:6px 14px;background:#333;color:#aaa}
+  .f-type.empire{background:#f0b84a;color:#000}
+  .f-type.country{background:#4fc3f7;color:#000}
+  .f-desc{font-family:var(--ff-mono);font-size:13px;color:var(--dim);margin-top:16px;line-height:1.7;max-width:680px}
+
+  .stats-row{max-width:1100px;margin:32px auto;padding:0 20px;display:grid;grid-template-columns:repeat(auto-fit,minmax(160px,1fr));gap:16px}
+  .stat-mini{background:var(--bg2);padding:20px;text-align:center;border-left:3px solid var(--red2)}
+  .stat-mini .lab{font-family:var(--ff-mono);font-size:10px;letter-spacing:.2em;color:var(--dim);margin-bottom:6px}
+  .stat-mini .val{font-family:var(--ff-title);font-size:32px;font-weight:900;color:var(--cream)}
+
+  .section{max-width:1100px;margin:60px auto;padding:0 20px}
+  .section-title{font-family:var(--ff-title);font-size:28px;font-weight:900;color:var(--red3);margin-bottom:24px;letter-spacing:.04em}
+
+  .members-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:12px}
+  .member{background:var(--bg2);padding:16px;display:flex;align-items:center;gap:12px}
+  .member-avatar{width:36px;height:36px;background:#333;image-rendering:pixelated}
+  .member-name{font-family:var(--ff-mono);font-size:13px;color:var(--cream)}
+  .member-rank{font-family:var(--ff-mono);font-size:10px;color:var(--dim);letter-spacing:.15em;text-transform:uppercase;margin-top:2px}
+  .member-rank.LEADER{color:#f0b84a}
+  .member-rank.OFFICER{color:#ff6b6b}
+
+  .claims-info{background:var(--bg2);padding:24px;font-family:var(--ff-mono);color:var(--dim);line-height:1.8}
+  .claims-info strong{color:var(--cream)}
+
+  .loading{text-align:center;padding:60px;font-family:var(--ff-mono);color:var(--dim)}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<canvas id="canvas-bg"></canvas>
+
+<nav>
+  <a href="index.html" class="nav-logo">CANT<b>A</b>LE</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="factions.html">Factions</a></li>
+    <li><a href="liste.html">Liste</a></li>
+    <li><a href="regles.html">Règlement</a></li>
+  </ul>
+  <span data-cantale-user class="nav-btn" style="background:transparent;border:1px solid var(--red2);padding:10px 18px">…</span>
+</nav>
+
+<div id="content" class="loading">Chargement…</div>
+
+<script src="api-client.js"></script>
+<script>
+function fmtNum(n) { return n.toLocaleString('fr-FR'); }
+function fmtDate(t) { return t ? new Date(t*1000).toLocaleDateString('fr-FR') : '—'; }
+
+const params = new URLSearchParams(location.search);
+const idOrTag = params.get('tag') || params.get('id');
+
+(async () => {
+  if (!idOrTag) {
+    document.getElementById('content').innerHTML = '<div class="loading">Faction non spécifiée. <a href="factions.html" style="color:var(--red3)">← retour</a></div>';
+    return;
+  }
+  let f;
+  try { f = await CantaleAPI.getFaction(idOrTag); }
+  catch (e) {
+    document.getElementById('content').innerHTML = `<div class="loading" style="color:#f44">${e.message}</div>`;
+    return;
+  }
+  document.title = `CANTALE — ${f.name}`;
+  const typeBadge = `<span class="f-type ${f.type}">${f.type === 'empire' ? 'EMPIRE' : f.type === 'country' ? 'PAYS' : 'FACTION'}</span>`;
+
+  document.getElementById('content').className = '';
+  document.getElementById('content').innerHTML = `
+    <section class="f-hero">
+      <a href="factions.html" class="f-back">← Toutes les factions</a>
+      <div class="f-tag">[${f.tag}]</div>
+      <h1 class="f-name">${f.name}</h1>
+      ${typeBadge}
+      ${f.description ? `<p class="f-desc">${f.description}</p>` : ''}
+    </section>
+
+    <div class="stats-row">
+      <div class="stat-mini"><div class="lab">Membres</div><div class="val">${fmtNum(f.memberCount)}</div></div>
+      <div class="stat-mini"><div class="lab">Claims</div><div class="val">${fmtNum(f.claimCount)}</div></div>
+      <div class="stat-mini"><div class="lab">Pouvoir</div><div class="val" style="color:#f0b84a">${fmtNum(f.power)}</div></div>
+      <div class="stat-mini"><div class="lab">Banque</div><div class="val" style="font-size:24px">${fmtNum(Math.floor(f.balance))} <small style="font-size:.5em;color:var(--dim)">Cantox</small></div></div>
+      <div class="stat-mini"><div class="lab">Fondée</div><div class="val" style="font-size:18px;color:var(--dim);font-family:var(--ff-mono);font-weight:400">${fmtDate(f.created_at)}</div></div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Membres (${f.members.length})</h2>
+      <div class="members-list">
+        ${f.members.map(m => `
+          <div class="member">
+            <img class="member-avatar" src="https://mc-heads.net/avatar/${encodeURIComponent(m.username || m.player_uuid)}/36" alt="">
+            <div>
+              <div class="member-name">${m.username || m.player_uuid.slice(0,8)}</div>
+              <div class="member-rank ${m.rank}">${m.rank}</div>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+
+    <div class="section">
+      <h2 class="section-title">Territoires</h2>
+      <div class="claims-info">
+        <div>Total chunks claimés : <strong>${fmtNum(f.claims.length)}</strong></div>
+        <div>Mondes : <strong>${[...new Set(f.claims.map(c => c.world))].join(', ') || '—'}</strong></div>
+        <div>Chunks PASDIC : <strong>${fmtNum(f.claims.filter(c => c.pasdic).length)}</strong></div>
+      </div>
+    </div>
+  `;
+})();
+</script>
+<script src="scripts.js" defer></script>
+</body>
+</html>

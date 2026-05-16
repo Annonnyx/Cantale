@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Panier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=DM+Mono:ital,wght@0,300;0,400;0,500&family=Cinzel+Decorative:wght@400;700;900&family=Unbounded:wght@200;400;700;900&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  .cart-hero{padding:140px 20px 40px;text-align:center}
+  .cart-title{font-family:var(--ff-title);font-size:clamp(40px,6vw,64px);font-weight:900;color:var(--cream);letter-spacing:.04em}
+  .cart-title span{color:var(--red3)}
+  .cart-container{max-width:900px;margin:40px auto 100px;padding:0 20px}
+  .cart-empty{background:var(--bg2);padding:60px 20px;text-align:center;font-family:var(--ff-mono);color:var(--dim)}
+  .cart-empty a{color:var(--red3);text-decoration:underline}
+  .cart-line{
+    display:grid;grid-template-columns:1fr auto auto auto;gap:16px;
+    padding:20px;background:var(--bg2);margin-bottom:8px;
+    align-items:center;border-left:3px solid var(--red2);
+  }
+  .cart-line-name{font-family:var(--ff-title);font-size:18px;color:var(--cream)}
+  .cart-line-desc{font-family:var(--ff-mono);font-size:11px;color:var(--dim);margin-top:4px}
+  .cart-qty{display:flex;align-items:center;gap:8px;font-family:var(--ff-mono)}
+  .cart-qty button{
+    background:#222;color:#fff;border:1px solid #444;width:28px;height:28px;
+    cursor:pointer;font-family:var(--ff-mono);font-size:16px;
+  }
+  .cart-qty button:hover{background:var(--red2);border-color:var(--red2)}
+  .cart-qty input{width:40px;text-align:center;background:#111;color:#fff;border:1px solid #333;height:28px;font-family:var(--ff-mono)}
+  .cart-price{font-family:var(--ff-mono);font-size:14px;color:#f0b84a;font-weight:500;min-width:80px;text-align:right}
+  .cart-remove{
+    background:transparent;border:1px solid #555;color:#888;
+    width:28px;height:28px;cursor:pointer;font-size:14px;
+  }
+  .cart-remove:hover{border-color:#f44;color:#f44}
+  .cart-summary{
+    background:var(--bg2);padding:28px;margin-top:24px;
+    border-top:2px solid var(--red2);
+  }
+  .cart-total{display:flex;justify-content:space-between;align-items:center;font-family:var(--ff-mono);font-size:18px}
+  .cart-total strong{font-family:var(--ff-title);font-size:32px;color:#f0b84a}
+  .cart-actions{margin-top:24px;display:flex;gap:12px;justify-content:flex-end;flex-wrap:wrap}
+  .cart-btn{
+    font-family:var(--ff-mono);font-size:12px;letter-spacing:.2em;
+    text-transform:uppercase;padding:14px 28px;cursor:pointer;border:none;
+    text-decoration:none;display:inline-block;
+  }
+  .cart-btn-secondary{background:transparent;border:1px solid #555;color:#aaa}
+  .cart-btn-secondary:hover{border-color:var(--red3);color:var(--red3)}
+  .cart-btn-checkout{background:var(--red2);color:#000;font-weight:600}
+  .cart-btn-checkout:disabled{background:#3a3a3a;color:#888;cursor:not-allowed}
+  .closed-notice{
+    background:linear-gradient(90deg,#3a1818,#5a1f1f);
+    border-left:4px solid var(--red2);
+    padding:20px 24px;margin-bottom:24px;
+    font-family:var(--ff-mono);font-size:13px;color:#ffd9d9;
+  }
+  .closed-notice strong{color:#fff}
+  .loading{text-align:center;padding:60px;font-family:var(--ff-mono);color:var(--dim)}
+</style>
+</head>
+<body>
+
+<div class="noise"></div>
+<canvas id="canvas-bg"></canvas>
+
+<nav>
+  <a href="index.html" class="nav-logo">CANT<b>A</b>LE</a>
+  <ul class="nav-links">
+    <li><a href="index.html">Accueil</a></li>
+    <li><a href="boutique.html">Boutique</a></li>
+    <li><a href="palliers.html">Palliers</a></li>
+    <li><a href="liste.html">Liste</a></li>
+    <li><a href="regles.html">Règlement</a></li>
+  </ul>
+  <span data-cantale-user class="nav-btn" style="background:transparent;border:1px solid var(--red2);padding:10px 18px">…</span>
+</nav>
+
+<section class="cart-hero">
+  <h1 class="cart-title">MON <span>PANIER</span></h1>
+</section>
+
+<div class="cart-container" id="container">
+  <div class="loading">Chargement…</div>
+</div>
+
+<script src="api-client.js"></script>
+<script>
+function fmtEur(n) { return n.toFixed(2).replace('.', ',') + ' €'; }
+
+async function render() {
+  // Vérif auth
+  try { await CantaleAPI.me(); }
+  catch (e) { if (e.status === 401) { window.location.href = 'login.html'; return; } }
+
+  let data;
+  try { data = await CantaleAPI.getCart(); }
+  catch (e) {
+    document.getElementById('container').innerHTML = `<div class="cart-empty" style="color:#f44">Erreur : ${e.message}</div>`;
+    return;
+  }
+
+  const c = document.getElementById('container');
+  if (!data.lines || data.lines.length === 0) {
+    c.innerHTML = `
+      <div class="cart-empty">
+        Ton panier est vide.<br><br>
+        <a href="boutique.html">Parcourir la boutique →</a>
+      </div>
+    `;
+    return;
+  }
+
+  const notice = !data.shopEnabled ? `
+    <div class="closed-notice">
+      <strong>🚫 Boutique temporairement fermée.</strong>
+      Tu peux constituer ton panier dès maintenant, il sera conservé pour la réouverture. Le checkout est désactivé.
+    </div>
+  ` : '';
+
+  const lines = data.lines.map(l => `
+    <div class="cart-line" data-id="${l.itemId}">
+      <div>
+        <div class="cart-line-name">${l.name}</div>
+        <div class="cart-line-desc">${l.description}</div>
+      </div>
+      <div class="cart-qty">
+        <button class="btn-dec">−</button>
+        <input type="number" min="0" max="99" value="${l.quantity}" class="qty-input">
+        <button class="btn-inc">+</button>
+      </div>
+      <div class="cart-price">${fmtEur(l.lineTotal)}</div>
+      <button class="cart-remove" title="Retirer">✕</button>
+    </div>
+  `).join('');
+
+  c.innerHTML = `
+    ${notice}
+    ${lines}
+    <div class="cart-summary">
+      <div class="cart-total">
+        <span>Total</span>
+        <strong>${fmtEur(data.totalEur)}</strong>
+      </div>
+      <div class="cart-actions">
+        <button class="cart-btn cart-btn-secondary" id="btn-clear">Vider le panier</button>
+        <button class="cart-btn cart-btn-checkout" id="btn-checkout" ${data.shopEnabled ? '' : 'disabled'}>${data.shopEnabled ? 'Procéder au paiement' : 'Checkout fermé'}</button>
+      </div>
+    </div>
+  `;
+
+  // Wire events
+  c.querySelectorAll('.cart-line').forEach(line => {
+    const id = line.dataset.id;
+    line.querySelector('.btn-inc').addEventListener('click', async () => {
+      const inp = line.querySelector('.qty-input');
+      const nv = Math.min(99, parseInt(inp.value, 10) + 1);
+      await CantaleAPI.updateCart(id, nv); render();
+    });
+    line.querySelector('.btn-dec').addEventListener('click', async () => {
+      const inp = line.querySelector('.qty-input');
+      const nv = Math.max(0, parseInt(inp.value, 10) - 1);
+      await CantaleAPI.updateCart(id, nv); render();
+    });
+    line.querySelector('.qty-input').addEventListener('change', async (e) => {
+      const nv = Math.max(0, Math.min(99, parseInt(e.target.value, 10) || 0));
+      await CantaleAPI.updateCart(id, nv); render();
+    });
+    line.querySelector('.cart-remove').addEventListener('click', async () => {
+      await CantaleAPI.removeFromCart(id); render();
+    });
+  });
+  document.getElementById('btn-clear').addEventListener('click', async () => {
+    if (confirm('Vider tout le panier ?')) { await CantaleAPI.clearCart(); render(); }
+  });
+  document.getElementById('btn-checkout').addEventListener('click', async () => {
+    try {
+      await CantaleAPI.checkout();
+      alert('Paiement initié ! (à venir : Stripe)');
+    } catch (e) {
+      alert(e.message);
+    }
+  });
+}
+render();
+</script>
+<script src="scripts.js" defer></script>
+</body>
+</html>

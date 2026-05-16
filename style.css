@@ -1130,3 +1130,56 @@ footer{
   .items-inner{max-width:1600px}
   .cta-inner{max-width:1200px}
 }
+
+/* ═══════════════════════════════════════════════════════════════
+   SHOP DISABLED — Boutique temporairement fermée
+   ═══════════════════════════════════════════════════════════════ */
+
+/* Liens vers la boutique : grisés, non-cliquables */
+.shop-disabled{
+  opacity:.45;
+  cursor:not-allowed !important;
+  pointer-events:none;
+  position:relative;
+  text-decoration:line-through !important;
+}
+.shop-disabled::after{
+  content:" 🚫";
+  font-size:.85em;
+  opacity:.7;
+}
+
+/* Bannière en haut de la page boutique */
+.shop-closed-banner{
+  position:fixed;
+  top:0;left:0;right:0;
+  z-index:9999;
+  background:linear-gradient(90deg,#3a1818,#5a1f1f,#3a1818);
+  border-bottom:2px solid var(--red2,#e0182c);
+  color:#ffd9d9;
+  font-family:var(--ff-mono,monospace);
+  font-size:13px;
+  letter-spacing:.04em;
+  padding:14px 24px;
+  text-align:center;
+  box-shadow:0 4px 24px rgba(224,24,44,.3);
+  animation:bannerSlideDown .6s ease-out;
+}
+.shop-closed-banner strong{
+  color:#fff;
+  letter-spacing:.06em;
+  font-weight:700;
+}
+.shop-closed-banner .banner-icon{
+  font-size:18px;
+  margin-right:8px;
+  vertical-align:-2px;
+}
+@keyframes bannerSlideDown{
+  from{transform:translateY(-100%);opacity:0}
+  to{transform:translateY(0);opacity:1}
+}
+body.has-shop-banner{padding-top:54px}
+
+/* Note : les CTAs boutique sont actifs (ajout au panier), seul le checkout
+   final dans cart.html est désactivé tant que SHOP_ENABLED=false côté backend. */
