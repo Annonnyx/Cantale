@@ -1,6 +1,7 @@
 /* ── CURSOR ── */
 const cur = document.getElementById('cur');
 const trail = document.getElementById('cur-trail');
+if(cur && trail){
 let mx=0,my=0,tx=0,ty=0;
 document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
 (function animCur(){
@@ -9,9 +10,11 @@ document.addEventListener('mousemove',e=>{mx=e.clientX;my=e.clientY});
   trail.style.left=tx+'px'; trail.style.top=ty+'px';
   requestAnimationFrame(animCur);
 })();
+}
 
 /* ── PROGRESS BAR (throttled) ── */
 const prog=document.getElementById('progress');
+if(prog){
 let scrollTicking=false;
 window.addEventListener('scroll',()=>{
   if(!scrollTicking){
@@ -23,6 +26,7 @@ window.addEventListener('scroll',()=>{
     scrollTicking=true;
   }
 },{passive:true});
+}
 
 /* ── CANVAS PARTICLES (optimized) ── */
 const canvas=document.getElementById('canvas-bg');
@@ -104,11 +108,11 @@ reveals.forEach(el=>revObs.observe(el));
 
 /* ── LIVES ANIMATION on scroll ── */
 const livesSection=document.getElementById('concept');
-let livesPhase=0;
 const life3=document.getElementById('life3');
 const life2=document.getElementById('life2');
 const life1=document.getElementById('life1');
-
+if(life3 && life2 && life1){
+let livesPhase=0;
 function setLivesPhase(p){
   if(p===livesPhase) return;
   livesPhase=p;
@@ -129,7 +133,6 @@ function setLivesPhase(p){
 life3.classList.add('active');
 
 function updateLives(){
-  // Use text description block positions for accurate sync with sticky visual
   const step1=document.getElementById('lifeStep1');
   const step2=document.getElementById('lifeStep2');
   const step3=document.getElementById('lifeStep3');
@@ -141,9 +144,11 @@ function updateLives(){
 
 window.addEventListener('scroll',updateLives,{passive:true});
 updateLives();
+}
 
 /* ── MAP GENERATION ── */
 const mapGrid=document.getElementById('mapGrid');
+if(mapGrid){
 const factionMap={
   '0,0':'f1','1,0':'f1','2,0':'f1','3,0':'f1','4,0':'f1','5,0':'f1',
   '0,1':'f1','1,1':'f1','2,1':'f1','3,1':'f1','4,1':'f1',
@@ -177,28 +182,37 @@ for(let row=0;row<12;row++){
     mapGrid.appendChild(cell);
   }
 }
+}
 
 /* ── FEATURES DRAG SCROLL ── */
 const track=document.getElementById('featTrack');
+if(track){
 let isDragging=false,startX=0,startScroll=0;
 track.addEventListener('mousedown',e=>{isDragging=true;startX=e.pageX;startScroll=track.scrollLeft;track.style.cursor='grabbing'});
 document.addEventListener('mousemove',e=>{if(!isDragging)return;track.scrollLeft=startScroll-(e.pageX-startX)});
 document.addEventListener('mouseup',()=>{isDragging=false;track.style.cursor=''});
+}
 
 /* ── LEADERBOARD & FACTION BARS trigger ── */
+const lbEl=document.getElementById('leaderboard');
+if(lbEl){
 const lbObs=new IntersectionObserver(entries=>{
   if(entries[0].isIntersecting){
-    document.getElementById('leaderboard').classList.add('in');
+    lbEl.classList.add('in');
     document.querySelectorAll('.faction-card').forEach(c=>c.classList.add('in'));
   }
 },{threshold:.2});
-lbObs.observe(document.getElementById('leaderboard'));
+lbObs.observe(lbEl);
+}
 
 /* ── CTA reveal ── */
+const ctaInner=document.getElementById('ctaInner');
+if(ctaInner){
 const ctaObs=new IntersectionObserver(entries=>{
-  if(entries[0].isIntersecting) document.getElementById('ctaInner').classList.add('in');
+  if(entries[0].isIntersecting) ctaInner.classList.add('in');
 },{threshold:.3});
-ctaObs.observe(document.getElementById('ctaInner'));
+ctaObs.observe(ctaInner);
+}
 
 /* ── COPY IP ── */
 function copyIP(){

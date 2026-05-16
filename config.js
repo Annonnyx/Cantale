@@ -1,16 +1,15 @@
 /**
- * Configuration globale du frontend Cantale (Vercel + Supabase).
+ * Configuration globale du frontend Cantale.
  *
- * Remplace l'ancien backend local par Supabase REST API.
- * Les données proviennent du bot Discord/plugin Minecraft.
+ * Le backend Node.js est hébergé sur PixelHorizons (port 3001).
+ * Le site web est sur Vercel.
  *
- * 1. Crée un projet sur https://supabase.com
- * 2. Exécute SUPABASE_SCHEMA.sql dans l'éditeur SQL
- * 3. Va dans Settings → API pour récupérer l'URL et la clé anon
- * 4. Remplace les valeurs ci-dessous
+ * Options selon ton setup :
+ *   1. Si PixelHorizons gère un reverse proxy (cantale.pixelhorizons.fr/api → backend:3001) :
+ *      window.CANTALE_API_BASE = '/api';
+ *   2. Si le backend est accessible directement sur le port 3001 :
+ *      window.CANTALE_API_BASE = 'https://cantale.pixelhorizons.fr:3001/api';
+ *   3. Pour tester en local avant déploiement :
+ *      window.CANTALE_API_BASE = 'http://82.66.173.236:3001/api';
  */
-window.SUPABASE_URL = "https://xxxxxxxxxxxxxxxx.supabase.co";
-window.SUPABASE_ANON_KEY = "eyJ...";
-
-// Gardé pour compatibilité (non utilisé avec Supabase)
-window.CANTALE_API_BASE = window.CANTALE_API_BASE || '/api';
+window.CANTALE_API_BASE = window.CANTALE_API_BASE || 'http://82.66.173.236:3001/api';
