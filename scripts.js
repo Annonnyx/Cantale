@@ -216,7 +216,7 @@ ctaObs.observe(ctaInner);
 
 /* ── COPY IP ── */
 function copyIP(){
-  navigator.clipboard.writeText('play.cantale.fr');
+  navigator.clipboard.writeText('play.cantale.world');
   const el=document.getElementById('ipCopy');
   el.textContent='Copié !';
   setTimeout(()=>el.textContent='Copier',2000);

@@ -1,7 +1,8 @@
 /**
  * Configuration globale du frontend Cantale.
  *
- * Le backend est proxifié par Vercel (/api → PixelHorizons:3001).
- * Pas de CORS, pas de Mixed Content — tout passe par Vercel.
+ * En prod   : nginx/Vercel proxyfie /api → backend:3001
+ * En dev    : appel direct sur localhost:3001
  */
-window.CANTALE_API_BASE = window.CANTALE_API_BASE || '/api';
+const isLocal = location.hostname === 'localhost' || location.hostname === '127.0.0.1';
+window.CANTALE_API_BASE = window.CANTALE_API_BASE || (isLocal ? 'http://localhost:3001/api' : '/api');
