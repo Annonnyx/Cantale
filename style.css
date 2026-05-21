@@ -30,12 +30,12 @@ body{
 
 /* ─── CURSOR ─── */
 #cur{
-  position:fixed;width:6px;height:6px;
-  background:var(--red3);border-radius:50%;
+  position:fixed;width:8px;height:8px;
+  background:#fff;border-radius:50%;
   pointer-events:none;z-index:9999;
   transform:translate(-50%,-50%);
+  box-shadow:0 0 8px rgba(224,24,44,.9),0 0 2px rgba(0,0,0,.8);
   transition:width .15s,height .15s;
-  mix-blend-mode:screen;
 }
 #cur-trail{
   position:fixed;width:28px;height:28px;
@@ -98,6 +98,11 @@ nav{
   transition:background .2s,box-shadow .2s;
 }
 .nav-btn:hover{background:var(--red3);box-shadow:0 0 30px rgba(224,24,44,.5)}
+/* Variante "outline" : fond transparent → texte clair pour lisibilité */
+.nav-btn[style*="transparent"]{color:var(--cream)!important}
+.nav-btn[style*="transparent"] a{color:var(--cream)!important}
+.nav-btn[style*="transparent"]:hover{background:var(--red2);color:var(--bg)!important}
+.nav-btn[style*="transparent"]:hover a{color:var(--bg)!important}
 
 /* ─── SECTIONS BASE ─── */
 section{position:relative;z-index:2}
