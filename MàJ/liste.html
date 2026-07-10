@@ -1,0 +1,360 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Liste des Morts Définitifs</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Unbounded:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0A0A; --paper:#F5F4F0; --gris:#8A8A8A;
+  --bt:6px solid #0A0A0A; --bm:3px solid #0A0A0A; --bs:2px solid #0A0A0A;
+  --bt-i:6px solid #F5F4F0; --bm-i:3px solid #F5F4F0; --bs-i:2px solid #F5F4F0;
+  --fd:'Anton','Arial Narrow',sans-serif;
+  --fw:'Unbounded','Anton',sans-serif;
+  --fb:'Inter',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  --e:.15s ease;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;}
+
+.w{max-width:1280px;margin:0 auto;padding:0 clamp(16px,4vw,56px);}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--ink);color:var(--paper);border-bottom:var(--bt);}
+.ni{display:flex;align-items:center;justify-content:space-between;height:66px;}
+.logo{height:42px;width:auto;cursor:pointer;}
+.nl{display:flex;gap:4px;align-items:center;}
+.nb{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;background:transparent;color:var(--paper);border:2px solid transparent;transition:border-color var(--e);}
+.nb:hover{border-color:var(--paper);}
+.nshop{font-family:var(--fm);font-size:12px;font-weight:700;padding:9px 16px;background:var(--paper);color:var(--ink);border:2px solid var(--paper);transition:background var(--e),color var(--e);}
+.nshop:hover{background:transparent;color:var(--paper);}
+.nmob{display:none;background:none;border:2px solid var(--paper);color:var(--paper);width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;}
+
+/* HERO */
+.hero-sec{min-height:60vh;display:grid;grid-template-columns:1fr auto;align-items:flex-end;padding-top:66px;background:var(--ink);color:var(--paper);border-bottom:var(--bt);overflow:hidden;position:relative;}
+.hero-wm{position:absolute;right:-40px;bottom:-20px;font-family:var(--fd);font-size:clamp(140px,28vw,400px);line-height:1;opacity:.06;white-space:nowrap;pointer-events:none;user-select:none;}
+.hero-inner{padding:clamp(40px,6vw,80px) clamp(16px,4vw,56px);position:relative;z-index:2;}
+.hero-kicker{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;opacity:.5;margin-bottom:16px;}
+.hero-h1{font-family:var(--fw);font-weight:900;font-size:clamp(48px,9vw,110px);line-height:.9;letter-spacing:-0.02em;text-transform:uppercase;margin-bottom:20px;}
+.hero-sub{font-family:var(--fm);font-size:14px;font-weight:500;opacity:.65;max-width:480px;line-height:1.7;}
+.hero-skull{padding:0 clamp(28px,5vw,72px) clamp(32px,5vw,64px);display:flex;align-items:flex-end;justify-content:center;position:relative;z-index:2;}
+
+/* STATS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);border-bottom:var(--bt);}
+.stat-cell{padding:28px clamp(16px,3vw,44px);border-right:var(--bs);display:flex;flex-direction:column;gap:6px;}
+.stat-cell:last-child{border-right:none;}
+.stat-n{font-family:var(--fd);font-size:clamp(42px,7vw,80px);line-height:1;}
+.stat-l{font-family:var(--fm);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.45;}
+
+/* TABLE SECTION */
+.table-sec{padding:clamp(40px,5vw,64px) 0;}
+.table-header{display:flex;justify-content:space-between;align-items:flex-end;margin-bottom:28px;gap:20px;flex-wrap:wrap;}
+.table-title{font-family:var(--fd);text-transform:uppercase;font-size:clamp(28px,4vw,52px);line-height:.93;}
+.table-sub{font-family:var(--fm);font-size:12px;opacity:.5;line-height:1.6;max-width:340px;text-align:right;}
+
+/* TABLE */
+.dead-table{width:100%;border-collapse:collapse;border:var(--bt);}
+.dead-table thead tr{background:var(--ink);color:var(--paper);}
+.dead-table th{font-family:var(--fm);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;padding:14px 18px;text-align:left;border-right:2px solid rgba(245,244,240,.15);}
+.dead-table th:last-child{border-right:none;}
+.dead-table td{font-family:var(--fm);font-size:13px;padding:16px 18px;border-right:var(--bs);border-bottom:var(--bs);color:var(--ink);}
+.dead-table td:last-child{border-right:none;}
+.dead-table tr:last-child td{border-bottom:none;}
+.dead-table tr:hover td{background:rgba(10,10,10,.04);}
+.td-rank{font-family:var(--fd);font-size:22px;color:var(--gris);width:60px;}
+.td-rank.r1{color:var(--ink);}
+.td-rank.r2{color:var(--ink);opacity:.6;}
+.td-rank.r3{color:var(--ink);opacity:.4;}
+.td-name{font-weight:700;display:flex;align-items:center;gap:10px;}
+.skull-tag{font-family:var(--fm);font-size:9px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:3px 7px;}
+.td-date{opacity:.55;font-size:11px;letter-spacing:.04em;}
+.td-deaths{text-align:center;font-weight:700;}
+
+/* EMPTY STATE */
+.empty-state{padding:80px 40px;text-align:center;border:var(--bm);background:rgba(10,10,10,.02);}
+.empty-icon{font-family:var(--fd);font-size:72px;line-height:1;margin-bottom:16px;opacity:.15;}
+.empty-text{font-family:var(--fd);font-size:clamp(22px,3vw,36px);text-transform:uppercase;margin-bottom:10px;}
+.empty-sub{font-family:var(--fm);font-size:13px;opacity:.5;line-height:1.7;}
+
+/* CMD BOX */
+.cmd-box{margin-top:36px;border:var(--bt);display:grid;grid-template-columns:1fr auto;align-items:center;gap:0;}
+.cmd-left{padding:20px 28px;}
+.cmd-label{font-family:var(--fm);font-size:10px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;opacity:.45;margin-bottom:8px;}
+.cmd-code{font-family:var(--fm);font-size:clamp(16px,2.5vw,26px);font-weight:700;letter-spacing:.08em;}
+.cmd-aliases{font-family:var(--fm);font-size:11px;opacity:.4;margin-top:6px;}
+.cmd-right{background:var(--ink);color:var(--paper);padding:20px 28px;border-left:var(--bt);height:100%;display:flex;flex-direction:column;justify-content:center;gap:4px;}
+.cmd-right-label{font-family:var(--fm);font-size:10px;letter-spacing:.15em;text-transform:uppercase;opacity:.5;}
+.cmd-right-val{font-family:var(--fd);font-size:18px;text-transform:uppercase;}
+
+/* LEGENDE */
+.legend-bar{border-top:var(--bt);padding:20px 0;}
+.legend-inner{display:flex;align-items:center;gap:32px;flex-wrap:wrap;}
+.leg-item{display:flex;align-items:center;gap:8px;font-family:var(--fm);font-size:11px;opacity:.55;}
+.leg-dot{width:10px;height:10px;background:var(--ink);}
+
+/* FOOTER */
+footer.bot{border-top:var(--bt);padding:26px 0;}
+.frow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;}
+.flinks{display:flex;gap:18px;flex-wrap:wrap;}
+.flinks a{font-family:var(--fm);font-size:11px;letter-spacing:.04em;text-transform:uppercase;opacity:.55;transition:opacity var(--e);}
+.flinks a:hover{opacity:1;text-decoration:underline;}
+.fcopy{font-family:var(--fm);font-size:11px;opacity:.32;}
+
+@media(max-width:960px){
+  .nl{display:none;} .nmob{display:flex;}
+  .hero-sec{grid-template-columns:1fr;}
+  .hero-skull{display:none;}
+  .stats-row{grid-template-columns:repeat(3,1fr);}
+  .cmd-box{grid-template-columns:1fr;}
+  .cmd-right{border-left:none;border-top:var(--bt);}
+}
+@media(max-width:600px){
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .stat-cell:nth-child(2){border-right:none;}
+  .stat-cell:nth-child(3){border-right:var(--bs);grid-column:1/-1;border-top:var(--bs);}
+  .dead-table{font-size:11px;}
+  .dead-table th,.dead-table td{padding:11px 10px;}
+}
+</style>
+</head>
+<body>
+
+<template id="logo-tpl">
+<svg viewBox="0 0 340 44" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#F5F4F0" stroke-width="4.5">
+    <polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="#F5F4F0"/>
+    <polygon points="60,2 76,11 76,29 60,38 44,29 44,11"/>
+    <polygon points="100,2 116,11 116,29 100,38 84,29 84,11"/>
+    <line x1="90" y1="13" x2="110" y2="27"/><line x1="110" y1="13" x2="90" y2="27"/>
+  </g>
+  <text x="132" y="28" font-family="Unbounded,Anton,sans-serif" font-weight="800" font-size="22" fill="#F5F4F0" letter-spacing="-0.5">CANTALE</text>
+</svg>
+</template>
+
+<header>
+  <div class="w ni">
+    <div class="logo" id="logoWrap"></div>
+    <nav class="nl">
+      <a class="nb" href="index.html">Accueil</a>
+      <a class="nb" href="factions.html">Factions</a>
+      <a class="nb" href="palliers.html">Paliers</a>
+      <a class="nb" href="recrutement.html">Rejoindre</a>
+      <a class="nb" href="liste.html">Liste des morts</a>
+      <a class="nb" href="regles.html">Règles</a>
+      <a class="nshop" href="boutique.html">Boutique</a>
+    </nav>
+    <button class="nmob" id="mobBtn" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div id="mobMenu" style="display:none;position:fixed;top:66px;left:0;right:0;z-index:199;background:var(--ink);border-bottom:var(--bt);padding:12px 0;">
+  <div class="w" style="display:flex;flex-direction:column;gap:2px;">
+    <a class="nb" style="text-align:left;" href="index.html">Accueil</a>
+    <a class="nb" style="text-align:left;" href="factions.html">Factions</a>
+    <a class="nb" style="text-align:left;" href="palliers.html">Paliers</a>
+    <a class="nb" style="text-align:left;" href="recrutement.html">Rejoindre</a>
+    <a class="nb" style="text-align:left;" href="liste.html">Liste des morts</a>
+    <a class="nb" style="text-align:left;" href="regles.html">Règles</a>
+    <a class="nb" style="text-align:left;" href="boutique.html">Boutique</a>
+  </div>
+</div>
+
+<!-- ============================================================
+  HERO
+============================================================ -->
+<section class="hero-sec">
+  <div class="hero-wm">MORTS</div>
+  <div class="hero-inner">
+    <p class="hero-kicker">Hardcore — Bannissement définitif</p>
+    <h1 class="hero-h1">LISTE<br>DES<br>MORTS</h1>
+    <p class="hero-sub">Les joueurs qui n'ont pas survécu à Cantale. Bannis définitivement pour épuisement de toutes leurs vies. Mise à jour en temps réel.</p>
+  </div>
+  <div class="hero-skull">
+    <!-- Skull SVG brutaliste -->
+    <svg viewBox="0 0 200 240" width="clamp(120px,18vw,220px)" style="opacity:.18;">
+      <rect x="30" y="20" width="140" height="120" rx="70" fill="#F5F4F0"/>
+      <rect x="55" y="60" width="36" height="36" fill="#0A0A0A"/>
+      <rect x="109" y="60" width="36" height="36" fill="#0A0A0A"/>
+      <rect x="30" y="130" width="140" height="50" rx="0" fill="#F5F4F0"/>
+      <rect x="55" y="140" width="16" height="40" fill="#0A0A0A"/>
+      <rect x="79" y="140" width="16" height="40" fill="#0A0A0A"/>
+      <rect x="103" y="140" width="16" height="40" fill="#0A0A0A"/>
+      <rect x="127" y="140" width="16" height="40" fill="#0A0A0A"/>
+      <rect x="60" y="180" width="80" height="14" rx="0" fill="#F5F4F0"/>
+      <!-- crossbones -->
+      <line x1="10" y1="210" x2="190" y2="240" stroke="#F5F4F0" stroke-width="14" stroke-linecap="round"/>
+      <line x1="190" y1="210" x2="10" y2="240" stroke="#F5F4F0" stroke-width="14" stroke-linecap="round"/>
+    </svg>
+  </div>
+</section>
+
+<!-- ============================================================
+  STATS ROW
+============================================================ -->
+<div class="stats-row">
+  <div class="stat-cell">
+    <div class="stat-n" id="total-count">0</div>
+    <div class="stat-l">Joueurs bannis</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-n" id="today-count">0</div>
+    <div class="stat-l">Aujourd'hui</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-n" id="week-count">0</div>
+    <div class="stat-l">Cette semaine</div>
+  </div>
+</div>
+
+<!-- ============================================================
+  TABLE
+============================================================ -->
+<div class="table-sec">
+  <div class="w">
+    <div class="table-header">
+      <h2 class="table-title">Tombés au<br>combat.</h2>
+      <p class="table-sub">Cette liste est mise à jour en temps réel. Chaque joueur ici a épuisé ses 3 vies hardcore et est banni définitivement du serveur.</p>
+    </div>
+
+    <div id="dead-list-container">
+      <!-- rempli par JS -->
+    </div>
+
+    <!-- CMD BOX -->
+    <div class="cmd-box">
+      <div class="cmd-left">
+        <div class="cmd-label">Voir cette liste en jeu</div>
+        <div class="cmd-code">/listemorts</div>
+        <div class="cmd-aliases">Alias acceptés : /list · /morts · /bans</div>
+      </div>
+      <div class="cmd-right">
+        <div class="cmd-right-label">Règle en vigueur</div>
+        <div class="cmd-right-val">Bannissement à 0 vie — automatique &amp; permanent</div>
+      </div>
+    </div>
+
+    <!-- LÉGENDE -->
+    <div class="legend-bar">
+      <div class="legend-inner">
+        <span class="leg-item"><span class="leg-dot" style="opacity:1;"></span>Banni définitivement</span>
+        <span class="leg-item"><span class="leg-dot" style="background:var(--gris);"></span>Morts totales = nombre de décès avant bannissement</span>
+        <span class="leg-item"><span class="leg-dot" style="background:transparent;border:2px solid var(--ink);"></span>Date de mort = date du bannissement</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bot">
+  <div class="w frow">
+    <svg viewBox="0 0 260 32" style="height:28px;cursor:pointer;" onclick="window.location='index.html'">
+      <g fill="none" stroke="#0A0A0A" stroke-width="3.5"><polygon points="14,2 25,8 25,24 14,30 3,24 3,8" fill="#0A0A0A"/><polygon points="38,2 49,8 49,24 38,30 27,24 27,8"/><polygon points="62,2 73,8 73,24 62,30 51,24 51,8"/><line x1="54" y1="9" x2="70" y2="23"/><line x1="70" y1="9" x2="54" y2="23"/></g>
+      <text x="82" y="21" font-family="Unbounded,Anton,sans-serif" font-weight="800" font-size="16" fill="#0A0A0A" letter-spacing="-0.4">CANTALE</text>
+    </svg>
+    <div class="flinks">
+      <a href="https://discord.gg/65a9upGPHx" target="_blank" rel="noopener">Discord</a>
+      <a href="#">Twitter / X</a>
+      <a href="boutique.html">Boutique</a>
+      <a href="palliers.html">Paliers</a>
+      <a href="liste.html">Liste</a>
+      <a href="regles.html">Règlement</a>
+    </div>
+    <span class="fcopy">© 2025 Cantale · Non affilié à Mojang Studios</span>
+  </div>
+</footer>
+
+<script>
+/* LOGO */
+(function(){
+  const tpl = document.getElementById('logo-tpl');
+  const wrap = document.getElementById('logoWrap');
+  if(tpl && wrap) wrap.appendChild(tpl.content.cloneNode(true));
+})();
+
+/* MOBILE MENU */
+document.getElementById('mobBtn').addEventListener('click', function(){
+  const m = document.getElementById('mobMenu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+});
+
+/* DATA — remplacer par appel API */
+const deadPlayers = [
+  // { rank:1, username:"ExempleJoueur", date:"04/05/2026 15:30", deaths:5 }
+];
+
+function renderDeadList() {
+  const container = document.getElementById('dead-list-container');
+
+  if (deadPlayers.length === 0) {
+    container.innerHTML = `
+      <div class="empty-state">
+        <div class="empty-icon">☠</div>
+        <div class="empty-text">Aucun banni pour l'instant.</div>
+        <div class="empty-sub">Soyez le premier... ou plutôt, évitez de l'être.<br>Garde tes 3 vies.</div>
+      </div>
+    `;
+    document.getElementById('total-count').textContent = '0';
+    document.getElementById('today-count').textContent = '0';
+    document.getElementById('week-count').textContent = '0';
+    return;
+  }
+
+  const rows = deadPlayers.map(p => {
+    const rankCls = p.rank <= 3 ? ` r${p.rank}` : '';
+    const medal = p.rank === 1 ? '①' : p.rank === 2 ? '②' : p.rank === 3 ? '③' : p.rank;
+    return `
+      <tr>
+        <td class="td-rank${rankCls}">${medal}</td>
+        <td class="td-name"><span class="skull-tag">☠</span>${p.username}</td>
+        <td class="td-date">${p.date}</td>
+        <td class="td-deaths">${p.deaths}</td>
+      </tr>
+    `;
+  }).join('');
+
+  container.innerHTML = `
+    <table class="dead-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Joueur</th>
+          <th>Date de bannissement</th>
+          <th style="text-align:center;">Morts totales</th>
+        </tr>
+      </thead>
+      <tbody>${rows}</tbody>
+    </table>
+  `;
+
+  document.getElementById('total-count').textContent = deadPlayers.length.toLocaleString('fr-FR');
+
+  const now = new Date();
+  const today = deadPlayers.filter(p => {
+    const [d,m,y] = p.date.split(' ')[0].split('/');
+    const pd = new Date(y, m-1, d);
+    return pd.toDateString() === now.toDateString();
+  }).length;
+  document.getElementById('today-count').textContent = today;
+
+  const weekAgo = new Date(now - 7*24*60*60*1000);
+  const week = deadPlayers.filter(p => {
+    const [d,m,y] = p.date.split(' ')[0].split('/');
+    return new Date(y, m-1, d) >= weekAgo;
+  }).length;
+  document.getElementById('week-count').textContent = week;
+}
+
+document.addEventListener('DOMContentLoaded', renderDeadList);
+</script>
+</body>
+</html>

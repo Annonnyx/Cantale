@@ -1,0 +1,359 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Panier</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Unbounded:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0A0A; --paper:#F5F4F0; --gris:#8A8A8A;
+  --bt:6px solid #0A0A0A; --bm:3px solid #0A0A0A; --bs:2px solid #0A0A0A;
+  --bt-i:6px solid #F5F4F0; --bm-i:3px solid #F5F4F0; --bs-i:2px solid #F5F4F0;
+  --fd:'Anton','Arial Narrow',sans-serif;
+  --fw:'Unbounded','Anton',sans-serif;
+  --fb:'Inter',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  --e:.15s ease;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;min-height:100vh;display:flex;flex-direction:column;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;}
+.w{max-width:1280px;margin:0 auto;padding:0 clamp(16px,4vw,56px);}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--ink);color:var(--paper);border-bottom:var(--bt);}
+.ni{display:flex;align-items:center;justify-content:space-between;height:66px;}
+.nl{display:flex;gap:4px;align-items:center;}
+.nb{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;background:transparent;color:var(--paper);border:2px solid transparent;transition:border-color var(--e);}
+.nb:hover{border-color:var(--paper);}
+.nshop{font-family:var(--fm);font-size:12px;font-weight:700;padding:9px 16px;background:var(--paper);color:var(--ink);border:2px solid var(--paper);transition:background var(--e),color var(--e);}
+.nshop:hover{background:transparent;color:var(--paper);}
+.nmob{display:none;background:none;border:2px solid var(--paper);color:var(--paper);width:40px;height:40px;align-items:center;justify-content:center;cursor:pointer;}
+
+/* HERO */
+.hero-sec{padding-top:66px;background:var(--ink);color:var(--paper);border-bottom:var(--bt);}
+.hero-inner{padding:clamp(32px,5vw,64px) clamp(16px,4vw,56px);display:flex;align-items:flex-end;justify-content:space-between;flex-wrap:wrap;gap:20px;}
+.hero-h1{font-family:var(--fw);font-weight:900;font-size:clamp(40px,7vw,88px);line-height:.9;letter-spacing:-0.02em;text-transform:uppercase;}
+.hero-count{font-family:var(--fm);font-size:13px;opacity:.5;text-align:right;}
+
+/* CLOSED NOTICE */
+.closed-notice{background:var(--paper);color:var(--ink);border-bottom:var(--bt);}
+.closed-inner{padding:16px clamp(16px,4vw,56px);display:flex;align-items:center;gap:16px;flex-wrap:wrap;}
+.closed-icon{font-family:var(--fd);font-size:20px;}
+.closed-text{font-family:var(--fm);font-size:12px;line-height:1.6;flex:1;}
+.closed-text strong{font-weight:700;}
+
+/* LAYOUT */
+.cart-layout{flex:1;display:grid;grid-template-columns:1fr 380px;align-items:start;}
+.cart-lines{border-right:var(--bt);}
+.cart-sidebar{position:sticky;top:66px;}
+
+/* LINES */
+.cart-line{display:grid;grid-template-columns:1fr auto auto auto;gap:0;border-bottom:var(--bs);align-items:stretch;}
+.line-info{padding:20px 24px;display:flex;flex-direction:column;gap:5px;border-right:var(--bs);}
+.line-name{font-family:var(--fd);font-size:18px;text-transform:uppercase;}
+.line-desc{font-family:var(--fm);font-size:11px;opacity:.5;line-height:1.5;}
+.line-qty{display:flex;align-items:center;border-right:var(--bs);}
+.qty-btn{width:44px;height:100%;background:transparent;border:none;font-family:var(--fm);font-size:18px;font-weight:700;color:var(--ink);transition:background var(--e);}
+.qty-btn:hover{background:var(--ink);color:var(--paper);}
+.qty-input{width:44px;text-align:center;background:transparent;border:none;border-left:var(--bs);border-right:var(--bs);font-family:var(--fm);font-size:13px;font-weight:700;color:var(--ink);height:100%;padding:0;}
+.qty-input:focus{outline:none;background:rgba(10,10,10,.04);}
+.line-price{padding:20px 20px;font-family:var(--fd);font-size:22px;display:flex;align-items:center;justify-content:flex-end;border-right:var(--bs);min-width:100px;white-space:nowrap;}
+.line-remove{width:52px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;font-family:var(--fm);font-size:18px;color:var(--gris);transition:background var(--e),color var(--e);}
+.line-remove:hover{background:var(--ink);color:var(--paper);}
+
+/* EMPTY */
+.cart-empty{padding:80px 40px;text-align:center;border-right:var(--bt);}
+.empty-icon{font-family:var(--fd);font-size:64px;opacity:.1;margin-bottom:16px;}
+.empty-text{font-family:var(--fd);font-size:clamp(22px,3vw,36px);text-transform:uppercase;margin-bottom:12px;}
+.empty-sub{font-family:var(--fm);font-size:13px;opacity:.5;line-height:1.7;margin-bottom:24px;}
+.empty-link{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:13px 24px;border:3px solid var(--ink);display:inline-block;transition:background var(--e),color var(--e),transform var(--e),box-shadow var(--e);}
+.empty-link:hover{background:var(--ink);color:var(--paper);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ink);}
+
+/* SIDEBAR */
+.sidebar-head{padding:20px 24px;border-bottom:var(--bs);}
+.sidebar-title{font-family:var(--fd);font-size:22px;text-transform:uppercase;}
+.sidebar-body{padding:20px 24px;display:flex;flex-direction:column;gap:12px;}
+.total-row{display:flex;justify-content:space-between;align-items:baseline;}
+.total-lbl{font-family:var(--fm);font-size:11px;letter-spacing:.1em;text-transform:uppercase;opacity:.5;}
+.total-val{font-family:var(--fd);font-size:clamp(32px,4vw,52px);}
+.sidebar-sep{height:2px;background:rgba(10,10,10,.1);}
+.checkout-btn{font-family:var(--fm);font-size:13px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:16px 24px;background:var(--ink);color:var(--paper);border:3px solid var(--ink);width:100%;transition:background var(--e),color var(--e),transform var(--e),box-shadow var(--e);}
+.checkout-btn:hover:not(:disabled){background:var(--paper);color:var(--ink);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ink);}
+.checkout-btn:disabled{opacity:.35;cursor:not-allowed;}
+.clear-btn{font-family:var(--fm);font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;padding:11px 24px;background:transparent;color:var(--gris);border:2px solid rgba(138,138,138,.3);width:100%;transition:border-color var(--e),color var(--e);}
+.clear-btn:hover{border-color:var(--ink);color:var(--ink);}
+.continue-link{font-family:var(--fm);font-size:11px;opacity:.5;letter-spacing:.06em;text-align:center;display:block;}
+.continue-link:hover{opacity:1;text-decoration:underline;}
+
+/* ITEM BREAKDOWN */
+.breakdown{border-top:var(--bs);margin-top:4px;}
+.breakdown-row{display:flex;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(10,10,10,.08);font-family:var(--fm);font-size:12px;}
+.breakdown-row:last-child{border-bottom:none;}
+.br-name{opacity:.7;max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.br-val{font-weight:700;}
+
+/* LOADING */
+.loading-state{flex:1;display:flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:13px;opacity:.4;min-height:300px;}
+
+/* FOOTER */
+footer.bot{border-top:var(--bt);padding:26px 0;}
+.frow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;}
+.flinks{display:flex;gap:18px;flex-wrap:wrap;}
+.flinks a{font-family:var(--fm);font-size:11px;letter-spacing:.04em;text-transform:uppercase;opacity:.55;transition:opacity var(--e);}
+.flinks a:hover{opacity:1;text-decoration:underline;}
+.fcopy{font-family:var(--fm);font-size:11px;opacity:.32;}
+
+@media(max-width:900px){
+  .nl{display:none;} .nmob{display:flex;}
+  .cart-layout{grid-template-columns:1fr;}
+  .cart-lines{border-right:none;}
+  .cart-sidebar{position:static;border-top:var(--bt);}
+  .cart-empty{border-right:none;}
+}
+@media(max-width:560px){
+  .cart-line{grid-template-columns:1fr auto auto;}
+  .line-price{min-width:80px;font-size:16px;}
+}
+</style>
+</head>
+<body>
+
+<template id="logo-tpl">
+<svg viewBox="0 0 340 44" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#F5F4F0" stroke-width="4.5">
+    <polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="#F5F4F0"/>
+    <polygon points="60,2 76,11 76,29 60,38 44,29 44,11"/>
+    <polygon points="100,2 116,11 116,29 100,38 84,29 84,11"/>
+    <line x1="90" y1="13" x2="110" y2="27"/><line x1="110" y1="13" x2="90" y2="27"/>
+  </g>
+  <text x="132" y="28" font-family="Unbounded,Anton,sans-serif" font-weight="800" font-size="22" fill="#F5F4F0" letter-spacing="-0.5">CANTALE</text>
+</svg>
+</template>
+
+<header>
+  <div class="w ni">
+    <div id="logoWrap"></div>
+    <nav class="nl">
+      <a class="nb" href="index.html">Accueil</a>
+      <a class="nb" href="factions.html">Factions</a>
+      <a class="nb" href="palliers.html">Paliers</a>
+      <a class="nb" href="liste.html">Liste des morts</a>
+      <a class="nb" href="regles.html">Règles</a>
+      <a class="nshop" href="boutique.html">Boutique</a>
+    </nav>
+    <button class="nmob" id="mobBtn" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<div id="mobMenu" style="display:none;position:fixed;top:66px;left:0;right:0;z-index:199;background:var(--ink);border-bottom:var(--bt);padding:12px 0;">
+  <div class="w" style="display:flex;flex-direction:column;gap:2px;">
+    <a class="nb" style="text-align:left;" href="index.html">Accueil</a>
+    <a class="nb" style="text-align:left;" href="factions.html">Factions</a>
+    <a class="nb" style="text-align:left;" href="palliers.html">Paliers</a>
+    <a class="nb" style="text-align:left;" href="liste.html">Liste des morts</a>
+    <a class="nb" style="text-align:left;" href="regles.html">Règles</a>
+    <a class="nb" style="text-align:left;" href="boutique.html">Boutique</a>
+  </div>
+</div>
+
+<!-- HERO -->
+<section class="hero-sec">
+  <div class="hero-inner">
+    <h1 class="hero-h1">MON<br>PANIER</h1>
+    <div class="hero-count" id="hero-count"></div>
+  </div>
+</section>
+
+<!-- CLOSED NOTICE (caché par défaut) -->
+<div class="closed-notice" id="closed-notice" style="display:none;">
+  <div class="w closed-inner">
+    <span class="closed-icon">🚫</span>
+    <div class="closed-text"><strong>Boutique temporairement fermée.</strong> Tu peux constituer ton panier dès maintenant — il sera conservé. Le paiement sera disponible bientôt.</div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div id="loading-state" class="loading-state">Chargement…</div>
+
+<!-- CART LAYOUT (injecté par JS) -->
+<div id="cart-wrap" style="display:none;flex:1;">
+  <div class="cart-layout">
+
+    <!-- LIGNES -->
+    <div id="cart-lines"></div>
+
+    <!-- SIDEBAR -->
+    <div class="cart-sidebar">
+      <div class="sidebar-head">
+        <div class="sidebar-title">Récapitulatif</div>
+      </div>
+      <div class="sidebar-body">
+        <div class="total-row">
+          <span class="total-lbl">Total</span>
+          <span class="total-val" id="total-val">—</span>
+        </div>
+        <div class="breakdown" id="breakdown"></div>
+        <div class="sidebar-sep"></div>
+        <button class="checkout-btn" id="btn-checkout" disabled>Procéder au paiement</button>
+        <button class="clear-btn" id="btn-clear">Vider le panier</button>
+        <a href="boutique.html" class="continue-link">← Continuer mes achats</a>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- FOOTER -->
+<footer class="bot">
+  <div class="w frow">
+    <svg viewBox="0 0 260 32" style="height:28px;cursor:pointer;" onclick="window.location='index.html'">
+      <g fill="none" stroke="#0A0A0A" stroke-width="3.5"><polygon points="14,2 25,8 25,24 14,30 3,24 3,8" fill="#0A0A0A"/><polygon points="38,2 49,8 49,24 38,30 27,24 27,8"/><polygon points="62,2 73,8 73,24 62,30 51,24 51,8"/><line x1="54" y1="9" x2="70" y2="23"/><line x1="70" y1="9" x2="54" y2="23"/></g>
+      <text x="82" y="21" font-family="Unbounded,Anton,sans-serif" font-weight="800" font-size="16" fill="#0A0A0A" letter-spacing="-0.4">CANTALE</text>
+    </svg>
+    <div class="flinks">
+      <a href="https://discord.gg/65a9upGPHx" target="_blank" rel="noopener">Discord</a>
+      <a href="boutique.html">Boutique</a>
+      <a href="regles.html">Règlement</a>
+    </div>
+    <span class="fcopy">© 2025 Cantale · Non affilié à Mojang Studios</span>
+  </div>
+</footer>
+
+<script src="config.js"></script>
+<script src="api-client.js"></script>
+<script>
+(function(){
+  const tpl = document.getElementById('logo-tpl');
+  const wrap = document.getElementById('logoWrap');
+  if(tpl && wrap) wrap.appendChild(tpl.content.cloneNode(true));
+})();
+document.getElementById('mobBtn').addEventListener('click', function(){
+  const m = document.getElementById('mobMenu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+});
+
+function fmtEur(n){ return n.toFixed(2).replace('.',',') + ' €'; }
+
+async function render(){
+  /* Auth check */
+  try { await CantaleAPI.me(); }
+  catch(e){ if(e.status === 401){ window.location.href = 'login.html'; return; } }
+
+  let data;
+  try {
+    data = await CantaleAPI.getCart();
+  } catch(e){
+    document.getElementById('loading-state').textContent = 'Erreur : ' + e.message;
+    return;
+  }
+
+  document.getElementById('loading-state').style.display = 'none';
+  document.getElementById('cart-wrap').style.display = 'flex';
+  document.getElementById('cart-wrap').style.flexDirection = 'column';
+
+  /* Closed notice */
+  if(!data.shopEnabled) document.getElementById('closed-notice').style.display = '';
+
+  const linesEl = document.getElementById('cart-lines');
+  const totalEl = document.getElementById('total-val');
+  const breakdownEl = document.getElementById('breakdown');
+  const checkoutBtn = document.getElementById('btn-checkout');
+
+  if(!data.lines || data.lines.length === 0){
+    linesEl.innerHTML = `
+      <div class="cart-empty">
+        <div class="empty-icon">🛒</div>
+        <div class="empty-text">Panier vide.</div>
+        <div class="empty-sub">Aucun article pour l'instant. Parcours la boutique et ajoute ce qu'il te faut.</div>
+        <a class="empty-link" href="boutique.html">Voir la boutique →</a>
+      </div>
+    `;
+    totalEl.textContent = '0,00 €';
+    document.getElementById('hero-count').textContent = '0 article';
+    checkoutBtn.textContent = 'Panier vide';
+    return;
+  }
+
+  /* LINES */
+  const totalItems = data.lines.reduce((s,l) => s + l.quantity, 0);
+  document.getElementById('hero-count').textContent = `${totalItems} article${totalItems > 1 ? 's' : ''}`;
+
+  linesEl.innerHTML = data.lines.map(l => `
+    <div class="cart-line" data-id="${l.itemId}">
+      <div class="line-info">
+        <div class="line-name">${l.name}</div>
+        <div class="line-desc">${l.description}</div>
+      </div>
+      <div class="line-qty">
+        <button class="qty-btn btn-dec">−</button>
+        <input class="qty-input qty-input-el" type="number" min="0" max="99" value="${l.quantity}">
+        <button class="qty-btn btn-inc">+</button>
+      </div>
+      <div class="line-price">${fmtEur(l.lineTotal)}</div>
+      <button class="line-remove btn-remove" title="Retirer">✕</button>
+    </div>
+  `).join('');
+
+  /* TOTAL */
+  totalEl.textContent = fmtEur(data.totalEur);
+
+  /* BREAKDOWN */
+  breakdownEl.innerHTML = data.lines.map(l => `
+    <div class="breakdown-row">
+      <span class="br-name">${l.name} ×${l.quantity}</span>
+      <span class="br-val">${fmtEur(l.lineTotal)}</span>
+    </div>
+  `).join('');
+
+  /* CHECKOUT BTN */
+  checkoutBtn.disabled = !data.shopEnabled;
+  checkoutBtn.textContent = data.shopEnabled ? 'Procéder au paiement' : 'Checkout fermé';
+
+  /* WIRE EVENTS */
+  linesEl.querySelectorAll('.cart-line').forEach(line => {
+    const id = line.dataset.id;
+    const inp = line.querySelector('.qty-input-el');
+
+    line.querySelector('.btn-inc').addEventListener('click', async () => {
+      await CantaleAPI.updateCart(id, Math.min(99, parseInt(inp.value,10) + 1));
+      render();
+    });
+    line.querySelector('.btn-dec').addEventListener('click', async () => {
+      await CantaleAPI.updateCart(id, Math.max(0, parseInt(inp.value,10) - 1));
+      render();
+    });
+    inp.addEventListener('change', async () => {
+      await CantaleAPI.updateCart(id, Math.max(0, Math.min(99, parseInt(inp.value,10) || 0)));
+      render();
+    });
+    line.querySelector('.btn-remove').addEventListener('click', async () => {
+      await CantaleAPI.removeFromCart(id);
+      render();
+    });
+  });
+
+  document.getElementById('btn-clear').addEventListener('click', async () => {
+    if(confirm('Vider tout le panier ?')){ await CantaleAPI.clearCart(); render(); }
+  });
+
+  checkoutBtn.addEventListener('click', async () => {
+    try {
+      await CantaleAPI.checkout();
+      alert('Paiement initié ! (Stripe à venir)');
+    } catch(e){ alert(e.message); }
+  });
+}
+
+render();
+</script>
+</body>
+</html>

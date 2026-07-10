@@ -1,0 +1,636 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CANTALE — Trois vies. C'est tout.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Unbounded:wght@500;700;800;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#0A0A0A; --paper:#F5F4F0; --gris:#8A8A8A;
+  --bt:6px solid #0A0A0A; --bm:3px solid #0A0A0A; --bs:2px solid #0A0A0A;
+  --bt-i:6px solid #F5F4F0; --bm-i:3px solid #F5F4F0; --bs-i:2px solid #F5F4F0;
+  --fd:'Anton','Arial Narrow',sans-serif;
+  --fw:'Unbounded','Anton',sans-serif;
+  --fb:'Inter',sans-serif;
+  --fm:'JetBrains Mono',monospace;
+  --e:.15s ease;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+html{scroll-behavior:smooth;}
+body{font-family:var(--fb);background:var(--paper);color:var(--ink);-webkit-font-smoothing:antialiased;overflow-x:hidden;}
+svg,img{display:block;}
+a{color:inherit;text-decoration:none;}
+button{cursor:pointer;}
+
+/* WRAP */
+.w{max-width:1280px;margin:0 auto;padding:0 clamp(16px,4vw,56px);}
+
+/* EYEBROW */
+.eye{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.22em;text-transform:uppercase;display:flex;align-items:center;gap:12px;}
+.eye::before{content:'';width:22px;height:6px;background:currentColor;flex-shrink:0;}
+
+/* BUTTONS */
+.btn{display:inline-flex;align-items:center;justify-content:center;font-family:var(--fm);font-size:13px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;padding:13px 26px;border:3px solid currentColor;background:transparent;transition:transform var(--e),background var(--e),color var(--e),box-shadow var(--e);}
+.bf{background:var(--ink);color:var(--paper);border-color:var(--ink);}
+.bf:hover{background:var(--paper);color:var(--ink);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ink);}
+.bg{color:var(--ink);border-color:var(--ink);}
+.bg:hover{background:var(--ink);color:var(--paper);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--ink);}
+.bi{color:var(--paper);border-color:var(--paper);}
+.bi:hover{background:var(--paper);color:var(--ink);}
+.bif{background:var(--paper);color:var(--ink);border-color:var(--paper);}
+.bif:hover{background:transparent;color:var(--paper);transform:translate(-2px,-2px);box-shadow:4px 4px 0 var(--paper);}
+
+/* HEADER */
+header{position:fixed;top:0;left:0;right:0;z-index:200;background:var(--ink);color:var(--paper);border-bottom:var(--bt);}
+.ni{display:flex;align-items:center;justify-content:space-between;height:66px;}
+.logo{cursor:pointer;height:42px;width:auto;}
+.nl{display:flex;gap:4px;align-items:center;}
+.nb{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.04em;text-transform:uppercase;padding:8px 13px;background:transparent;color:var(--paper);border:2px solid transparent;transition:border-color var(--e),background var(--e),color var(--e);}
+.nb:hover{border-color:var(--paper);}
+.nshop{font-family:var(--fm);font-size:12px;font-weight:700;padding:9px 16px;background:var(--paper);color:var(--ink);border:2px solid var(--paper);transition:background var(--e),color var(--e);}
+.nshop:hover{background:transparent;color:var(--paper);}
+.nmob{display:none;background:none;border:2px solid var(--paper);color:var(--paper);width:40px;height:40px;align-items:center;justify-content:center;}
+
+/* SECTIONS */
+.ink{background:var(--ink);color:var(--paper);}
+.paper{background:var(--paper);color:var(--ink);}
+.sec{padding:clamp(52px,8vw,110px) 0;}
+.pt{padding-top:66px;}
+
+/* HEX SVGs */
+.hx{display:inline-block;}
+.lives-row{display:flex;align-items:center;gap:clamp(8px,1.5vw,18px);}
+
+/* HERO */
+.hero{min-height:100vh;display:flex;flex-direction:column;justify-content:flex-end;position:relative;overflow:hidden;}
+.hero-bg{position:absolute;inset:0;background:var(--ink);}
+.hpat{position:absolute;inset:0;opacity:.065;}
+.hwm{position:absolute;left:50%;bottom:-3%;transform:translateX(-50%);font-family:var(--fw);font-weight:900;font-size:clamp(110px,21vw,420px);line-height:1;color:#F5F4F0;opacity:.05;white-space:nowrap;letter-spacing:-0.02em;pointer-events:none;user-select:none;}
+.bstrip{overflow:hidden;border-bottom:var(--bt);background:var(--ink);padding:11px 0;}
+.bstrip-track{display:flex;white-space:nowrap;font-family:var(--fw);font-weight:700;font-size:15px;letter-spacing:.08em;text-transform:uppercase;color:var(--paper);opacity:.85;gap:28px;animation:ticker 22s linear infinite;}
+@keyframes ticker{0%{transform:translateX(0);}100%{transform:translateX(-50%);}}
+.bstrip-track span{opacity:.4;font-weight:400;}
+.hcont{position:relative;z-index:3;display:grid;grid-template-columns:1fr auto;border-top:var(--bt);}
+.hl{padding:clamp(32px,5vw,72px) clamp(16px,4vw,56px);border-right:var(--bt);}
+.hr{width:clamp(240px,30vw,420px);display:flex;align-items:flex-end;justify-content:center;overflow:hidden;}
+.htag{font-family:var(--fm);font-size:12px;font-weight:700;letter-spacing:.18em;text-transform:uppercase;color:var(--paper);opacity:.55;margin-bottom:18px;}
+.hh1{font-family:var(--fw);font-weight:900;font-size:clamp(50px,12vw,135px);line-height:.92;letter-spacing:-0.02em;text-transform:uppercase;color:var(--paper);margin-bottom:14px;}
+.htagline{font-family:var(--fd);font-size:clamp(22px,3.4vw,44px);line-height:1.1;text-transform:uppercase;color:var(--paper);margin-bottom:22px;display:flex;flex-wrap:wrap;align-items:center;gap:12px;}
+.htagline .sep{opacity:.35;font-size:.7em;}
+.hsub{font-family:var(--fm);font-size:clamp(13px,1.4vw,16px);font-weight:600;letter-spacing:.04em;color:var(--paper);opacity:.78;max-width:500px;line-height:1.65;margin-bottom:32px;}
+.ha{display:flex;gap:12px;flex-wrap:wrap;}
+.ipbtn{display:inline-flex;align-items:center;gap:10px;font-family:var(--fm);font-size:13px;font-weight:700;letter-spacing:.04em;color:var(--paper);border:2px dashed rgba(245,244,240,.4);padding:11px 16px;background:transparent;transition:all var(--e);cursor:pointer;}
+.ipbtn:hover{background:var(--paper);color:var(--ink);border-style:solid;border-color:var(--paper);}
+.hlbar{display:flex;align-items:center;gap:14px;border-top:2px solid rgba(245,244,240,.15);padding-top:20px;margin-top:28px;}
+.hlbl{font-family:var(--fm);font-size:11px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--paper);opacity:.45;}
+.scue{position:absolute;bottom:24px;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:10;}
+.scue span{font-family:var(--fm);font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--paper);opacity:.35;}
+.sline{width:1px;height:32px;background:var(--paper);opacity:.25;animation:sp 1.9s ease-in-out infinite;}
+@keyframes sp{0%,100%{opacity:.08;}50%{opacity:.4;}}
+
+/* STATS BAR */
+.stbar{border-top:var(--bt);border-bottom:var(--bt);}
+.strow{display:grid;grid-template-columns:repeat(6,1fr);}
+.st{padding:22px 14px;text-align:center;border-right:var(--bs);}
+.st:last-child{border-right:none;}
+.stn{font-family:var(--fd);font-size:clamp(20px,2.8vw,34px);}
+.stl{font-family:var(--fm);font-size:10px;letter-spacing:.07em;text-transform:uppercase;opacity:.5;margin-top:4px;}
+
+/* HEAD BLOCK */
+.hb{margin-bottom:clamp(36px,5vw,64px);}
+.hb h2{font-family:var(--fd);text-transform:uppercase;font-size:clamp(36px,5.5vw,76px);line-height:.93;margin:18px 0 16px;}
+.hb p{font-size:clamp(15px,1.4vw,18px);line-height:1.7;opacity:.87;max-width:620px;}
+
+/* SEQUENCE 4 */
+.seq4{display:grid;grid-template-columns:repeat(4,1fr);border:var(--bt);}
+.sqc{padding:32px 20px;display:flex;flex-direction:column;align-items:center;gap:14px;border-right:var(--bt);text-align:center;}
+.sqc:last-child{border-right:none;}
+.sqn{font-family:var(--fm);font-weight:700;font-size:19px;}
+.sql{font-family:var(--fm);font-size:11.5px;letter-spacing:.03em;text-transform:uppercase;line-height:1.6;opacity:.8;}
+.sqt{font-family:var(--fm);font-size:10px;letter-spacing:.07em;text-transform:uppercase;border:2px solid currentColor;padding:3px 8px;margin-top:auto;}
+
+/* STEPS */
+.steps-grid{display:flex;flex-direction:column;gap:0;margin-top:40px;border:var(--bt);}
+.step-row{display:grid;grid-template-columns:80px 1fr;border-bottom:var(--bm);}
+.step-row:last-child{border-bottom:none;}
+.step-num{display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:clamp(28px,3.5vw,46px);background:var(--ink);color:var(--paper);border-right:var(--bt);padding:20px 12px;text-align:center;}
+.step-body{padding:22px 28px;display:flex;flex-direction:column;gap:6px;}
+.step-title{font-family:var(--fd);font-size:18px;text-transform:uppercase;}
+.step-desc{font-family:var(--fm);font-size:12px;line-height:1.7;opacity:.72;}
+
+/* FEAT GRID */
+.fg{display:grid;grid-template-columns:repeat(3,1fr);gap:2px;background:var(--paper);border:var(--bs);}
+.fc{padding:30px 24px;background:var(--ink);color:var(--paper);display:flex;flex-direction:column;gap:11px;min-height:210px;}
+.ftag{font-family:var(--fm);font-size:10px;letter-spacing:.07em;text-transform:uppercase;border:1.5px solid rgba(245,244,240,.35);padding:3px 7px;width:fit-content;}
+.fc h3{font-family:var(--fd);text-transform:uppercase;font-size:21px;line-height:1.05;}
+.fc p{font-size:13.5px;line-height:1.6;opacity:.82;}
+
+/* TERRITORY */
+.tg{display:grid;grid-template-columns:1.25fr .75fr;gap:52px;align-items:start;}
+.mapbox{border:var(--bt);padding:5px;}
+.mapcells{display:grid;grid-template-columns:repeat(10,1fr);gap:3px;}
+.cell{aspect-ratio:1;border:var(--bs);}
+.cell.c{background:var(--ink);}
+.cell.f{background:var(--paper);}
+.cell.x{background-image:repeating-linear-gradient(45deg,var(--ink) 0 2px,transparent 2px 8px);}
+.leg{display:flex;flex-direction:column;gap:10px;margin-top:16px;}
+.lrow{display:flex;align-items:center;gap:10px;font-family:var(--fm);font-size:12px;}
+.lsw{width:16px;height:16px;border:2px solid var(--ink);flex-shrink:0;}
+.cmds{display:flex;gap:7px;flex-wrap:wrap;margin-top:20px;}
+.cmd{font-family:var(--fm);font-size:12px;border:var(--bs);padding:6px 10px;}
+
+/* ITEM GRID */
+.ig{display:grid;grid-template-columns:repeat(3,1fr);border:var(--bt);}
+.ic{padding:28px 24px;border-right:var(--bt);border-bottom:var(--bt);display:flex;flex-direction:column;gap:11px;position:relative;}
+.ic:nth-child(3n){border-right:none;}
+.ic:nth-child(n+4){border-bottom:none;}
+.rar{position:absolute;top:-2px;right:-2px;font-family:var(--fm);font-size:9px;letter-spacing:.06em;text-transform:uppercase;background:var(--ink);color:var(--paper);padding:4px 8px;}
+.ic h3{font-family:var(--fd);font-size:19px;text-transform:uppercase;}
+.ic p{font-size:13px;line-height:1.55;opacity:.82;}
+
+/* RANKS */
+.rl{display:flex;flex-direction:column;}
+.rr{display:grid;grid-template-columns:50px 1fr 1fr auto;align-items:center;gap:24px;padding:22px 0;border-bottom:2px solid rgba(10,10,10,.12);}
+.rr:last-child{border-bottom:none;}
+.rsym{font-family:var(--fd);font-size:26px;}
+.rname{font-family:var(--fd);font-size:19px;text-transform:uppercase;}
+.rdesc{font-size:13.5px;opacity:.8;line-height:1.5;}
+.rcmd{font-family:var(--fm);font-size:11.5px;opacity:.7;text-align:right;white-space:nowrap;}
+
+/* CTA */
+.cta{text-align:center;padding:clamp(56px,9vw,120px) 0 0;}
+.cta h2{font-family:var(--fd);text-transform:uppercase;font-size:clamp(44px,8vw,110px);line-height:.9;margin-bottom:32px;}
+.ipblock{display:inline-flex;align-items:center;gap:18px;border:var(--bt);padding:16px 26px;margin-bottom:24px;font-family:var(--fm);font-size:clamp(14px,1.6vw,19px);font-weight:700;}
+.ipcopy{font-family:var(--fm);font-weight:700;font-size:11.5px;letter-spacing:.05em;text-transform:uppercase;background:var(--ink);color:var(--paper);border:none;padding:9px 13px;cursor:pointer;}
+.ctabtns{display:flex;gap:12px;justify-content:center;flex-wrap:wrap;}
+
+/* FOOTER */
+footer.bot{border-top:var(--bt);padding:26px 0;margin-top:52px;}
+.frow{display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:14px;}
+.flinks{display:flex;gap:18px;flex-wrap:wrap;}
+.flinks a{font-family:var(--fm);font-size:11px;letter-spacing:.04em;text-transform:uppercase;opacity:.55;transition:opacity var(--e);}
+.flinks a:hover{opacity:1;text-decoration:underline;}
+.fcopy{font-family:var(--fm);font-size:11px;opacity:.32;}
+
+/* RESPONSIVE */
+@media(max-width:960px){
+  .nl{display:none;} .nmob{display:flex;}
+  .hcont{grid-template-columns:1fr;} .hr{display:none;}
+  .strow{grid-template-columns:repeat(3,1fr);}
+  .seq4{grid-template-columns:1fr 1fr;}
+  .sqc:nth-child(2){border-right:none;} .sqc:nth-child(n+3){border-top:var(--bt);}
+  .fg{grid-template-columns:1fr 1fr;}
+  .tg{grid-template-columns:1fr;}
+  .ig{grid-template-columns:1fr 1fr;}
+  .ic:nth-child(2n){border-right:none;} .ic:nth-child(2n+1){border-right:var(--bt);}
+  .rr{grid-template-columns:40px 1fr;}
+  .rcmd,.rdesc{grid-column:2;} .rcmd{text-align:left;}
+}
+@media(max-width:600px){
+  .strow{grid-template-columns:repeat(2,1fr);}
+  .seq4{grid-template-columns:1fr;} .sqc{border-right:none;border-bottom:var(--bt);} .sqc:last-child{border-bottom:none;}
+  .fg,.ig{grid-template-columns:1fr;}
+  .ic:nth-child(n){border-right:none;}
+  .step-row{grid-template-columns:60px 1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- SVG LOGO TEMPLATE -->
+<template id="logo-tpl">
+<svg viewBox="0 0 340 44" xmlns="http://www.w3.org/2000/svg">
+  <g fill="none" stroke="#F5F4F0" stroke-width="4.5">
+    <polygon points="20,2 36,11 36,29 20,38 4,29 4,11" fill="#F5F4F0"/>
+    <polygon points="60,2 76,11 76,29 60,38 44,29 44,11"/>
+    <polygon points="100,2 116,11 116,29 100,38 84,29 84,11"/>
+    <line x1="90" y1="13" x2="110" y2="27"/><line x1="110" y1="13" x2="90" y2="27"/>
+  </g>
+  <text x="132" y="28" font-family="Unbounded,Anton,sans-serif" font-weight="800" font-size="22" fill="#F5F4F0" letter-spacing="-0.5">CANTALE</text>
+  <text x="132" y="41" font-family="JetBrains Mono,monospace" font-size="9" fill="#F5F4F0" opacity="0.45" letter-spacing="2.5">TROIS VIES. C'EST TOUT.</text>
+</svg>
+</template>
+
+<!-- SVG DEFS (hexagones) -->
+<svg width="0" height="0" style="position:absolute">
+  <defs>
+    <symbol id="hx-full" viewBox="0 0 96 96"><polygon points="48,4 89,27 89,73 48,96 7,73 7,27" fill="currentColor"/></symbol>
+    <symbol id="hx-empty" viewBox="0 0 96 96"><polygon points="48,4 89,27 89,73 48,96 7,73 7,27" fill="none" stroke="currentColor" stroke-width="8"/></symbol>
+    <symbol id="hx-dead" viewBox="0 0 96 96"><polygon points="48,4 89,27 89,73 48,96 7,73 7,27" fill="none" stroke="currentColor" stroke-width="8"/><line x1="22" y1="22" x2="74" y2="74" stroke="currentColor" stroke-width="8"/><line x1="74" y1="22" x2="22" y2="74" stroke="currentColor" stroke-width="8"/></symbol>
+    <pattern id="hexbg" width="108" height="93" patternUnits="userSpaceOnUse">
+      <polygon points="54,4 87,22 87,56 54,74 21,56 21,22" fill="none" stroke="#F5F4F0" stroke-width="2.5"/>
+    </pattern>
+  </defs>
+</svg>
+
+<!-- HEADER -->
+<header>
+  <div class="w ni">
+    <div class="logo" id="logoWrap"></div>
+    <nav class="nl">
+      <a class="nb" href="index.html">Accueil</a>
+      <a class="nb" href="factions.html">Factions</a>
+      <a class="nb" href="palliers.html">Paliers</a>
+      <a class="nb" href="recrutement.html">Rejoindre</a>
+      <a class="nb" href="liste.html">Liste des morts</a>
+      <a class="nb" href="regles.html">Règles</a>
+      <a class="nshop" href="boutique.html">Boutique</a>
+    </nav>
+    <button class="nmob" id="mobBtn" aria-label="Menu">
+      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5">
+        <line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/>
+      </svg>
+    </button>
+  </div>
+</header>
+
+<!-- MOBILE MENU -->
+<div id="mobMenu" style="display:none;position:fixed;top:66px;left:0;right:0;z-index:199;background:var(--ink);border-bottom:var(--bt);padding:12px 0;">
+  <div class="w" style="display:flex;flex-direction:column;gap:2px;">
+    <a class="nb" style="text-align:left;" href="index.html">Accueil</a>
+    <a class="nb" style="text-align:left;" href="factions.html">Factions</a>
+    <a class="nb" style="text-align:left;" href="palliers.html">Paliers</a>
+    <a class="nb" style="text-align:left;" href="recrutement.html">Rejoindre</a>
+    <a class="nb" style="text-align:left;" href="liste.html">Liste des morts</a>
+    <a class="nb" style="text-align:left;" href="regles.html">Règles</a>
+    <a class="nb" style="text-align:left;" href="boutique.html">Boutique</a>
+  </div>
+</div>
+
+<!-- ============================================================
+  HERO
+============================================================ -->
+<section class="hero ink" style="padding-top:66px;">
+  <div class="hero-bg"></div>
+  <svg class="hpat" style="position:absolute;inset:0;width:100%;height:100%;" preserveAspectRatio="xMidYMid slice">
+    <rect width="100%" height="100%" fill="url(#hexbg)"/>
+  </svg>
+
+  <div class="hcont">
+    <div class="hl">
+      <p class="htag">Minecraft Java 1.20.4 · Serveur PvP Faction</p>
+      <div class="lives-row" style="margin-bottom:20px;">
+        <svg width="48" height="48" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+        <svg width="48" height="48" style="color:#F5F4F0;"><use href="#hx-empty"/></svg>
+        <svg width="48" height="48" style="color:#F5F4F0;"><use href="#hx-dead"/></svg>
+      </div>
+      <h1 class="hh1">CANTALE</h1>
+      <div class="htagline">TROIS VIES<span class="sep">●</span>ZÉRO PITIÉ</div>
+      <p class="hsub">Chaque mort retire une vie. Zéro régénération. La troisième entaille : bannissement définitif.</p>
+      <div class="ha">
+        <a class="btn bif" href="#sec-systeme">Découvrir le concept</a>
+        <button class="ipbtn" onclick="cpIP(this)">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="9" y="9" width="11" height="11" rx="1"/><path d="M5 15V5a1 1 0 011-1h10"/></svg>
+          <span>play.cantale.world</span>
+        </button>
+      </div>
+      <div class="hlbar">
+        <span class="hlbl">Statut joueur</span>
+        <div class="lives-row">
+          <svg width="32" height="32" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+          <svg width="32" height="32" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+          <svg width="32" height="32" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+        </div>
+        <span class="hlbl">3/3 vies actives</span>
+      </div>
+    </div>
+    <div class="hr">
+      <!-- Personnage SVG DA -->
+      <svg viewBox="0 0 360 640" style="width:100%;max-height:560px;">
+        <path fill="#0A0A0A" stroke="#F5F4F0" stroke-width="7" stroke-linejoin="round" d="M180 108C130 108 90 140 76 200L52 440C50 462 64 476 88 476L272 476C296 476 310 462 308 440L284 200C270 140 230 108 180 108Z"/>
+        <path fill="#F5F4F0" d="M180 155L150 310L180 440L210 310Z"/>
+        <path fill="#0A0A0A" stroke="#F5F4F0" stroke-width="7" stroke-linejoin="round" d="M180 22C148 22 124 46 124 78C124 110 148 132 180 132C212 132 236 110 236 78C236 46 212 22 180 22Z"/>
+        <ellipse fill="#F5F4F0" cx="180" cy="82" rx="40" ry="34"/>
+        <ellipse fill="none" stroke="#0A0A0A" stroke-width="6" cx="180" cy="82" rx="40" ry="34"/>
+        <rect fill="#0A0A0A" x="152" y="78" width="22" height="10" rx="5"/>
+        <rect fill="#0A0A0A" x="186" y="78" width="22" height="10" rx="5"/>
+        <path fill="#0A0A0A" stroke="#F5F4F0" stroke-width="6" d="M124 78C110 40 136 8 180 8C224 8 250 40 236 78C220 58 200 52 180 52C160 52 140 58 124 78Z"/>
+        <path fill="#0A0A0A" stroke="#F5F4F0" stroke-width="7" stroke-linejoin="round" d="M88 220C56 250 40 320 52 398L90 386C82 326 92 270 114 240Z"/>
+        <path fill="#0A0A0A" stroke="#F5F4F0" stroke-width="7" stroke-linejoin="round" d="M272 220C304 250 320 320 308 398L270 386C278 326 268 270 246 240Z"/>
+        <path fill="#0A0A0A" stroke="#F5F4F0" stroke-width="7" stroke-linejoin="round" d="M108 462L82 630L148 630L162 470Z"/>
+        <path fill="#0A0A0A" stroke="#F5F4F0" stroke-width="7" stroke-linejoin="round" d="M252 462L278 630L212 630L198 470Z"/>
+        <g transform="translate(180,270)">
+          <path fill="#F5F4F0" stroke="#F5F4F0" stroke-width="7" stroke-linejoin="round" d="M0-230L18 56L0 90L-18 56Z"/>
+          <path fill="#0A0A0A" d="M0-230L8 56L0 74L-8 56Z"/>
+          <rect fill="#0A0A0A" stroke="#F5F4F0" stroke-width="5" x="-36" y="88" width="72" height="18" rx="2"/>
+          <rect fill="#0A0A0A" stroke="#F5F4F0" stroke-width="5" x="-12" y="104" width="24" height="80" rx="2"/>
+        </g>
+      </svg>
+    </div>
+  </div>
+
+  <div class="scue"><span>Défiler</span><span class="sline"></span></div>
+</section>
+
+<!-- STATS BAR -->
+<div class="stbar paper">
+  <div class="w" style="padding:0;">
+    <div class="strow">
+      <div class="st"><div class="stn">3</div><div class="stl">Vies / joueur</div></div>
+      <div class="st"><div class="stn">1.20.4</div><div class="stl">Version Java</div></div>
+      <div class="st"><div class="stn">6+</div><div class="stl">Items custom</div></div>
+      <div class="st"><div class="stn">20+</div><div class="stl">Commandes</div></div>
+      <div class="st"><div class="stn">CANTOX</div><div class="stl">Monnaie</div></div>
+      <div class="st"><div class="stn">∞</div><div class="stl">Terres à conquérir</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- BRAND STRIP -->
+<div class="bstrip">
+  <div class="bstrip-track">
+    <span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE<span>—</span>CANTALE
+  </div>
+</div>
+
+<!-- ============================================================
+  SECTION : SYSTÈME DES VIES
+============================================================ -->
+<section class="sec ink" id="sec-systeme">
+  <div class="w">
+    <div class="hb" style="max-width:720px;">
+      <div class="eye" style="color:#F5F4F0;opacity:.6;">Cantale · Le système des vies</div>
+      <h2 style="color:#F5F4F0;">La mort a<br>un prix.</h2>
+      <p style="color:#F5F4F0;">Sur Cantale, chaque mort — PvP, PvE, environnement — retire une vie. Pas d'exception, pas d'appel. À zéro vie : bannissement automatique et définitif.</p>
+    </div>
+
+    <!-- Séquence 4 états -->
+    <div class="seq4">
+      <div class="sqc">
+        <div class="lives-row" style="justify-content:center;">
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+        </div>
+        <span class="sqn">3/3</span>
+        <span class="sql">Intact. Aucun signal. Tu agis librement.</span>
+        <span class="sqt">En vie</span>
+      </div>
+      <div class="sqc">
+        <div class="lives-row" style="justify-content:center;">
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-dead"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+        </div>
+        <span class="sqn">2/3</span>
+        <span class="sql">Marqué. Les primes /wanted deviennent actives sur toi.</span>
+        <span class="sqt">Vulnérable</span>
+      </div>
+      <div class="sqc">
+        <div class="lives-row" style="justify-content:center;">
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-dead"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-dead"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-full"/></svg>
+        </div>
+        <span class="sqn">1/3</span>
+        <span class="sql">Traqué. Priorité maximale. Évite tout conflit.</span>
+        <span class="sqt">Danger</span>
+      </div>
+      <div class="sqc" style="opacity:.45;">
+        <div class="lives-row" style="justify-content:center;">
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-dead"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-dead"/></svg>
+          <svg width="58" height="58" style="color:#F5F4F0;"><use href="#hx-dead"/></svg>
+        </div>
+        <span class="sqn" style="text-decoration:line-through;">0/3</span>
+        <span class="sql">Banni. Compte effacé. Permanent et irréversible.</span>
+        <span class="sqt">Terminus</span>
+      </div>
+    </div>
+
+    <!-- Steps détail -->
+    <div class="steps-grid" style="margin-top:40px;">
+      <div class="step-row">
+        <div class="step-num" style="color:#F5F4F0;background:var(--ink);">01</div>
+        <div class="step-body">
+          <div class="step-title" style="color:#F5F4F0;">Tu meurs — tu perds une vie</div>
+          <div class="step-desc" style="color:rgba(245,244,240,.6);">En PvP, en PvE ou par environnement. Aucune exception. Seul un admin peut redonner une vie dans des circonstances exceptionnelles.</div>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num" style="color:#F5F4F0;background:var(--ink);">02</div>
+        <div class="step-body">
+          <div class="step-title" style="color:#F5F4F0;">À deux vies, tu es une cible</div>
+          <div class="step-desc" style="color:rgba(245,244,240,.6);">Marqué par le serveur. Les primes /wanted te ciblent en priorité. Les chasseurs s'activent.</div>
+        </div>
+      </div>
+      <div class="step-row">
+        <div class="step-num" style="color:#F5F4F0;background:var(--ink);">03</div>
+        <div class="step-body">
+          <div class="step-title" style="color:#F5F4F0;">La troisième mort = bannissement</div>
+          <div class="step-desc" style="color:rgba(245,244,240,.6);">Permanent. Irréversible. Ton nom rejoint la liste des morts. Une légende de plus tombée.</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Features grid -->
+    <div style="margin-top:40px;">
+      <div class="fg">
+        <div class="fc"><span class="ftag">Unique</span><h3>Vies Hardcore</h3><p>3 vies, zéro régénération. La mort environnementale compte autant que le PvP.</p></div>
+        <div class="fc"><span class="ftag">PvP</span><h3>Factions & Claims</h3><p>Réclame des chunks, déclare la guerre, gère ta banque. La carte ne ment pas.</p></div>
+        <div class="fc"><span class="ftag">Économie</span><h3>Cantox</h3><p>La monnaie unique. /pay, hôtel des ventes, banque commune. Tout transite par là.</p></div>
+        <div class="fc"><span class="ftag">Custom</span><h3>Items Exclusifs</h3><p>6 items non-craftables. Pioches de zone, élytra factionnel, épée évolutive à 100 kills.</p></div>
+        <div class="fc"><span class="ftag">Chasse</span><h3>Wanted & Primes</h3><p>Mets une prime sur n'importe quel compte. Les chasseurs traquent. La justice s'achète.</p></div>
+        <div class="fc"><span class="ftag">Navigation</span><h3>Téléportation</h3><p>Homes, warps publics, spawn, RTP. Chaque déplacement est une décision stratégique.</p></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+  SECTION : TERRITOIRE
+============================================================ -->
+<section class="sec paper" style="border-top:var(--bt);" id="sec-territoire">
+  <div class="w">
+    <div class="tg">
+      <div>
+        <div class="hb" style="margin-bottom:32px;">
+          <div class="eye">Cantale · Factions & Territoire</div>
+          <h2>Conquérir<br>ou périr.</h2>
+          <p>Chaque chunk de terre peut être revendiqué par ta faction. Les territoires perdus sont une humiliation publique. Les zones contestées sont des champs de bataille permanents.</p>
+        </div>
+        <div class="mapbox">
+          <div class="mapcells" id="mapG"></div>
+        </div>
+        <div class="leg">
+          <div class="lrow"><span class="lsw" style="background:var(--ink);"></span>Territoire claimé</div>
+          <div class="lrow"><span class="lsw"></span>Zone libre</div>
+          <div class="lrow"><span class="lsw" style="background-image:repeating-linear-gradient(45deg,#0A0A0A 0 2px,transparent 2px 8px);"></span>Zone contestée</div>
+        </div>
+        <div class="cmds">
+          <span class="cmd">/f claim</span>
+          <span class="cmd">/f unclaim</span>
+          <span class="cmd">/f map</span>
+          <span class="cmd">/f autoclaim</span>
+          <span class="cmd">/f secret</span>
+        </div>
+      </div>
+      <div>
+        <div style="border:var(--bt);padding:28px;margin-bottom:20px;">
+          <div class="eye" style="margin-bottom:18px;">Grades de faction</div>
+          <div class="rl">
+            <div class="rr">
+              <span class="rsym">★</span>
+              <span class="rname">Leader</span>
+              <span class="rdesc">Contrôle total. Gère les permissions et le spawn.</span>
+              <span class="rcmd">/f promote</span>
+            </div>
+            <div class="rr">
+              <span class="rsym">◆</span>
+              <span class="rname">Officier</span>
+              <span class="rdesc">Claim / Unclaim · Banque · Kick membres.</span>
+              <span class="rcmd">/f officer</span>
+            </div>
+            <div class="rr">
+              <span class="rsym">●</span>
+              <span class="rname">Membre</span>
+              <span class="rdesc">Accès claims · Spawn faction · Banque (dépôt).</span>
+              <span class="rcmd">/f join</span>
+            </div>
+            <div class="rr">
+              <span class="rsym">○</span>
+              <span class="rname">Recrue</span>
+              <span class="rdesc">Accès limité · En période d'essai.</span>
+              <span class="rcmd">/f invite</span>
+            </div>
+          </div>
+          <a class="btn bg" style="width:100%;margin-top:16px;display:block;text-align:center;" href="factions.html">Voir toutes les factions →</a>
+        </div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+  SECTION : ARSENAL
+============================================================ -->
+<section class="sec ink" style="border-top:var(--bt);" id="sec-arsenal">
+  <div class="w">
+    <div class="hb" style="max-width:680px;">
+      <div class="eye" style="color:#F5F4F0;opacity:.6;">Cantale · Items custom exclusifs</div>
+      <h2 style="color:#F5F4F0;">L'Arsenal<br>de Cantale.</h2>
+      <p style="color:#F5F4F0;opacity:.87;">Non-craftables, non-trouvables en jeu normal. Disponibles en boutique ou en récompense d'événements.</p>
+    </div>
+    <div class="ig" style="border-color:#F5F4F0;">
+      <div class="ic" style="border-color:rgba(245,244,240,.3);">
+        <span class="rar">Légendaire</span>
+        <svg width="40" height="40" viewBox="0 0 44 44"><path fill="#F5F4F0" stroke="#F5F4F0" stroke-width="2" stroke-linejoin="round" d="M6 18C14 10 22 7 22 7C22 7 30 10 38 18C34 19 28 17 24 13L18 28L13 24L20 11C16 13 9 18 6 18Z"/><rect fill="#F5F4F0" x="19" y="24" width="5" height="18" transform="rotate(12 22 33)"/></svg>
+        <h3 style="color:#F5F4F0;">Pickantaxes</h3>
+        <p style="color:rgba(245,244,240,.75);">Pioches de zone 1×1 à 7×7. Fer, Diamant, Netherite. Entièrement enchantables.</p>
+      </div>
+      <div class="ic" style="border-color:rgba(245,244,240,.3);">
+        <span class="rar">Épique</span>
+        <svg width="40" height="40" viewBox="0 0 44 44"><path fill="#F5F4F0" stroke="#F5F4F0" stroke-width="2" stroke-linejoin="round" d="M13 4C22 3 30 7 30 16C29 23 22 24 18 21L9 37L4 33L14 18C10 14 9 8 13 4Z"/></svg>
+        <h3 style="color:#F5F4F0;">Cantaxes</h3>
+        <p style="color:rgba(245,244,240,.75);">Abat un arbre entier en un coup. Toutes essences, toutes matières.</p>
+      </div>
+      <div class="ic" style="border-color:rgba(245,244,240,.3);">
+        <span class="rar">Épique</span>
+        <svg width="40" height="40" viewBox="0 0 44 44"><path fill="none" stroke="#F5F4F0" stroke-width="3" stroke-linejoin="round" d="M8 32C8 18 15 7 22 7C29 7 36 18 36 32C29 27 15 27 8 32Z"/><line x1="22" y1="7" x2="22" y2="32" stroke="#F5F4F0" stroke-width="3"/></svg>
+        <h3 style="color:#F5F4F0;">Multi-Cantools</h3>
+        <p style="color:rgba(245,244,240,.75);">Pioche, hache, pelle et cisailles en un. S'adapte au bloc visé automatiquement.</p>
+      </div>
+      <div class="ic" style="border-color:rgba(245,244,240,.3);">
+        <span class="rar">Légendaire</span>
+        <svg width="40" height="40" viewBox="0 0 44 44"><path fill="#F5F4F0" d="M22 3C16 10 9 12 9 19C12 19 17 17 20 14L22 37L24 14C27 17 32 19 35 19C35 12 28 10 22 3Z"/></svg>
+        <h3 style="color:#F5F4F0;">Statio-Lytras</h3>
+        <p style="color:rgba(245,244,240,.75);">Vol créatif dans les claims de ta faction uniquement. Non-craftable.</p>
+      </div>
+      <div class="ic" style="border-color:rgba(245,244,240,.3);">
+        <span class="rar">Légendaire</span>
+        <svg width="40" height="40" viewBox="0 0 44 44"><path fill="#F5F4F0" stroke="#F5F4F0" stroke-width="2" stroke-linejoin="round" d="M22 3L26 22L22 28L18 22Z"/><rect fill="#F5F4F0" x="16" y="26" width="12" height="5"/><rect fill="#F5F4F0" x="18" y="31" width="8" height="10"/></svg>
+        <h3 style="color:#F5F4F0;">Cantalame</h3>
+        <p style="color:rgba(245,244,240,.75);">Épée évolutive. 100 kills uniques = arme surpuissante. Chaque ennemi compte.</p>
+      </div>
+      <div class="ic" style="border-color:rgba(245,244,240,.3);">
+        <span class="rar">Rare</span>
+        <svg width="40" height="40" viewBox="0 0 44 44"><rect fill="#F5F4F0" x="4" y="4" width="36" height="36" rx="2"/><path fill="#0A0A0A" d="M14 14h16v2H14zm0 6h16v2H14zm0 6h10v2H14z"/></svg>
+        <h3 style="color:#F5F4F0;">Rune de Fortification</h3>
+        <p style="color:rgba(245,244,240,.75);">Clic-droit pour rendre un bloc incassable par les non-membres.</p>
+      </div>
+    </div>
+    <div style="margin-top:20px;text-align:center;">
+      <a class="btn bi" href="boutique.html">Voir la boutique complète →</a>
+    </div>
+  </div>
+</section>
+
+<!-- ============================================================
+  CTA REJOINDRE
+============================================================ -->
+<section class="sec paper" style="border-top:var(--bt);" id="join">
+  <div class="w cta">
+    <div class="eye" style="justify-content:center;margin-bottom:16px;">Rejoindre Cantale</div>
+    <h2>ENTRE DANS<br>L'ARÈNE.</h2>
+    <div style="display:flex;flex-direction:column;align-items:center;gap:14px;">
+      <div class="ipblock">
+        <span>play.cantale.world</span>
+        <button class="ipcopy" onclick="cpIP(this)">Copier</button>
+      </div>
+      <div class="ctabtns">
+        <a href="https://discord.gg/65a9upGPHx" target="_blank" rel="noopener" class="btn bf">Discord</a>
+        <a href="palliers.html" class="btn bg">Paliers</a>
+        <a href="boutique.html" class="btn bg">Boutique</a>
+      </div>
+    </div>
+  </div>
+
+  <footer class="bot">
+    <div class="w frow">
+      <svg viewBox="0 0 260 32" style="height:28px;" onclick="window.location='index.html'" style="cursor:pointer">
+        <g fill="none" stroke="#0A0A0A" stroke-width="3.5"><polygon points="14,2 25,8 25,24 14,30 3,24 3,8" fill="#0A0A0A"/><polygon points="38,2 49,8 49,24 38,30 27,24 27,8"/><polygon points="62,2 73,8 73,24 62,30 51,24 51,8"/><line x1="54" y1="9" x2="70" y2="23"/><line x1="70" y1="9" x2="54" y2="23"/></g>
+        <text x="82" y="21" font-family="Unbounded,Anton,sans-serif" font-weight="800" font-size="16" fill="#0A0A0A" letter-spacing="-0.4">CANTALE</text>
+      </svg>
+      <div class="flinks">
+        <a href="https://discord.gg/65a9upGPHx" target="_blank" rel="noopener">Discord</a>
+        <a href="#">Twitter / X</a>
+        <a href="boutique.html">Boutique</a>
+        <a href="palliers.html">Paliers</a>
+        <a href="recrutement.html">Rejoindre</a>
+        <a href="liste.html">Liste</a>
+        <a href="regles.html">Règlement</a>
+      </div>
+      <span class="fcopy">© 2025 Cantale · Non affilié à Mojang Studios</span>
+    </div>
+  </footer>
+</section>
+
+<script>
+/* LOGO */
+(function(){
+  const tpl = document.getElementById('logo-tpl');
+  const wrap = document.getElementById('logoWrap');
+  if(tpl && wrap) wrap.appendChild(tpl.content.cloneNode(true));
+})();
+
+/* MOBILE MENU */
+document.getElementById('mobBtn').addEventListener('click', function(){
+  const m = document.getElementById('mobMenu');
+  m.style.display = m.style.display === 'none' ? 'block' : 'none';
+});
+
+/* IP COPY */
+function cpIP(el){
+  navigator.clipboard?.writeText('play.cantale.world').catch(()=>{});
+  const target = el.querySelector('span:last-child') || el;
+  const was = target.textContent;
+  target.textContent = '✓ Copié';
+  setTimeout(() => { target.textContent = was; }, 1600);
+}
+
+/* MAP */
+(function(){
+  const g = document.getElementById('mapG');
+  if(!g) return;
+  const t = ['c','c','f','f','f','x'];
+  for(let i = 0; i < 100; i++){
+    const d = document.createElement('div');
+    d.className = 'cell ' + t[Math.floor(Math.random() * t.length)];
+    g.appendChild(d);
+  }
+})();
+</script>
+</body>
+</html>
