@@ -1,0 +1,511 @@
+@import "tailwindcss";
+
+@theme {
+  /* Palette « Le Registre » — sombre et chaude, jamais de noir froid ni de blanc pur */
+  --color-ash: #15130f;
+  --color-ash-deep: #0e0c09;
+  --color-iron: #221e19;
+  --color-iron-light: #2c2721;
+  --color-iron-line: #3a342c;
+  --color-ember: #c6491f;
+  --color-ember-glow: #e8703c;
+  --color-gold: #d9a441;
+  --color-steel: #756f63;
+  /* steel éclairci — contraste AA (≈ 5,2:1 sur ash) pour le texte courant < 14px */
+  --color-steel-light: #8d877a;
+  --color-bone: #eee7d8;
+
+  /* Raretés (Items + Boutique) */
+  --color-rare: #5b8dd9;
+  --color-epique: #9b59d0;
+  --color-mythique: #e04f5f;
+  --color-legendaire: #d9a441;
+}
+
+@theme inline {
+  --font-hero: var(--font-zina), "Impact", serif;
+  --font-display: var(--font-clash), sans-serif;
+  --font-sans: var(--font-cabinet), system-ui, sans-serif;
+  --font-tech: var(--font-nippo), monospace;
+}
+
+/* ——— Motion tokens + hard shadow 2D (plaque nette, pas de glow / blur) ——— */
+:root {
+  --motion-fast: 150ms;
+  --motion-base: 200ms;
+  --motion-slow: 380ms;
+  --motion-press: 80ms;
+  --ease-forge: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-press: cubic-bezier(0.16, 1, 0.3, 1);
+  /* Boutons : ombre diagonale nette (blur 0) */
+  --shadow-rest: 3px 4px 0 0 rgba(0, 0, 0, 0.8);
+  --shadow-raised: 7px 9px 0 0 rgba(0, 0, 0, 0.8);
+  --shadow-pressed: 4px 5px 0 0 rgba(0, 0, 0, 0.8);
+  /* Cartes : même logique, offsets un cran plus discrets */
+  --shadow-card-rest: 3px 4px 0 0 rgba(0, 0, 0, 0.75);
+  --shadow-card-raised: 6px 8px 0 0 rgba(0, 0, 0, 0.8);
+  --shadow-card-pressed: 4px 5px 0 0 rgba(0, 0, 0, 0.78);
+  --shadow-card-soft: 5px 6px 0 0 rgba(0, 0, 0, 0.72);
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-ash);
+  color: var(--color-bone);
+}
+
+::selection {
+  background: var(--color-ember);
+  color: var(--color-bone);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-ember-glow);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+/* ——— Hero : révélation lettre par lettre ——— */
+@keyframes hero-letter {
+  from {
+    opacity: 0;
+    transform: translateY(0.35em) rotate(1.5deg);
+    filter: blur(6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) rotate(0deg);
+    filter: blur(0);
+  }
+}
+
+.hero-letter {
+  display: inline-block;
+  opacity: 0;
+  animation: hero-letter 0.9s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+@keyframes hero-fade {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.hero-fade {
+  opacity: 0;
+  animation: hero-fade 1.2s ease-out forwards;
+}
+
+/* ——— Bandeau registre défilant ——— */
+@keyframes marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+.marquee-track {
+  animation: marquee 36s linear infinite;
+  will-change: transform;
+}
+
+/* ——— Révélation au scroll ——— */
+@keyframes reveal-up {
+  from {
+    opacity: 0;
+    transform: translateY(28px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.reveal {
+  animation: reveal-up 0.9s var(--ease-forge) both;
+  animation-timeline: view();
+  animation-range: entry 0% entry 40%;
+}
+
+@supports not (animation-timeline: view()) {
+  .reveal {
+    animation: none;
+  }
+}
+
+/* Fallback IO (RevealObserver) — navigateurs sans view() timeline */
+.reveal.reveal-io {
+  opacity: 0;
+  transform: translateY(20px);
+  animation: none !important;
+  transition:
+    opacity var(--motion-slow) var(--ease-forge),
+    transform var(--motion-slow) var(--ease-forge);
+  transition-delay: var(--reveal-delay, 0ms);
+}
+
+.reveal.reveal-io.is-revealed {
+  opacity: 1;
+  transform: none;
+}
+
+/* Conteneur stagger : n'anime pas lui-même, uniquement les enfants */
+.reveal.reveal-stagger {
+  animation: none;
+  opacity: 1;
+  transform: none;
+}
+
+.reveal.reveal-stagger.reveal-io {
+  opacity: 1;
+  transform: none;
+}
+
+/* Stagger enfants (cartes dans une grille) */
+.reveal-stagger > * {
+  --reveal-delay: 0ms;
+}
+
+.reveal-stagger > *:nth-child(1) {
+  --reveal-delay: 0ms;
+}
+.reveal-stagger > *:nth-child(2) {
+  --reveal-delay: 55ms;
+}
+.reveal-stagger > *:nth-child(3) {
+  --reveal-delay: 110ms;
+}
+.reveal-stagger > *:nth-child(4) {
+  --reveal-delay: 165ms;
+}
+.reveal-stagger > *:nth-child(5) {
+  --reveal-delay: 220ms;
+}
+.reveal-stagger > *:nth-child(6) {
+  --reveal-delay: 275ms;
+}
+.reveal-stagger > *:nth-child(n + 7) {
+  --reveal-delay: 300ms;
+}
+
+@supports (animation-timeline: view()) {
+  .reveal-stagger > * {
+    animation: reveal-up 0.55s var(--ease-forge) both;
+    animation-delay: var(--reveal-delay, 0ms);
+    animation-timeline: view();
+    animation-range: entry 0% entry 45%;
+  }
+}
+
+@supports not (animation-timeline: view()) {
+  .reveal-stagger.reveal-io > * {
+    opacity: 0;
+    transform: translateY(16px);
+    transition:
+      opacity var(--motion-slow) var(--ease-forge),
+      transform var(--motion-slow) var(--ease-forge);
+    transition-delay: 0ms;
+  }
+
+  .reveal-stagger.reveal-io.is-revealed > * {
+    opacity: 1;
+    transform: none;
+    transition-delay: var(--reveal-delay, 0ms);
+  }
+}
+
+/* ——— Point « live » pulsant ——— */
+@keyframes live-pulse {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(200, 73, 31, 0.55);
+  }
+  50% {
+    box-shadow: 0 0 0 6px rgba(200, 73, 31, 0);
+  }
+}
+
+.live-dot {
+  animation: live-pulse 2.2s ease-in-out infinite;
+}
+
+/* ——— Encoches de vie : braise qui respire ——— */
+@keyframes ember-breathe {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 3px rgba(232, 112, 60, 0.5));
+  }
+  50% {
+    filter: drop-shadow(0 0 9px rgba(232, 112, 60, 0.9));
+  }
+}
+
+.notch-burning {
+  animation: ember-breathe 3s ease-in-out infinite;
+}
+
+/* ——— Transition de page (template.tsx) ——— */
+@keyframes page-enter {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.page-enter {
+  animation: page-enter var(--motion-base) var(--ease-forge) both;
+}
+
+/* View Transitions API — si le navigateur / Next l'active un jour */
+@supports (view-transition-name: none) {
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation-duration: var(--motion-base);
+    animation-timing-function: var(--ease-forge);
+  }
+}
+
+/* ——— Boutons / pressables ——— */
+.pressable {
+  transform: translate(0, 0);
+  box-shadow: var(--shadow-rest);
+  transition:
+    transform var(--motion-base) var(--ease-press),
+    box-shadow var(--motion-base) var(--ease-press),
+    border-color var(--motion-base) ease-out,
+    background-color var(--motion-base) ease-out,
+    color var(--motion-base) ease-out,
+    opacity var(--motion-fast) ease-out;
+}
+
+.pressable:active:not(:disabled) {
+  transform: translate(-1px, -2px);
+  box-shadow: var(--shadow-pressed);
+  transition-duration: var(--motion-press);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .pressable:hover:not(:disabled) {
+    transform: translate(-3px, -5px);
+    box-shadow: var(--shadow-raised);
+  }
+
+  .pressable:hover:active:not(:disabled) {
+    transform: translate(-1px, -2px);
+    box-shadow: var(--shadow-pressed);
+    transition-duration: var(--motion-press);
+  }
+}
+
+/* ——— Cartes / cases ——— */
+.card-lift {
+  transform: translate(0, 0);
+  box-shadow: var(--shadow-card-rest);
+  transition:
+    transform var(--motion-base) var(--ease-forge),
+    box-shadow var(--motion-base) var(--ease-forge),
+    border-color var(--motion-base) ease-out,
+    background-color var(--motion-base) ease-out,
+    color var(--motion-base) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-lift:hover {
+    transform: translate(-2px, -4px);
+    box-shadow: var(--shadow-card-raised);
+  }
+
+  a.card-lift:hover,
+  button.card-lift:hover {
+    border-color: var(--color-ember);
+  }
+}
+
+.card-lift:active {
+  transform: translate(-1px, -2px);
+  box-shadow: var(--shadow-card-pressed);
+  transition-duration: var(--motion-press);
+}
+
+/* Soft lift — blocs non cliquables (hover discret, trait discret) */
+.card-soft {
+  transform: translate(0, 0);
+  box-shadow: var(--shadow-card-rest);
+  transition:
+    transform var(--motion-base) var(--ease-forge),
+    box-shadow var(--motion-base) var(--ease-forge),
+    border-color var(--motion-base) ease-out,
+    background-color var(--motion-base) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .card-soft:hover {
+    transform: translate(-2px, -3px);
+    border-color: color-mix(in srgb, var(--color-bone) 35%, var(--color-iron-line));
+    box-shadow: var(--shadow-card-soft);
+  }
+}
+
+/* ——— Nav / textes : steel → bone, sans underline glow ——— */
+.nav-link {
+  transition: color 180ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .nav-link:hover {
+    color: var(--color-bone);
+  }
+}
+
+/* ——— Chips / filtres ——— */
+.chip {
+  transition:
+    transform var(--motion-fast) var(--ease-press),
+    border-color var(--motion-base) ease-out,
+    color var(--motion-base) ease-out,
+    background-color var(--motion-base) ease-out;
+}
+
+.chip:active:not(:disabled) {
+  transform: scale(0.97);
+}
+
+/* ——— Tampon : léger encrage au hover (conserve --stamp-rot) ——— */
+.stamp-ink {
+  transform: rotate(var(--stamp-rot, -2deg));
+  transition:
+    transform var(--motion-base) var(--ease-forge),
+    border-color var(--motion-base) ease-out,
+    color var(--motion-base) ease-out,
+    filter var(--motion-base) ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .stamp-ink:hover {
+    transform: rotate(var(--stamp-rot, -2deg)) scale(1.04);
+    filter: brightness(1.08);
+  }
+}
+
+/* ——— Menu mobile panel ——— */
+@keyframes panel-drop {
+  from {
+    opacity: 0;
+    transform: translateY(-6px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.menu-panel {
+  animation: panel-drop var(--motion-base) var(--ease-forge) both;
+}
+
+.menu-link {
+  transition: color 180ms ease-out;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .menu-link:hover {
+    color: var(--color-bone);
+  }
+}
+
+/* ——— Lien CTA « Découvrir → » : flèche qui avance ——— */
+.cta-arrow {
+  display: inline-block;
+  transition: transform var(--motion-base) var(--ease-forge);
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .group:hover .cta-arrow {
+    transform: translateX(4px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  .hero-letter,
+  .hero-fade,
+  .marquee-track,
+  .reveal,
+  .reveal-stagger > *,
+  .live-dot,
+  .notch-burning,
+  .page-enter,
+  .menu-panel {
+    animation: none !important;
+    opacity: 1 !important;
+    transform: none !important;
+    filter: none !important;
+  }
+
+  .reveal.reveal-io,
+  .reveal-stagger.reveal-io > *,
+  .pressable,
+  .card-lift,
+  .card-soft,
+  .nav-link,
+  .chip,
+  .menu-link,
+  .cta-arrow {
+    transition: none !important;
+    transform: none !important;
+  }
+
+  .stamp-ink {
+    transition: none !important;
+    filter: none !important;
+    transform: rotate(var(--stamp-rot, -2deg)) !important;
+  }
+
+  .pressable:hover:not(:disabled),
+  .pressable:active:not(:disabled),
+  .card-lift:hover,
+  .card-lift:active,
+  .card-soft:hover,
+  .chip:active:not(:disabled),
+  .group:hover .cta-arrow {
+    transform: none !important;
+  }
+
+  .pressable,
+  .pressable:hover:not(:disabled),
+  .pressable:active:not(:disabled),
+  .card-lift,
+  .card-lift:hover,
+  .card-lift:active,
+  .card-soft,
+  .card-soft:hover {
+    box-shadow: var(--shadow-rest) !important;
+  }
+
+  .stamp-ink:hover {
+    filter: none !important;
+    transform: rotate(var(--stamp-rot, -2deg)) !important;
+  }
+
+  ::view-transition-old(root),
+  ::view-transition-new(root) {
+    animation: none !important;
+  }
+}
