@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { AuthEntry } from "./auth-entry";
+import { DesktopMoreMenu } from "./desktop-more-menu";
 import { LiveCounter } from "./live-counter";
 import { MobileMenu } from "./mobile-menu";
 
@@ -14,7 +15,7 @@ const NAV_LINKS = [
   { href: "/partenariats", label: "Partenariats" },
 ];
 
-/** Découverte secondaire — footer + hamburger « Plus », pas la barre desktop. */
+/** Découverte secondaire — footer + menu « Plus » (mobile et desktop). */
 const EXTRA_LINKS = [
   { href: "/reglement", label: "Règlement" },
   { href: "/boutique", label: "Boutique" },
@@ -43,6 +44,7 @@ export function SiteHeader() {
               {link.label}
             </Link>
           ))}
+          <DesktopMoreMenu links={EXTRA_LINKS} />
         </nav>
 
         <div className="flex items-center gap-4">
