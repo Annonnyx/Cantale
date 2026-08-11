@@ -1,6 +1,5 @@
 import Link from "next/link";
 import { AuthEntry } from "./auth-entry";
-import { DesktopMoreMenu } from "./desktop-more-menu";
 import { LiveCounter } from "./live-counter";
 import { MobileMenu } from "./mobile-menu";
 
@@ -15,7 +14,7 @@ const NAV_LINKS = [
   { href: "/partenariats", label: "Partenariats" },
 ];
 
-/** Découverte secondaire — footer + menu « Plus » (mobile et desktop). */
+/** Découverte secondaire — footer + section « Plus » du menu. */
 const EXTRA_LINKS = [
   { href: "/reglement", label: "Règlement" },
   { href: "/boutique", label: "Boutique" },
@@ -33,19 +32,6 @@ export function SiteHeader() {
         >
           CANTALE
         </Link>
-
-        <nav aria-label="Navigation principale" className="hidden items-center gap-7 xl:flex">
-          {NAV_LINKS.map((link) => (
-            <Link
-              key={link.href}
-              href={link.href}
-              className="nav-link font-tech text-[11px] uppercase tracking-[0.22em] text-steel-light hover:text-bone"
-            >
-              {link.label}
-            </Link>
-          ))}
-          <DesktopMoreMenu links={EXTRA_LINKS} />
-        </nav>
 
         <div className="flex items-center gap-4">
           <LiveCounter />

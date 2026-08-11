@@ -18,7 +18,7 @@ export function MobileMenu({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="xl:hidden">
+    <div>
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
@@ -36,7 +36,7 @@ export function MobileMenu({
 
       {open && (
         <nav
-          aria-label="Navigation mobile"
+          aria-label="Navigation"
           className="menu-panel absolute inset-x-0 top-16 border-b border-iron-line bg-ash-deep/95 backdrop-blur-md"
         >
           <ul className="flex flex-col px-6 py-4">
