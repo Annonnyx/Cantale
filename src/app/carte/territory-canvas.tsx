@@ -5,7 +5,6 @@ import type { KeyboardEvent, ReactNode } from "react";
 import {
   MAP_COLORS,
   chunkToBlock,
-  claimsBounds,
   factionFill,
   factionStroke,
   type MapClaim,
@@ -30,7 +29,13 @@ type HoverTarget =
 
 const SCALE_MIN = 1.5;
 const SCALE_MAX = 160;
+/**
+ * Zoom par défaut : ~12 px / chunk → ~±500 blocs visibles sur 800 px de large.
+ * Assez large pour le spawn / l’origine, assez serré pour lire les claims proches.
+ */
 const DEFAULT_SCALE = 12;
+/** Centre du chunk 0 (blocs 0–15) = origine monde / spawn schématique. */
+const ORIGIN_CHUNK = 0.5;
 const MARKER_HIT_RADIUS = 10;
 const ZOOM_STEP = 1.4;
 
@@ -73,7 +78,7 @@ export function TerritoryCanvas({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const camRef = useRef<Camera>({ x: 0.5, z: 0.5, scale: DEFAULT_SCALE });
+  const camRef = useRef<Camera>({ x: ORIGIN_CHUNK, z: ORIGIN_CHUNK, scale: DEFAULT_SCALE });
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
   const rafRef = useRef(0);
   const animRef = useRef(0);
@@ -81,7 +86,7 @@ export function TerritoryCanvas({
   const pinchRef = useRef<{ d: number; cx: number; cy: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const hoverRef = useRef<HoverTarget | null>(null);
-  const fittedRef = useRef(false);
+  const centeredRef = useRef(false);
   const [hover, setHover] = useState<{ target: HoverTarget; left: number; top: number } | null>(null);
 
   const grouped = useMemo(() => {
@@ -117,32 +122,23 @@ export function TerritoryCanvas({
     });
   }, []);
 
-  const fitView = useCallback(() => {
+  /**
+   * Vue par défaut stable : toujours l’origine monde (chunk 0,0 / spawn
+   * schématique) au centre, zoom fixe. Évite de atterrir au milieu de nulle
+   * part quand les claims sont épars ou loin du spawn (ancien fit-to-bounds).
+   */
+  const resetView = useCallback(() => {
     const cam = camRef.current;
-    const { w, h } = sizeRef.current;
-    const points: { x: number; z: number }[] = [...claims];
-    for (const marker of markers) points.push({ x: marker.x / 16, z: marker.z / 16 });
-    const bounds = claimsBounds(points);
-    if (!bounds || w <= 0 || h <= 0) {
-      cam.x = 0.5;
-      cam.z = 0.5;
-      cam.scale = DEFAULT_SCALE;
-      scheduleDraw();
-      return;
-    }
-    const pad = 4;
-    const spanX = bounds.maxX - bounds.minX + 1 + pad * 2;
-    const spanZ = bounds.maxZ - bounds.minZ + 1 + pad * 2;
-    cam.x = (bounds.minX + bounds.maxX + 1) / 2;
-    cam.z = (bounds.minZ + bounds.maxZ + 1) / 2;
-    cam.scale = clampScale(Math.min(w / spanX, h / spanZ));
+    cam.x = ORIGIN_CHUNK;
+    cam.z = ORIGIN_CHUNK;
+    cam.scale = DEFAULT_SCALE;
     scheduleDraw();
-  }, [claims, markers, scheduleDraw]);
+  }, [scheduleDraw]);
 
-  const fitRef = useRef(fitView);
+  const resetRef = useRef(resetView);
   useEffect(() => {
-    fitRef.current = fitView;
-  }, [fitView]);
+    resetRef.current = resetView;
+  }, [resetView]);
 
   /* ——— Rendu ——— */
   useEffect(() => {
@@ -371,9 +367,9 @@ export function TerritoryCanvas({
       sizeRef.current = { w: rect.width, h: rect.height, dpr };
       canvas.width = Math.max(1, Math.round(rect.width * dpr));
       canvas.height = Math.max(1, Math.round(rect.height * dpr));
-      if (!fittedRef.current) {
-        fittedRef.current = true;
-        fitRef.current();
+      if (!centeredRef.current) {
+        centeredRef.current = true;
+        resetRef.current();
       }
       scheduleDraw();
     };
@@ -600,7 +596,7 @@ export function TerritoryCanvas({
         zoomBy(1 / 1.25);
         break;
       case "0":
-        fitRef.current();
+        resetRef.current();
         break;
       default:
         return;
@@ -627,7 +623,7 @@ export function TerritoryCanvas({
         role="img"
         tabIndex={0}
         onKeyDown={onKeyDown}
-        aria-label="Carte interactive des territoires. Glisser pour déplacer, molette pour zoomer. Au clavier : flèches pour déplacer, touches plus et moins pour zoomer, zéro pour recadrer."
+        aria-label="Carte interactive des territoires. Glisser pour déplacer, molette pour zoomer. Au clavier : flèches pour déplacer, touches plus et moins pour zoomer, zéro pour recentrer sur l'origine."
         className="block h-full w-full cursor-grab touch-none"
       />
 
@@ -642,7 +638,7 @@ export function TerritoryCanvas({
             <path d="M1 7h12" />
           </svg>
         </MapButton>
-        <MapButton label="Recadrer sur les territoires" onClick={() => fitRef.current()}>
+        <MapButton label="Recentrer sur l'origine (0 · 0)" onClick={() => resetRef.current()}>
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
             <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
           </svg>

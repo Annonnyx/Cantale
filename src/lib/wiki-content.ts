@@ -849,6 +849,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             ],
             list: [
               "Pose de stockage : refusée en wilderness, claim ennemi et claim allié — uniquement claim de ta fac (sauf op/admin).",
+              "Exception : CRAFTING_TABLE posable en wilderness (reste protégée à la casse dans les claims via storage-blocks). Autres ateliers (smithing, loom, etc.) : toujours réservés au claim de ta fac.",
             ],
           },
           {

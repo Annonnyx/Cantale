@@ -422,7 +422,7 @@ export function MapExplorer({
               <div className="mt-auto flex flex-col gap-2 border-t border-iron-line/60 pt-4">
                 <p className="text-xs leading-relaxed text-steel">
                   Glisser pour déplacer, molette pour zoomer. Clavier : flèches pour
-                  déplacer, + et − pour zoomer, 0 pour recadrer.
+                  déplacer, + et − pour zoomer, 0 pour recentrer sur l&apos;origine.
                 </p>
                 <p className="font-tech text-[10px] uppercase tracking-[0.18em] text-steel">
                   {worldClaims.length} claim{worldClaims.length > 1 ? "s" : ""} — {pasdicTotal}{" "}
