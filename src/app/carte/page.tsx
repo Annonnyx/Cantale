@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { mapProviderPublicUrl } from "@/lib/map-provider";
 import { getMapClaims, getMapWarps } from "@/server/repo/map";
 import { MapExplorer } from "./map-explorer";
 
@@ -10,25 +11,10 @@ export const metadata: Metadata = {
     "La carte des territoires de CANTALE : claims de factions, zones PASDIC protégées et warps publics, relevés dans le registre.",
 };
 
-/**
- * URL publique d'une éventuelle Squaremap/BlueMap (MAP_PROVIDER_URL).
- * N'accepte que http(s) — jamais d'URL arbitraire dans une iframe.
- */
-function providerUrlFromEnv(): string | null {
-  const raw = process.env.MAP_PROVIDER_URL?.trim();
-  if (!raw) return null;
-  try {
-    const url = new URL(raw);
-    if (url.protocol !== "https:" && url.protocol !== "http:") return null;
-    return url.toString();
-  } catch {
-    return null;
-  }
-}
-
 export default async function CartePage() {
   const [claims, warps] = await Promise.all([getMapClaims(), getMapWarps()]);
-  const providerUrl = providerUrlFromEnv();
+  // HTTP → `/map-provider/` (rewrite same-origin) pour éviter le mixed content.
+  const providerUrl = mapProviderPublicUrl();
   const generatedAt = new Date().toISOString();
 
   return (

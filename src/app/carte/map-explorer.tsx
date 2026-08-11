@@ -213,7 +213,7 @@ export function MapExplorer({
             className="h-[62vh] min-h-[420px] w-full border border-iron-line bg-ash-deep"
           />
           <p className="text-xs leading-relaxed text-steel">
-            La carte détaillée est servie par un outil externe.{" "}
+            Carte live Squaremap / BlueMap (tuiles du serveur).{" "}
             <a
               href={providerUrl}
               target="_blank"

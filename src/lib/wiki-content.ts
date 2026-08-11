@@ -893,7 +893,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             title: "Carte site (/carte)",
             paragraphs: [
               "Sur cantale.world/carte : canvas des claims (factions non secrètes), layer PASDIC, markers warps publics (permanents + événements actifs). Rafraîchissement silencieux toutes les 30 s. Les factions en /f secret sont exclues en SQL (secret_until).",
-              "Onglet « carte du monde détaillée » (Squaremap/BlueMap) uniquement si MAP_PROVIDER_URL est configuré côté site.",
+              "Onglet « carte du monde détaillée » (Squaremap/BlueMap) uniquement si MAP_PROVIDER_URL est configuré côté site. Si l’URL est en HTTP, l’iframe utilise le proxy same-origin /map-provider/* (mixed content sinon).",
             ],
             list: [
               "En jeu : /f map = grille 11×11 autour de toi (cooldown 30 s).",
