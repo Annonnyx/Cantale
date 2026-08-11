@@ -48,3 +48,23 @@ export function mapProviderPublicUrl(): string | null {
 }
 
 export const MAP_PROVIDER_PROXY_SOURCE = PROXY_BASE;
+
+/**
+ * Base pour charger tuiles / settings Squaremap depuis le client
+ * (proxy same-origin si upstream HTTP, sinon origine HTTPS directe).
+ */
+export function mapProviderTileBase(): string | null {
+  const raw = process.env.MAP_PROVIDER_URL?.trim();
+  if (!raw) return null;
+  try {
+    const url = new URL(raw);
+    if (url.protocol === "http:") return PROXY_BASE;
+    if (url.protocol === "https:") {
+      const path = url.pathname.replace(/\/+$/, "");
+      return `${url.origin}${path}`;
+    }
+    return null;
+  } catch {
+    return null;
+  }
+}

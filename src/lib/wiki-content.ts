@@ -892,12 +892,12 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "carte-site",
             title: "Carte site (/carte)",
             paragraphs: [
-              "Sur cantale.world/carte : canvas des claims (factions non secrètes), layer PASDIC, markers warps publics (permanents + événements actifs). Rafraîchissement silencieux toutes les 30 s. Les factions en /f secret sont exclues en SQL (secret_until).",
-              "Onglet « carte du monde détaillée » (Squaremap/BlueMap) uniquement si MAP_PROVIDER_URL est configuré côté site. Si l’URL est en HTTP, l’iframe utilise le proxy same-origin /map-provider/* (mixed content sinon).",
+              "Sur cantale.world/carte : une seule vue — tuiles Squaremap (relief live) + overlays Cantale (claims, PASDIC, warps). Rafraîchissement silencieux toutes les 30 s. Les factions en /f secret sont exclues en SQL (secret_until).",
+              "Si MAP_PROVIDER_URL est en HTTP, les tuiles passent par le proxy same-origin /map-provider/* (évite le mixed content). Plein écran, lien externe Squaremap, recherche faction et champs X/Z (blocs). Centre par défaut : spawn /spawn (−67 · −144).",
             ],
             list: [
               "En jeu : /f map = grille 11×11 autour de toi (cooldown 30 s).",
-              "Spawn serveur : pas en base warps — non inventé sur la carte site.",
+              "Spawn serveur : affiché comme repère (coords Bukkit / Squaremap), pas inventé depuis la table warps.",
             ],
           },
         ],

@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { mapProviderPublicUrl } from "@/lib/map-provider";
+import { mapProviderPublicUrl, mapProviderTileBase } from "@/lib/map-provider";
 import { getMapClaims, getMapWarps } from "@/server/repo/map";
 import { MapExplorer } from "./map-explorer";
 
@@ -8,13 +8,14 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Carte",
   description:
-    "La carte des territoires de CANTALE : claims de factions, zones PASDIC protégées et warps publics, relevés dans le registre.",
+    "La carte des territoires de CANTALE : claims de factions, zones PASDIC protégées et warps publics sur le relief Squaremap.",
 };
 
 export default async function CartePage() {
   const [claims, warps] = await Promise.all([getMapClaims(), getMapWarps()]);
   // HTTP → `/map-provider/index.html` (rewrite same-origin) pour éviter le mixed content.
   const providerUrl = mapProviderPublicUrl();
+  const tileBase = mapProviderTileBase();
   const generatedAt = new Date().toISOString();
 
   return (
@@ -27,9 +28,10 @@ export default async function CartePage() {
           Carte
         </h1>
         <p className="max-w-2xl text-base leading-relaxed text-steel">
-          Chaque chunk revendiqué est gravé ici : territoires de factions, zones
+          Relief live Squaremap et territoires du registre : claims, zones
           PASDIC protégées et warps publics. Les factions en /f secret n&apos;y
-          figurent pas — le registre respecte la clandestinité.
+          figurent pas — le registre respecte la clandestinité. Vue centrée sur
+          le spawn (−67 · −144).
         </p>
       </header>
 
@@ -47,7 +49,7 @@ export default async function CartePage() {
           {providerUrl && (
             <div className="mt-4 flex flex-col gap-3 border border-iron-line bg-iron p-6">
               <span className="font-tech text-[10px] uppercase tracking-[0.24em] text-steel">
-                Carte du monde détaillée
+                Carte Squaremap
               </span>
               <a
                 href={providerUrl}
@@ -66,6 +68,7 @@ export default async function CartePage() {
           initialMarkers={warps ?? []}
           generatedAt={generatedAt}
           providerUrl={providerUrl}
+          tileBase={tileBase}
         />
       )}
     </main>

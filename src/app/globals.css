@@ -1,4 +1,27 @@
 @import "tailwindcss";
+@import "leaflet/dist/leaflet.css";
+
+/* Carte Leaflet unifiée — fond Registre, pas de tuiles OSM par défaut */
+.cantale-world-map.leaflet-container {
+  background: #0e0c09;
+  font: inherit;
+  z-index: 0;
+}
+.cantale-world-map .leaflet-control-attribution {
+  display: none;
+}
+.cantale-world-map .leaflet-bar a {
+  background: #221e19;
+  border-color: #3a342c;
+  color: #eee7d8;
+}
+.cantale-world-map .leaflet-bar a:hover {
+  background: #2c2721;
+  color: #e8703c;
+}
+.cantale-world-map .leaflet-bar a.leaflet-disabled {
+  color: #756f63;
+}
 
 @theme {
   /* Palette « Le Registre » — sombre et chaude, jamais de noir froid ni de blanc pur */
