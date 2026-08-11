@@ -1,4 +1,5 @@
 import { query } from "../db";
+import { publicRankingExcludeSql } from "../public-ranking-exclusions";
 
 /**
  * Tables `votes` (bruts, Votifier) et `vote_stats` (agrégats) — lecture seule.
@@ -107,6 +108,7 @@ export async function getTopVoters(limit = 10): Promise<VoteStats[]> {
   const rows = await query<VoteStatsRow>(
     `SELECT player_uuid, player_name, total_votes, streak_days, last_vote_at, monthly_votes, last_month
      FROM vote_stats
+     WHERE ${publicRankingExcludeSql("player_name", "player_uuid")}
      ORDER BY total_votes DESC
      LIMIT ${safeLimit}`,
   );

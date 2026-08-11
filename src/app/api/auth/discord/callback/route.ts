@@ -7,36 +7,58 @@ import {
 } from "@/server/session";
 
 export const dynamic = "force-dynamic";
+export const runtime = "nodejs";
 
 type TokenResponse = {
   access_token?: string;
   token_type?: string;
+  error?: string;
+  error_description?: string;
 };
 
-/** Échange le code d'autorisation contre un access token (Basic auth). */
+/** Échange le code d'autorisation contre un access token. */
 async function exchangeCode(code: string, redirectUri: string): Promise<string | null> {
   const clientId = env.discordClientId;
   const clientSecret = env.discordClientSecret;
-  if (!clientId || !clientSecret) return null;
+  if (!clientId || !clientSecret) {
+    console.error("[auth/discord] missing DISCORD_CLIENT_ID or DISCORD_CLIENT_SECRET");
+    return null;
+  }
 
   try {
+    // Credentials dans le body (forme documentée Discord) — Basic auth aussi accepté,
+    // mais le body évite les pièges d'encodage sur certains secrets.
     const res = await fetch("https://discord.com/api/v10/oauth2/token", {
       method: "POST",
       headers: {
         "Content-Type": "application/x-www-form-urlencoded",
-        Authorization: `Basic ${Buffer.from(`${clientId}:${clientSecret}`).toString("base64")}`,
       },
       body: new URLSearchParams({
+        client_id: clientId,
+        client_secret: clientSecret,
         grant_type: "authorization_code",
         code,
         redirect_uri: redirectUri,
       }),
       cache: "no-store",
     });
-    if (!res.ok) return null;
-    const data = (await res.json()) as TokenResponse;
+    const raw = await res.text();
+    let data: TokenResponse = {};
+    try {
+      data = raw ? (JSON.parse(raw) as TokenResponse) : {};
+    } catch {
+      data = {};
+    }
+    if (!res.ok) {
+      const detail = data.error_description ?? data.error ?? raw.slice(0, 200);
+      console.error(
+        `[auth/discord] token exchange failed status=${res.status} redirect_uri=${redirectUri} detail=${detail}`,
+      );
+      return null;
+    }
     return data.access_token ?? null;
-  } catch {
+  } catch (err) {
+    console.error("[auth/discord] token exchange threw", err);
     return null;
   }
 }
@@ -63,5 +85,8 @@ export async function GET(request: Request) {
   if (!user) return failure("profil_introuvable");
 
   await setSessionCookie(user);
+  if (!env.authSecret) {
+    console.error("[auth/discord] AUTH_SECRET missing — session cookie not set");
+  }
   return Response.redirect(`${origin}/connexion`, 302);
 }

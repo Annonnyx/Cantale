@@ -6,8 +6,17 @@ export const dynamic = "force-dynamic";
 /** Point d'entrée OAuth2 : redirige vers l'autorisation Discord (scope identify). */
 export async function GET(request: Request) {
   const clientId = env.discordClientId;
-  if (!clientId) {
-    return Response.json({ error: "Authentification non configurée." }, { status: 503 });
+  const clientSecret = env.discordClientSecret;
+  // Les deux sont requis : sans secret, Discord accepte l'authorize puis l'échange
+  // de code échoue avec « echange_impossible » — mieux vaut échouer ici.
+  if (!clientId || !clientSecret) {
+    return Response.json(
+      {
+        error:
+          "Authentification Discord non configurée (DISCORD_CLIENT_ID / DISCORD_CLIENT_SECRET).",
+      },
+      { status: 503 },
+    );
   }
 
   const origin = env.authUrl ?? new URL(request.url).origin;

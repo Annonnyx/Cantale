@@ -1,4 +1,5 @@
 import { query } from "../db";
+import { publicRankingExcludeSql } from "../public-ranking-exclusions";
 
 /**
  * Table `players` du plugin CANTALE — lecture seule.
@@ -130,7 +131,9 @@ export async function getTopPlayers(metric: PlayerMetric, limit = 10): Promise<P
   const column = SORTABLE_COLUMNS[metric];
   const safeLimit = clampLimit(limit);
   const rows = await query<PlayerRow>(
-    `SELECT ${PLAYER_SELECT} FROM players ORDER BY ${column} DESC, username ASC LIMIT ${safeLimit}`,
+    `SELECT ${PLAYER_SELECT} FROM players
+     WHERE ${publicRankingExcludeSql("username", "uuid")}
+     ORDER BY ${column} DESC, username ASC LIMIT ${safeLimit}`,
   );
   return rows.map(toPlayer);
 }

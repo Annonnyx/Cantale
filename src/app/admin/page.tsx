@@ -29,7 +29,9 @@ export default async function AdminPage() {
       </span>
       <h1 className="mt-3 font-display text-4xl font-semibold text-bone">Admin</h1>
       <p className="mt-4 max-w-2xl text-sm text-steel-light">
-        Actions via file plugin (~2 s). Joueurs en ligne : liste JSON mise à jour chaque minute.
+        Liste de tous les joueurs (online / offline). Clique un pseudo pour ouvrir son profil :
+        lecture publique pour tous, outils Direction (inspect inventaire / EC / PC, edits) si tu es
+        admin. Badges online via <code className="text-ember-glow">server_status.online_json</code>.
       </p>
       <div className="mt-10">
         <AdminPanel />

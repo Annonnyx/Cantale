@@ -1,4 +1,5 @@
 import { query } from "../db";
+import { publicRankingExcludeSql } from "../public-ranking-exclusions";
 import {
   findClosestSnapshotDate,
   getPeriodBounds,
@@ -185,8 +186,10 @@ export async function getLeaderboard(options: {
   if (startSnapshot) params.s0Date = startSnapshot;
   if (previousSnapshot) params.s1Date = previousSnapshot;
 
+  const excludeSql = publicRankingExcludeSql("p.username", "p.uuid");
   const selectSql = `SELECT p.uuid, p.username, ${valueExpr} AS value, ${prevExpr} AS prev_value
-     FROM players p ${joins}`;
+     FROM players p ${joins}
+     WHERE ${excludeSql}`;
 
   const rows = await query<LeaderboardRow>(
     `${selectSql} ORDER BY value DESC, p.username ASC LIMIT ${safeLimit}`,
@@ -211,7 +214,7 @@ export async function getLeaderboard(options: {
   let viewer: ViewerPosition | null = null;
   if (viewerUuid) {
     const viewerRows = await query<ViewerRow>(
-      `${selectSql} WHERE p.uuid = :viewerUuid LIMIT 1`,
+      `${selectSql} AND p.uuid = :viewerUuid LIMIT 1`,
       { ...params, viewerUuid },
     );
     const viewerRow = viewerRows[0];
@@ -221,6 +224,7 @@ export async function getLeaderboard(options: {
       const rankRows = await query<RankRow>(
         `SELECT COUNT(*) + 1 AS rank FROM (
            SELECT ${valueExpr} AS value FROM players p ${joins}
+           WHERE ${excludeSql}
          ) ranked
          WHERE ranked.value > :viewerValue`,
         { ...params, viewerValue },
@@ -256,7 +260,8 @@ export async function getGlobalCounters(): Promise<GlobalCounters> {
     `SELECT COALESCE(SUM(balance), 0) AS cantox,
             COALESCE(SUM(GREATEST(lives, 0)), 0) AS lives,
             COALESCE(SUM(deaths), 0) AS deaths
-     FROM players`,
+     FROM players
+     WHERE ${publicRankingExcludeSql("username", "uuid")}`,
   );
   const row = rows[0];
   return {
@@ -285,7 +290,8 @@ export async function getLivesDistribution(): Promise<LivesDistribution> {
             COALESCE(SUM(CASE WHEN lives = 2 THEN 1 ELSE 0 END), 0) AS two,
             COALESCE(SUM(CASE WHEN lives = 1 THEN 1 ELSE 0 END), 0) AS one,
             COALESCE(SUM(CASE WHEN lives <= 0 THEN 1 ELSE 0 END), 0) AS zero
-     FROM players`,
+     FROM players
+     WHERE ${publicRankingExcludeSql("username", "uuid")}`,
   );
   const row = rows[0];
   return {
@@ -297,26 +303,33 @@ export async function getLivesDistribution(): Promise<LivesDistribution> {
 }
 
 export type RecordHolder = {
+  uuid: string;
   username: string;
   value: number;
 } | null;
 
 /** Record absolu de série de kills, et son détenteur. */
 export async function getKillStreakRecord(): Promise<RecordHolder> {
-  const rows = await query<{ username: string; value: number | string }>(
-    `SELECT username, kill_streak AS value FROM players
+  const rows = await query<{ uuid: string; username: string; value: number | string }>(
+    `SELECT uuid, username, kill_streak AS value FROM players
+     WHERE ${publicRankingExcludeSql("username", "uuid")}
      ORDER BY kill_streak DESC, username ASC LIMIT 1`,
   );
   const row = rows[0];
-  return row ? { username: row.username, value: toNumber(row.value) } : null;
+  return row
+    ? { uuid: row.uuid, username: row.username, value: toNumber(row.value) }
+    : null;
 }
 
 /** Plus grand nombre de morts, et son détenteur. */
 export async function getDeathsRecord(): Promise<RecordHolder> {
-  const rows = await query<{ username: string; value: number | string }>(
-    `SELECT username, deaths AS value FROM players
+  const rows = await query<{ uuid: string; username: string; value: number | string }>(
+    `SELECT uuid, username, deaths AS value FROM players
+     WHERE ${publicRankingExcludeSql("username", "uuid")}
      ORDER BY deaths DESC, username ASC LIMIT 1`,
   );
   const row = rows[0];
-  return row ? { username: row.username, value: toNumber(row.value) } : null;
+  return row
+    ? { uuid: row.uuid, username: row.username, value: toNumber(row.value) }
+    : null;
 }

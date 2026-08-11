@@ -11,6 +11,7 @@ import {
   getLivesDistribution,
   type LivesDistribution,
 } from "@/server/repo/leaderboards";
+import { PlayerLink } from "@/components/player/player-link";
 
 export const dynamic = "force-dynamic";
 
@@ -214,7 +215,15 @@ export default async function StatsPage() {
             {streakRecord ? (
               <>
                 <span className="font-tech text-3xl text-bone">{formatNumber(streakRecord.value)}</span>
-                <span className="text-sm text-steel">par {streakRecord.username}</span>
+                <span className="text-sm text-steel">
+                  par{" "}
+                  <PlayerLink
+                    uuid={streakRecord.uuid}
+                    className="text-bone hover:text-ember-glow"
+                  >
+                    {streakRecord.username}
+                  </PlayerLink>
+                </span>
               </>
             ) : (
               <Unavailable />
@@ -227,7 +236,15 @@ export default async function StatsPage() {
             {deathsRecord ? (
               <>
                 <span className="font-tech text-3xl text-bone">{formatNumber(deathsRecord.value)}</span>
-                <span className="text-sm text-steel">par {deathsRecord.username}</span>
+                <span className="text-sm text-steel">
+                  par{" "}
+                  <PlayerLink
+                    uuid={deathsRecord.uuid}
+                    className="text-bone hover:text-ember-glow"
+                  >
+                    {deathsRecord.username}
+                  </PlayerLink>
+                </span>
               </>
             ) : (
               <Unavailable />
@@ -287,7 +304,11 @@ function TopTenChart({
                 <span className="font-tech text-[10px] text-steel">
                   {String(index + 1).padStart(2, "0")}
                 </span>
-                <span className="truncate text-sm text-bone">{player.username}</span>
+                <span className="truncate text-sm text-bone">
+                  <PlayerLink uuid={player.uuid} className="hover:text-ember-glow">
+                    {player.username}
+                  </PlayerLink>
+                </span>
                 <div aria-hidden className="h-3.5 w-full border border-iron-line/60 bg-ash-deep">
                   <div
                     className={`h-full ${index === 0 ? "bg-gold" : "bg-ember"}`}

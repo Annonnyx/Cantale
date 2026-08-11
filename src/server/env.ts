@@ -12,6 +12,13 @@ function readEnv(name: string): string | null {
   return trimmed.length > 0 ? trimmed : null;
 }
 
+/** Origine publique sans slash final (évite `//api/...` dans les redirect_uri OAuth). */
+function readOriginEnv(name: string): string | null {
+  const value = readEnv(name);
+  if (!value) return null;
+  return value.replace(/\/+$/, "");
+}
+
 export type DatabaseConfig =
   | { mode: "uri"; uri: string }
   | {
@@ -70,9 +77,13 @@ export const env = {
   get authSecret(): string | null {
     return readEnv("AUTH_SECRET");
   },
-  /** Origine publique du site (ex. https://cantale.world) — base des URL de callback OAuth. */
+  /**
+   * Origine publique du site (ex. https://www.cantale.world) — base des URL de callback OAuth.
+   * Doit correspondre exactement à une Redirect URI enregistrée sur le portail Discord,
+   * et idéalement au domaine canonique (www) pour éviter un 307 apex→www pendant le callback.
+   */
   get authUrl(): string | null {
-    return readEnv("AUTH_URL");
+    return readOriginEnv("AUTH_URL");
   },
   get shopEnabled(): boolean {
     return readEnv("SHOP_ENABLED") === "true";

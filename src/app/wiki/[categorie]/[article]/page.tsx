@@ -59,6 +59,43 @@ function SectionBody({ section }: { section: WikiSection }) {
           ))}
         </ul>
       )}
+      {section.tables?.map((table, tableIndex) => (
+        <div key={tableIndex} className="max-w-4xl overflow-x-auto">
+          {table.caption && (
+            <p className="mb-2 font-tech text-[10px] uppercase tracking-[0.22em] text-gold">
+              {table.caption}
+            </p>
+          )}
+          <table className="w-full min-w-[28rem] border-collapse border border-iron-line text-left text-sm">
+            <thead>
+              <tr className="bg-iron">
+                {table.headers.map((header) => (
+                  <th
+                    key={header}
+                    className="border border-iron-line px-3 py-2.5 font-tech text-[10px] uppercase tracking-[0.18em] text-ember-glow"
+                  >
+                    {header}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              {table.rows.map((row, rowIndex) => (
+                <tr key={rowIndex} className="bg-ash-deep/40">
+                  {row.map((cell, cellIndex) => (
+                    <td
+                      key={cellIndex}
+                      className="border border-iron-line px-3 py-2.5 align-top leading-relaxed text-steel"
+                    >
+                      {cell}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ))}
       {section.commands && (
         <div className="flex flex-col gap-3">
           {section.commands.map((command) => (

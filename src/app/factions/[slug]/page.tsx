@@ -1,5 +1,4 @@
-/* Avatars servis par mc-heads.net (tiers) : <img> natif — next/image exigerait
- * une entrée remotePatterns dans next.config, hors du périmètre de cette page. */
+/* Avatars via /api/minecraft/avatar (proxy serveur) : <img> natif. */
 /* eslint-disable @next/next/no-img-element */
 
 import type { Metadata } from "next";
@@ -18,10 +17,12 @@ import {
   getFactionSettings,
   getLivesByUuids,
 } from "@/server/repo/faction-settings";
+import { minecraftAvatarUrl } from "@/lib/minecraft-skin";
 import { listPendingByFaction } from "@/server/repo/faction-actions";
 import { getSessionUser } from "@/server/session";
 import { LifeNotches } from "@/components/ui/life-notches";
 import { Stamp } from "@/components/ui/stamp";
+import { PlayerLink } from "@/components/player/player-link";
 import { ApplyForm } from "./apply-form";
 import { LeaderPanel } from "./leader-panel";
 
@@ -67,7 +68,7 @@ function formatDate(unixSeconds: number): string {
 }
 
 function avatarUrl(uuid: string): string {
-  return `https://mc-heads.net/avatar/${uuid}/64`;
+  return minecraftAvatarUrl(uuid, 64);
 }
 
 function clampLives(lives: number): 0 | 1 | 2 | 3 {
@@ -96,9 +97,18 @@ function MemberRow({ member, lives }: { member: FactionMember; lives: number | u
         className="h-10 w-10 shrink-0 border border-iron-line bg-ash-deep"
       />
       <div className="flex min-w-0 flex-1 flex-col gap-0.5">
-        <span className="truncate font-display text-base font-semibold text-bone">
-          {member.username ?? "Joueur inconnu"}
-        </span>
+        {member.username ? (
+          <PlayerLink
+            uuid={member.uuid}
+            className="truncate font-display text-base font-semibold text-bone hover:text-ember-glow"
+          >
+            {member.username}
+          </PlayerLink>
+        ) : (
+          <span className="truncate font-display text-base font-semibold text-bone">
+            Joueur inconnu
+          </span>
+        )}
         <span className={`font-tech text-[10px] uppercase tracking-[0.22em] ${rank.className}`}>
           <span aria-hidden="true">{rank.symbol} </span>
           {rank.label}
@@ -106,7 +116,7 @@ function MemberRow({ member, lives }: { member: FactionMember; lives: number | u
         </span>
       </div>
       <span className="hidden font-tech text-[10px] uppercase tracking-[0.18em] text-steel sm:block">
-        Depuis le {formatDate(member.joinedAt)}
+        {member.joinedAt > 0 ? `Depuis le ${formatDate(member.joinedAt)}` : "—"}
       </span>
       {lives === undefined ? (
         <span className="font-tech text-[10px] uppercase tracking-[0.18em] text-steel/60">—</span>

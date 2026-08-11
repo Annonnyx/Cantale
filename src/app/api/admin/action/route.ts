@@ -13,6 +13,12 @@ const ALLOWED = new Set([
   "unban",
   "msg",
   "discord_dm",
+  "inspect_player",
+  "clear_container",
+  "remove_slot",
+  "clear_shulker",
+  "give_effect",
+  "clear_effect",
 ]);
 
 export async function POST(request: Request) {

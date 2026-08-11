@@ -276,6 +276,14 @@ async function ProfileView({ user }: { user: SessionUser }) {
         <h1 className="font-display text-4xl font-semibold leading-[1.05] text-bone sm:text-5xl">
           {username}
         </h1>
+        {uuid ? (
+          <Link
+            href={`/joueur/${uuid}`}
+            className="font-tech text-[10px] uppercase tracking-[0.25em] text-ember-glow hover:text-bone"
+          >
+            Voir le profil public →
+          </Link>
+        ) : null}
         <RoleStamps user={user} />
       </header>
 

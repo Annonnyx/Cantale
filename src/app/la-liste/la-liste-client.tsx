@@ -1,12 +1,15 @@
 "use client";
 
-/* Avatars servis par mc-heads.net (tiers) : <img> natif — next/image exigerait
- * une entrée remotePatterns dans next.config, hors du périmètre de cette page. */
+/* Avatars via /api/minecraft/avatar (proxy serveur) : <img> natif. */
 /* eslint-disable @next/next/no-img-element */
 
 import { useEffect, useMemo, useRef, useState } from "react";
+import Link from "next/link";
 import { LifeNotches } from "@/components/ui/life-notches";
 import { Stamp } from "@/components/ui/stamp";
+import { playerProfilePath } from "@/lib/player-profile";
+import { PlayerLink } from "@/components/player/player-link";
+import { minecraftAvatarUrl } from "@/lib/minecraft-skin";
 
 export type DeadPlayer = {
   uuid: string;
@@ -45,7 +48,7 @@ function formatPlaytime(seconds: number): string {
 }
 
 function avatarUrl(uuid: string): string {
-  return `https://mc-heads.net/avatar/${uuid}/64`;
+  return minecraftAvatarUrl(uuid, 64);
 }
 
 export function LaListeClient({ players }: { players: DeadPlayer[] }) {
@@ -134,7 +137,7 @@ export function LaListeClient({ players }: { players: DeadPlayer[] }) {
         <div className="border border-iron-line bg-iron">
           <div
             aria-hidden
-            className="hidden grid-cols-[1fr_10rem_6rem_6rem_8rem_8rem] gap-4 border-b border-iron-line px-5 py-3 font-tech text-[9px] uppercase tracking-[0.22em] text-steel lg:grid"
+            className="hidden grid-cols-[1fr_10rem_6rem_6rem_8rem_8rem_5rem] gap-4 border-b border-iron-line px-5 py-3 font-tech text-[9px] uppercase tracking-[0.22em] text-steel lg:grid"
           >
             <span>Nom</span>
             <span>Mort définitive</span>
@@ -142,16 +145,13 @@ export function LaListeClient({ players }: { players: DeadPlayer[] }) {
             <span className="text-right">Morts</span>
             <span className="text-right">Meilleure série</span>
             <span className="text-right">Temps de jeu</span>
+            <span className="text-right"> </span>
           </div>
           <ul>
             {pagePlayers.map((player) => (
               <li key={player.uuid} className="border-b border-iron-line/60 last:border-b-0">
-                <button
-                  type="button"
-                  onClick={() => setSelected(player)}
-                  className="pressable grid w-full grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-3.5 text-left hover:bg-iron-light lg:grid-cols-[1fr_10rem_6rem_6rem_8rem_8rem]"
-                >
-                  <span className="flex items-center gap-3">
+                <div className="grid grid-cols-[auto_1fr_auto] items-center gap-4 px-5 py-3.5 lg:grid-cols-[1fr_10rem_6rem_6rem_8rem_8rem_5rem]">
+                  <span className="flex min-w-0 items-center gap-3">
                     <img
                       src={avatarUrl(player.uuid)}
                       alt=""
@@ -160,9 +160,12 @@ export function LaListeClient({ players }: { players: DeadPlayer[] }) {
                       loading="lazy"
                       className="h-8 w-8 border border-iron-line bg-ash-deep"
                     />
-                    <span className="font-display text-base font-semibold text-bone">
+                    <PlayerLink
+                      uuid={player.uuid}
+                      className="truncate font-display text-base font-semibold text-bone hover:text-ember-glow"
+                    >
                       {player.username}
-                    </span>
+                    </PlayerLink>
                   </span>
                   <span className="hidden text-sm text-steel lg:block">
                     {formatDeathDate(player.lastDeath)}
@@ -182,10 +185,14 @@ export function LaListeClient({ players }: { players: DeadPlayer[] }) {
                   <span className="text-right font-tech text-[10px] uppercase tracking-[0.2em] text-steel lg:hidden">
                     {formatDeathDate(player.lastDeath)}
                   </span>
-                  <span className="hidden font-tech text-[10px] uppercase tracking-[0.25em] text-ember-glow lg:hidden">
-                    →
-                  </span>
-                </button>
+                  <button
+                    type="button"
+                    onClick={() => setSelected(player)}
+                    className="pressable justify-self-end font-tech text-[10px] uppercase tracking-[0.2em] text-ember-glow hover:text-bone"
+                  >
+                    Aperçu
+                  </button>
+                </div>
               </li>
             ))}
           </ul>
@@ -273,7 +280,11 @@ function MemorialPanel({ player, onClose }: { player: DeadPlayer; onClose: () =>
           />
           <div className="flex flex-col gap-3">
             <div className="flex flex-wrap items-center gap-3">
-              <h2 className="font-display text-2xl font-semibold text-bone">{player.username}</h2>
+              <h2 className="font-display text-2xl font-semibold text-bone">
+                <PlayerLink uuid={player.uuid} className="hover:text-ember-glow">
+                  {player.username}
+                </PlayerLink>
+              </h2>
               <Stamp tone="steel">Banni</Stamp>
             </div>
             <LifeNotches lives={0} />
@@ -281,6 +292,12 @@ function MemorialPanel({ player, onClose }: { player: DeadPlayer; onClose: () =>
               Mort définitive le {formatDeathDate(player.lastDeath)}. Trois encoches brisées —
               le registre garde le nom, le serveur garde le silence.
             </p>
+            <Link
+              href={playerProfilePath(player.uuid)}
+              className="font-tech text-[10px] uppercase tracking-[0.25em] text-ember-glow hover:text-bone"
+            >
+              Profil complet →
+            </Link>
           </div>
 
           <dl className="grid w-full grid-cols-2 gap-px border border-iron-line bg-iron-line">

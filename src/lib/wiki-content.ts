@@ -1,6 +1,7 @@
 /**
  * Contenu du wiki CANTALE — source de vérité typée.
- * Rédigé à partir de COMMANDS.md, docs/ et du plugin (plugin.yml, commandes).
+ * Aligné sur le plugin : plugin.yml, package commands/, PlayerRank,
+ * RankManager, PrivateChestService, AfkListener, Discord /link, site /connexion.
  * Les pages du wiki rendent ces données de façon générique.
  */
 
@@ -12,12 +13,20 @@ export interface WikiCommand {
   note?: string;
 }
 
+export interface WikiTable {
+  /** Légende courte au-dessus du tableau. */
+  caption?: string;
+  headers: string[];
+  rows: string[][];
+}
+
 export interface WikiSection {
   /** Ancre unique dans l'article (sommaire). */
   id: string;
   title: string;
   paragraphs?: string[];
   list?: string[];
+  tables?: WikiTable[];
   commands?: WikiCommand[];
 }
 
@@ -52,39 +61,197 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "commandes-joueur",
         title: "Commandes joueur",
         summary:
-          "Les commandes de base accessibles à tous : informations du serveur, profil, classements et récompense quotidienne.",
+          "Répertoire pratique : qui peut utiliser quoi, à quoi ça sert, cooldowns connus. Les /f détaillés sont dans Factions.",
         featured: true,
-        related: ["teleportation", "grades-permissions", "trois-vies"],
+        related: [
+          "teleportation",
+          "grades-permissions",
+          "discord-site",
+          "creer-gerer-faction",
+          "trois-vies",
+          "coffres-inventaires",
+        ],
         sections: [
+          {
+            id: "lecture",
+            title: "Comment lire cette page",
+            paragraphs: [
+              "Sauf note contraire, les commandes listées ici sont utilisables par tout joueur (pas de permission dans plugin.yml). Les grades VIP / Chèvre ouvrent des commandes ou lèvent des cooldowns — voir Grades & permissions.",
+              "Les sous-commandes de faction (/f …, /fc, /recolte) sont documentées dans la catégorie Factions : pas de doublon ici.",
+            ],
+          },
           {
             id: "informations",
             title: "Informations & profil",
-            paragraphs: [
-              "Ces commandes ne demandent aucune permission particulière : elles sont disponibles dès la première connexion.",
-            ],
             commands: [
               {
                 syntax: "/cantale",
-                description:
-                  "Affiche les informations du serveur et les commandes utiles.",
+                description: "Ouvre le menu principal du serveur.",
+                note: "Tous les joueurs",
               },
               {
                 syntax: "/profile [joueur]",
                 description:
-                  "Affiche le profil d'un joueur : vies, tags, réglages et onglet statistiques.",
+                  "Ouvre le profil (vies, tags, réglages, stats). Sans argument : le tien.",
+                note: "Tous les joueurs",
               },
               {
                 syntax: "/day",
                 description: "Affiche le jour et l'heure Minecraft.",
+                note: "Tous les joueurs",
               },
               {
                 syntax: "/bvn <pseudo>",
                 description: "Souhaite la bienvenue à un nouveau joueur.",
+                note: "Tous les joueurs",
               },
               {
                 syntax: "/lastdeath [joueur]",
+                description: "Infos sur la dernière mort.",
+                note: "Tous les joueurs",
+              },
+            ],
+          },
+          {
+            id: "economie-essentiel",
+            title: "Économie (essentiel)",
+            paragraphs: [
+              "Détail des sources et de la boutique : catégorie Économie.",
+            ],
+            commands: [
+              {
+                syntax: "/balance",
+                description: "Affiche ton solde Cantox.",
+                note: "Alias : /bal, /money. /balance <joueur> : cantale.admin.balance",
+              },
+              {
+                syntax: "/pay <joueur> <montant>",
+                description: "Transfère des Cantox à un joueur en ligne.",
+                note: "Tous les joueurs",
+              },
+              {
+                syntax: "/daily",
                 description:
-                  "Affiche les informations de la dernière mort d'un joueur.",
+                  "Récompense quotidienne : 1 000 Cantox de base + bonus de grade. Une fois par jour ; aussi sur Discord si compte lié.",
+                note: "Alias : /journalier — tous les joueurs",
+              },
+              {
+                syntax: "/ah",
+                description: "Hôtel des ventes. Limite de ventes simultanées selon le grade.",
+                note: "Alias : /auction — tous les joueurs",
+              },
+              {
+                syntax: "/trade <joueur|accept|decline>",
+                description: "Échange d'items entre joueurs.",
+                note: "Alias : /trades — tous les joueurs",
+              },
+              {
+                syntax: "/shop [buy|sell] <item> <quantité>",
+                description: "Boutique admin (Cantox).",
+                note: "Alias : /adminshop, /boutique — tous les joueurs",
+              },
+              {
+                syntax: "/vote [claim|stats|top|help]",
+                description: "Sites de vote et récompenses.",
+                note: "Tous les joueurs",
+              },
+            ],
+          },
+          {
+            id: "inventaire",
+            title: "Coffres & inventaire",
+            paragraphs: [
+              "Détail des tailles : Coffres & inventaires. Accès : /pc pour tous ; /pc2 dès VIP ; /pc3 dès Chèvre ; /feed dès VIP.",
+            ],
+            commands: [
+              {
+                syntax: "/pc",
+                description: "Coffre privé #1 (27 slots Joueur, 54 dès Aventurier).",
+                note: "Tous les joueurs",
+              },
+              {
+                syntax: "/pc2",
+                description: "Coffre privé #2.",
+                note: "VIP+ (ou cantale.admin)",
+              },
+              {
+                syntax: "/pc3",
+                description: "Coffre privé #3.",
+                note: "Chèvre+ (ou cantale.admin)",
+              },
+              {
+                syntax: "/ec",
+                description: "Ender Chest vanilla.",
+                note: "Tous les joueurs",
+              },
+              {
+                syntax: "/feed",
+                description: "Restaure faim et saturation.",
+                note: "VIP+ ou cantale.feed / cantale.admin. Cooldown : 3 min VIP, 1 min Chèvre+ ; aucun si cantale.admin",
+              },
+            ],
+          },
+          {
+            id: "teleport-rapide",
+            title: "Téléportation (aperçu)",
+            paragraphs: [
+              "Détails (warmup, cooldowns, homes) : article Téléportation.",
+            ],
+            commands: [
+              {
+                syntax: "/spawn",
+                description: "Téléporte au spawn.",
+                note: "Cooldown commande 20 s",
+              },
+              {
+                syntax: "/rtp",
+                description: "Téléportation aléatoire (500–5000 blocs, dans la border).",
+                note: "Cooldown 2 min Joueur/Aventurier ; aucun VIP+",
+              },
+              {
+                syntax: "/home …",
+                description: "Homes personnels (liste, set, delete, téléport).",
+                note: "Cooldown téléport 20 s — limite selon le grade",
+              },
+              {
+                syntax: "/warp [nom]",
+                description: "Warps publics.",
+                note: "Cooldown 20 s. set/delete/toggle : cantale.admin",
+              },
+              {
+                syntax: "/tpa <joueur> · /tpahere <joueur>",
+                description: "Demande de TP joueur ↔ joueur.",
+                note: "Expire 60 s. /tpyes (/tpaccept) · /tpno (/tpdeny)",
+              },
+              {
+                syntax: "/events",
+                description:
+                  "Liste les warps d'événement actifs (pas le calendrier faction auto).",
+                note: "Tous les joueurs",
+              },
+            ],
+          },
+          {
+            id: "vies-combat",
+            title: "Vies & primes",
+            paragraphs: [
+              "Mécanique des trois vies : article dédié.",
+            ],
+            commands: [
+              {
+                syntax: "/dropvie",
+                description: "Sacrifie une vie hardcore.",
+                note: "Tous les joueurs",
+              },
+              {
+                syntax: "/givevie <joueur>",
+                description: "Donne une vie à un joueur.",
+                note: "Permission cantale.givevie (incluse dans cantale.admin)",
+              },
+              {
+                syntax: "/wanted [add|list]",
+                description: "Primes wanted.",
+                note: "Alias : /prime, /primes — tous les joueurs",
               },
             ],
           },
@@ -95,33 +262,58 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               {
                 syntax: "/leaderboard <type> [limite]",
                 description:
-                  "Affiche les classements du serveur (dont le classement des réactions chat).",
-                note: "Alias : /top, /lb, /classement",
+                  "Types : kills, deaths, richest, factions, chat_reactions. Limite 1–50 (défaut 10).",
+                note: "Alias : /top, /lb, /classement, /classements",
               },
               {
                 syntax: "/listemorts",
-                description:
-                  "Affiche La Liste : les joueurs morts définitivement, le mémorial des bannis.",
+                description: "Joueurs morts définitivement (La Liste).",
                 note: "Alias : /list, /morts, /bans",
-              },
-              {
-                syntax: "/events",
-                description:
-                  "Liste les événements actifs et permet de s'y téléporter.",
               },
             ],
           },
           {
-            id: "quotidien",
-            title: "Récompense quotidienne",
+            id: "liaison",
+            title: "Discord & site",
             paragraphs: [
-              "Une fois par jour, la récompense quotidienne verse des Cantox : 1 000 de base, avec un bonus croissant selon ton grade. La récompense est synchronisée entre Minecraft et Discord.",
+              "Procédure complète : Discord & site.",
             ],
             commands: [
               {
-                syntax: "/daily",
-                description: "Réclame la récompense quotidienne.",
-                note: "Alias : /journalier",
+                syntax: "/link",
+                description:
+                  "Génère un code Discord à 6 caractères (clic = copier), valable 10 minutes.",
+                note: "Finaliser avec /link sur Discord",
+              },
+              {
+                syntax: "/web link <code>",
+                description:
+                  "Lie Minecraft à un code 6 chiffres fourni par le site (table web_link_codes).",
+                note: "Alias : /website, /site",
+              },
+              {
+                syntax: "/discord <message>",
+                description: "Message vers le salon Discord chat.",
+                note: "/discord mp <joueur> <message> pour un MP Discord",
+              },
+            ],
+          },
+          {
+            id: "factions-renvoi",
+            title: "Factions",
+            paragraphs: [
+              "Tout le détail /f (création, claims, banque, homes de faction…) est dans la catégorie Factions.",
+            ],
+            commands: [
+              {
+                syntax: "/f",
+                description: "Hub des commandes de faction.",
+                note: "Alias : /faction — voir wiki Factions",
+              },
+              {
+                syntax: "/fc [message]",
+                description: "Chat de faction.",
+                note: "Voir Vie de faction",
               },
             ],
           },
@@ -131,34 +323,79 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "teleportation",
         title: "Téléportation",
         summary:
-          "Spawn, homes, warps et téléportation aléatoire : délais, annulation et préchargement des chunks.",
-        related: ["commandes-joueur", "vie-de-faction"],
+          "Spawn, homes, warps, /rtp et /events : délais, cooldowns par grade et warps d'événement.",
+        related: ["commandes-joueur", "vie-de-faction", "events-faction"],
         sections: [
           {
             id: "fonctionnement",
             title: "Comment ça marche",
             paragraphs: [
-              "Les téléportations (spawn, warp, home, home de faction) respectent un délai avant le départ. Si tu bouges ou subis des dégâts pendant le compte à rebours, la téléportation est annulée.",
-              "Pour éviter les à-coups, le chunk de destination est préchargé environ une seconde avant l'arrivée. La téléportation aléatoire génère ses chunks de façon asynchrone pour ne pas faire freezer le serveur.",
+              "Les téléportations (spawn, warp, home, home de faction, /rtp) passent par un délai de 3 secondes pour les grades Joueur et Aventurier. VIP, Chèvre, Modérateur, Admin et Owner partent immédiatement. Si tu bouges d'un bloc ou subis des dégâts pendant le compte à rebours, la téléportation est annulée. Impossible de se téléporter pendant un tag de combat.",
+              "Le chunk de destination est préchargé avant l'arrivée. /rtp cherche une position sûre de façon asynchrone.",
+            ],
+          },
+          {
+            id: "rtp",
+            title: "/rtp — téléportation aléatoire",
+            paragraphs: [
+              "La commande tire une position dans le même monde, entre environ 500 et 5 000 blocs de ta position actuelle (borné par la world border), sur un sol sûr (pas d'eau, lave, cactus, feu, neige poudreuse, etc.). Jusqu'à 16 tentatives ; si aucune position n'est trouvée, réessaie plus tard.",
+            ],
+            list: [
+              "Cooldown : 2 minutes pour Joueur et Aventurier (le cooldown démarre après une téléportation réussie).",
+              "Pas de cooldown /rtp pour VIP, Chèvre, Modérateur, Admin, Owner, ni avec la permission cantale.cooldown.bypass.",
+              "Le délai de 3 s avant départ s'applique toujours aux grades Joueur / Aventurier (même règles d'annulation que les autres TP).",
+            ],
+            commands: [
+              {
+                syntax: "/rtp",
+                description:
+                  "Téléportation aléatoire dans ton monde actuel.",
+                note: "Cooldown 2 min sauf VIP+",
+              },
+            ],
+          },
+          {
+            id: "warps",
+            title: "Warps publics & /events",
+            paragraphs: [
+              "Sans argument, /warp (ou /warp list) affiche la liste cliquable des warps. Un clic envoie /warp <nom>. Les warps marqués événement affichent [EVENT] s'ils sont actifs, ou [DÉSACTIVÉ] sinon ; un warp d'événement désactivé refuse la téléportation.",
+              "/events ne liste que les warps d'événement actuellement actifs (cliquables). Ce n'est pas le calendrier des événements de faction automatiques (récolte / minage / PvP).",
+            ],
+            list: [
+              "Cooldown /warp : 20 secondes après une téléportation réussie.",
+              "Même délai de 3 s (Joueur / Aventurier) et blocage en combat.",
+            ],
+            commands: [
+              {
+                syntax: "/warp [nom]",
+                description:
+                  "Sans nom : liste les warps. Avec nom : s'y téléporte.",
+                note: "Cooldown 20 s",
+              },
+              {
+                syntax: "/events",
+                description:
+                  "Liste les warps d'événement actifs et permet d'y aller en un clic.",
+              },
             ],
           },
           {
             id: "commandes",
-            title: "Commandes",
+            title: "Spawn, homes & TPA",
+            list: [
+              "/spawn et /home <nom> : cooldown commande 20 s après une TP réussie (sauf cantale.cooldown.bypass).",
+              "Limite de homes personnels (PlayerRank) : Joueur 3 · Aventurier 5 · VIP 10 · Chèvre / staff 999.",
+              "/tpa et /tpahere : demande valable 60 s ; /tpyes (alias /tpaccept) · /tpno (alias /tpdeny).",
+            ],
             commands: [
               {
                 syntax: "/spawn",
-                description: "Téléporte au spawn du serveur.",
+                description: "Téléporte au spawn du monde world.",
+                note: "Cooldown 20 s · warmup selon grade",
               },
               {
-                syntax: "/rtp",
-                description:
-                  "Téléportation aléatoire dans le monde, pour démarrer loin du spawn.",
-              },
-              {
-                syntax: "/home [nom]",
-                description:
-                  "Téléporte au home personnel demandé ; sans nom, gère tes homes.",
+                syntax: "/home",
+                description: "Liste tes homes personnels.",
               },
               {
                 syntax: "/home set <nom>",
@@ -170,13 +407,29 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 note: "Alias : /home del",
               },
               {
-                syntax: "/warp [nom]",
-                description:
-                  "Téléporte à un warp public ; sans nom, liste les warps disponibles.",
+                syntax: "/home <nom>",
+                description: "Téléporte au home nommé.",
+                note: "Cooldown 20 s · warmup selon grade",
               },
               {
-                syntax: "/warp set <nom> | /warp delete <nom> | /warp toggle",
-                description: "Gestion des warps publics.",
+                syntax: "/tpa <joueur>",
+                description: "Demande à te téléporter vers un joueur.",
+                note: "Expire 60 s",
+              },
+              {
+                syntax: "/tpahere <joueur>",
+                description: "Demande à un joueur de venir vers toi.",
+                note: "Expire 60 s",
+              },
+              {
+                syntax: "/tpyes",
+                description: "Accepte la demande en attente.",
+                note: "Alias : /tpaccept",
+              },
+              {
+                syntax: "/tpno",
+                description: "Refuse la demande en attente.",
+                note: "Alias : /tpdeny",
               },
             ],
           },
@@ -184,9 +437,9 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "bon-a-savoir",
             title: "Bon à savoir",
             list: [
-              "Les grades Admin et Owner ne subissent aucun cooldown de téléportation et disposent de homes illimités.",
-              "Le nombre de homes personnels dépend du grade.",
-              "Les zones protégées (spawn, warps) ne peuvent pas être claim : inutile d'y poser un home stratégique.",
+              "VIP+ : pas de warmup 3 s. Le cooldown 20 s de /spawn /home /warp n'est levé que par cantale.cooldown.bypass (pas automatiquement par Chèvre).",
+              "Homes de faction / f spawn : voir Vie de faction.",
+              "Zones protégées (spawn, warps) : pas de claim.",
             ],
           },
         ],
@@ -195,49 +448,97 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "grades-permissions",
         title: "Grades & permissions",
         summary:
-          "Aventurier, VIP, Chèvre : avantages par grade, anti-AFK, et correspondance avec les permissions techniques.",
-        related: ["coffres-inventaires", "recompenses-regulieres", "commandes-joueur"],
+          "Avantages PlayerRank / RankManager : /daily, vies mensuelles, homes, AH, coffres, AFK, /feed, RTP, vol en claim.",
+        related: [
+          "coffres-inventaires",
+          "recompenses-regulieres",
+          "commandes-joueur",
+          "teleportation",
+          "afk-clearlag",
+        ],
         sections: [
           {
-            id: "grades",
-            title: "Les grades",
+            id: "tableau",
+            title: "Avantages par grade (joueurs)",
             paragraphs: [
-              "Trois grades de progression rythment la vie sur CANTALE, au-dessus du grade Joueur de base. Le staff dispose de ses propres grades : Modérateur, Admin et Owner.",
+              "Sources : PlayerRank, RankManager, PrivateChestService, AfkListener, FeedCommand, RtpCommand, TeleportDelayManager, AuctionManager, HomeManager. Grade de base = Joueur (NONE).",
             ],
+            tables: [
+              {
+                caption: "Bonus et limites",
+                headers: [
+                  "Grade",
+                  "Bonus /daily",
+                  "Vies/mois",
+                  "Homes",
+                  "/ah",
+                  "Coffres",
+                  "Anti-AFK",
+                ],
+                rows: [
+                  ["Joueur", "+0 (base 1 000)", "0", "3", "3", "/pc 27", "10 min"],
+                  ["Aventurier", "+2 500", "1", "5", "5", "/pc 54", "30 min"],
+                  ["VIP", "+10 000", "2", "10", "12", "/pc + /pc2 (54)", "1 h"],
+                  ["Chèvre", "+100 000", "3", "999", "20", "/pc+/pc2+/pc3", "Illimité"],
+                ],
+              },
+              {
+                caption: "Commandes & téléportation",
+                headers: ["Grade", "/feed", "/rtp", "Warmup TP", "Vol en claim"],
+                rows: [
+                  ["Joueur / Aventurier", "Non", "Cooldown 2 min", "3 s", "Non"],
+                  ["VIP", "Oui (3 min)", "Sans cooldown", "0", "Non"],
+                  ["Chèvre", "Oui (1 min)", "Sans cooldown", "0", "Oui"],
+                ],
+              },
+            ],
+          },
+          {
+            id: "details",
+            title: "Précisions",
             list: [
-              "Aventurier — premier palier : anti-AFK porté à 30 minutes, bonus quotidien de Cantox.",
-              "VIP — anti-AFK 1 heure, /feed (cooldown 3 minutes), second coffre privé /pc2, bonus quotidien supérieur.",
-              "Chèvre — le grade ultime : anti-AFK illimité, /feed (cooldown 1 minute), /pc2 et /pc3, bonus quotidien maximal.",
-              "Modérateur — outils de modération : /moderation, /vanish, /tag, /modhelp.",
-              "Admin & Owner — mêmes avantages : vol, aucun cooldown de téléportation, homes illimités, vies illimitées.",
+              "Vies mensuelles : items Vie à la connexion, une fois par mois calendaire (RankManager).",
+              "/daily (MC ou Discord lié) : 1 000 + dailyCantox. Staff (Modo/Admin/Owner) : bonus grade 0 → 1 000 seulement.",
+              "Vol en claim : grades hasUnlimitedFlight (Chèvre, Modérateur, Admin, Owner) — double-tap espace dans un claim de ta faction.",
+              "Anti-AFK détaillé : article AFK & clear-lag.",
+            ],
+          },
+          {
+            id: "staff",
+            title: "Grades staff",
+            list: [
+              "Modérateur — cantale.moderator : /moderation, /vanish, /tag, /modhelp. Coffres ×3, homes 999, /ah 20, pas d'AFK, vol en claim, warmup 0.",
+              "Admin / Owner — cantale.admin (enfants : givevie, moderator, feed, anticheat…). Mêmes avantages coffres/homes/vol/AFK côté rank. LifeManager ignore la perte de vie hardcore si cantale.admin.",
+            ],
+            commands: [
+              {
+                syntax: "/rank <set|remove|info> <joueur> [grade]",
+                description: "Gère le grade en base (player_permissions).",
+                note: "cantale.admin — OWNER|ADMIN|MODERATOR|AVENTURIER|VIP|CHEVRE|NONE",
+              },
+              {
+                syntax: "/feed",
+                description: "Restaure faim + saturation.",
+                note: "VIP+ ou cantale.feed / cantale.admin",
+              },
             ],
           },
           {
             id: "chevre-par-le-jeu",
-            title: "Le grade Chèvre par le jeu",
+            title: "Chèvre par les caisses",
             paragraphs: [
-              "Le grade Chèvre ne s'achète pas seulement : il s'obtient aussi en atteignant la caisse Légendaire depuis une caisse Vote, étape par étape. Voir l'article Caisses & clés.",
+              "Le grade Chèvre peut aussi être attribué automatiquement en atteignant la caisse Légendaire (chaîne de caisses). Voir Caisses & clés.",
             ],
           },
           {
             id: "permissions",
-            title: "Permissions techniques",
-            paragraphs: [
-              "Les commandes /rank et /perm sont synchronisées : modifier l'une met à jour l'autre. La correspondance par rôle est la suivante.",
-            ],
+            title: "Permissions plugin.yml",
             list: [
-              "cantale.admin — administration complète : grades, optimisation, caisses, items custom, anti-cheat.",
-              "cantale.moderator — outils de modération non-OP.",
-              "cantale.givevie — autorise /givevie.",
-              "cantale.feed — autorise /feed sans grade.",
-            ],
-            commands: [
-              {
-                syntax: "/feed",
-                description:
-                  "Restaure la faim et la saturation. Réservé au grade VIP et au-delà.",
-                note: "Cooldown : 3 min (VIP), 1 min (Chèvre)",
-              },
+              "cantale.admin (défaut op) — admin ; enfants givevie, moderator, feed, anticheat.alerts, anticheat.bypass.",
+              "cantale.moderator — modération.",
+              "cantale.givevie — /givevie.",
+              "cantale.feed — /feed sans être VIP+.",
+              "cantale.cooldown.bypass — ignore les cooldowns CooldownManager (spawn, home, warp, rtp…).",
             ],
           },
         ],
@@ -249,109 +550,192 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
     name: "Factions",
     tagline: "Le fer seul, la bannière ensemble",
     description:
-      "Création, claims, pouvoir, chat privé et banque commune : la vie de faction de A à Z.",
+      "Création, claims, pouvoir, banque, homes/warps et permissions : règles exactes du plugin.",
     articles: [
       {
         slug: "creer-gerer-faction",
         title: "Créer & gérer sa faction",
         summary:
-          "Création, invitations, rangs et gestion des membres : tout le cycle de vie d'une faction.",
+          "Toutes les commandes /f, grades, permissions fixes et sources de pouvoir (création 65, membres, PvP, banque, events, admin).",
         featured: true,
         related: ["claims-territoire", "vie-de-faction", "events-faction"],
         sections: [
           {
-            id: "creation",
-            title: "Créer sa faction",
+            id: "commandes",
+            title: "Toutes les commandes /f",
             paragraphs: [
-              "La création est immédiate mais exigeante : /f create revendique automatiquement le chunk où tu te tiens et y place le spawn de faction. Impossible dans une zone protégée (spawn, warp) ou sur un chunk déjà claim.",
-              "Un tag unique est généré à partir du nom choisi. La création est annoncée sur le Discord du serveur.",
+              "Sans argument, /f ouvre le menu. Alias principal : /faction.",
+            ],
+            tables: [
+              {
+                caption: "Gestion & infos",
+                headers: ["Commande", "Effet", "Qui"],
+                rows: [
+                  ["/f", "Menu de faction", "Tous"],
+                  ["/f help", "Liste d'aide en chat", "Tous"],
+                  ["/f create <nom>", "Crée la fac, claim le chunk, pose le f-spawn", "Hors faction ; zone claimable"],
+                  ["/f info [nom]", "Tag, chef, membres, claims, pouvoir, claims max", "Tous"],
+                  ["/f list", "Liste des factions", "Tous"],
+                  ["/f members", "Membres + rang + online", "Membre"],
+                  ["/f join …", "Message : il faut être invité (pas de join libre)", "Tous"],
+                  ["/f perms [grade]", "Permissions fixes du grade", "Membre"],
+                  ["/f disband", "Dissolution définitive", "Chef"],
+                ],
+              },
+              {
+                caption: "Membres",
+                headers: ["Commande", "Effet", "Qui"],
+                rows: [
+                  ["/f invite <pseudo>", "Invitation 5 min (cible online)", "FACCEPT (Officier+) ou chef"],
+                  ["/f accept", "Rejoint en Recrue", "Invité"],
+                  ["/f deny", "Refuse l'invitation", "Invité · alias /f refuse"],
+                  ["/f leave", "Quitte (−5 pouvoir). Chef seul → destruction ; chef avec membres → bloqué", "Membre"],
+                  ["/f kick <pseudo>", "Expulse (−5). Pas le chef ; pas rang ≥ soi", "FKICK (Officier+) ou chef"],
+                  ["/f ban <pseudo>", "Kick équivalent (liste ban non persistée)", "BAN (Officier+) ou chef"],
+                  ["/f promote <pseudo>", "Recrue→Membre→Vétéran→Officier", "Chef · alias /f promo"],
+                  ["/f demote <pseudo>", "Officier→Vétéran→Membre→Recrue", "Chef · alias /f demo"],
+                ],
+              },
+              {
+                caption: "Territoire & mobilité",
+                headers: ["Commande", "Effet", "Qui / notes"],
+                rows: [
+                  ["/f claim", "Claim chunk actuel", "ADD_CLAIMS (Membre+) · quota · distance 2"],
+                  ["/f unclaim", "Unclaim si claim de ta fac", "REMOVE_CLAIMS (Officier+)"],
+                  ["/f autoclaim on|off", "Claim auto en wilderness", "ADD_CLAIMS"],
+                  ["/f map", "Carte 11×11 chunks", "Cooldown 30 s"],
+                  ["/f secret", "Cache claims/spawn 1 h", "SECRET (Officier+) · CD 24 h"],
+                  ["/f spawn", "TP f-spawn", "Cooldown 20 s"],
+                  ["/f go", "TP f-spawn sans cooldown spawn", "Membre"],
+                  ["/f setspawn", "Pose f-spawn (dans un claim)", "Chef"],
+                  ["/f warp [nom]", "Liste / TP warp de fac", "FWARP (Membre+)"],
+                  ["/f setwarp <nom>", "Crée warp (dans un claim)", "FWARP · quota warps"],
+                  ["/f delwarp <nom>", "Supprime un warp", "FWARP"],
+                  ["/f home [nom]", "Liste / TP tes f-homes", "Membre"],
+                  ["/f sethome <nom>", "Crée f-home perso (dans un claim)", "Pas Recrue · quota fhomes"],
+                ],
+              },
+              {
+                caption: "Banque & chat",
+                headers: ["Commande", "Effet", "Qui"],
+                rows: [
+                  ["/f bank", "Solde, pouvoir, claims max, prix prochain point", "INFO_BANK / BANK_ADD / chef"],
+                  ["/f bank add|deposit <n>", "Dépose Cantox perso → banque", "BANK_ADD (Recrue+) ou chef"],
+                  ["/f bank take|withdraw <n>", "Retire banque → perso", "BANK_TAKE (Officier+) ou chef"],
+                  ["/f bank power [n]", "Achète 1–50 pouvoir (défaut 1)", "Chef, Officier, ou BANK_TAKE"],
+                  ["/f c [msg]", "Toggle chat fac ou envoi direct", "Membre"],
+                  ["/fc [msg]", "Raccourci chat fac", "Membre"],
+                ],
+              },
             ],
             commands: [
-              {
-                syntax: "/f",
-                description: "Ouvre le menu de faction.",
-                note: "Alias : /faction",
-              },
-              {
-                syntax: "/f create <nom>",
-                description:
-                  "Crée une faction, claim le chunk actuel et pose le spawn de faction à ta position.",
-              },
-              {
-                syntax: "/f info [nom]",
-                description:
-                  "Affiche les infos d'une faction : tag, chef, membres, claims, pouvoir.",
-              },
-              {
-                syntax: "/f list",
-                description: "Liste les factions du serveur.",
-              },
-            ],
-          },
-          {
-            id: "membres",
-            title: "Invitations & membres",
-            paragraphs: [
-              "On ne rejoint une faction que sur invitation : l'invitation expire au bout de 5 minutes. Les rangs internes sont, du plus bas au plus haut : Recrue, Membre, Vétéran, Officier — le chef reste au-dessus de tous.",
-            ],
-            commands: [
-              {
-                syntax: "/f invite <pseudo>",
-                description: "Invite un joueur dans ta faction.",
-                note: "Invitation valable 5 min",
-              },
-              {
-                syntax: "/f accept",
-                description: "Accepte l'invitation reçue.",
-              },
-              {
-                syntax: "/f deny",
-                description: "Refuse l'invitation reçue.",
-                note: "Alias : /f refuse",
-              },
-              {
-                syntax: "/f leave",
-                description: "Quitte ta faction actuelle.",
-              },
-              {
-                syntax: "/f kick <pseudo>",
-                description:
-                  "Expulse un membre. Impossible d'expulser le chef, ni un membre de rang égal ou supérieur au tien.",
-              },
-              {
-                syntax: "/f members",
-                description:
-                  "Liste les membres avec leur rang et leur statut en ligne.",
-                note: "Alias : /f membres",
-              },
-              {
-                syntax: "/f promote <pseudo>",
-                description:
-                  "Fait monter un membre d'un grade : Recrue → Membre → Vétéran → Officier.",
-                note: "Chef uniquement",
-              },
-              {
-                syntax: "/f demote <pseudo>",
-                description: "Rétrograde un membre d'un grade.",
-                note: "Chef uniquement",
-              },
               {
                 syntax: "/f disband",
-                description: "Dissout définitivement la faction.",
+                description: "Dissout la faction (claims retirés, rôles Discord sync).",
                 note: "Alias : /f delete, /f supprimer",
               },
               {
                 syntax: "/f perms [grade]",
-                description:
-                  "Affiche les permissions par grade de faction (inviter, claim, warps…).",
+                description: "Affiche les permissions du grade (fixes, non configurables).",
+                note: "Alias : /f permissions",
               },
             ],
           },
           {
-            id: "pouvoir",
-            title: "Pouvoir & limites",
+            id: "creation",
+            title: "Création",
+            list: [
+              "Impossible si déjà en faction, nom déjà pris, zone protégée (spawn/warp), ou chunk déjà claim.",
+              "Tag auto : 4 premiers caractères du nom (majuscules), suffixe numérique si collision.",
+              "Effets immédiats : claim du chunk actuel + f-spawn à ta position + annonce Discord si salon configuré.",
+              "config factions.min-members-create (8) est lu mais non vérifié à la création (TODO dans le code).",
+            ],
+          },
+          {
+            id: "grades-perms",
+            title: "Grades & permissions",
             paragraphs: [
-              "Chaque faction accumule du pouvoir, notamment par les kills de ses membres et les événements. Le pouvoir détermine le nombre maximum de claims et de warps de faction : plus la faction pèse, plus elle s'étend.",
+              "Permissions fixes par grade (FactionPermissions). Le chef bypass tout. Le Vétéran n'a pas d'entrée dans la table → aucune permission de cette liste.",
+            ],
+            tables: [
+              {
+                caption: "Qui peut quoi",
+                headers: ["Permission", "Recrue", "Membre", "Vétéran", "Officier", "Chef"],
+                rows: [
+                  ["BANK_ADD (déposer)", "oui", "oui", "—", "oui", "oui"],
+                  ["ADD_CLAIMS / autoclaim", "—", "oui", "—", "oui", "oui"],
+                  ["INFO_BANK (voir banque)", "—", "oui", "—", "oui", "oui"],
+                  ["FWARP (warps)", "—", "oui", "—", "oui", "oui"],
+                  ["REMOVE_CLAIMS", "—", "—", "—", "oui", "oui"],
+                  ["FACCEPT (inviter)", "—", "—", "—", "oui", "oui"],
+                  ["FKICK / BAN / UNBAN", "—", "—", "—", "oui", "oui"],
+                  ["BANK_TAKE / power buy", "—", "—", "—", "oui", "oui"],
+                  ["SECRET", "—", "—", "—", "oui", "oui"],
+                  ["SET_PERMS / CULTURES / FHOME (flags)", "—", "—", "—", "—", "oui"],
+                ],
+              },
+            ],
+            list: [
+              "Promouvoir : Recrue → Membre → Vétéran → Officier (chef seul).",
+              "/f sethome : bloqué pour Recrue (check hardcodé), pas via le flag FHOME.",
+              "CULTURES (fermes publiques) : activé seulement si Recrue a CULTURES — ce n'est pas le cas → récolte publique off.",
+              "Alliés (diplomatie) : interactions claim comme membres (sauf pose de stockage, réservée au claim de sa propre fac).",
+            ],
+          },
+          {
+            id: "pouvoir",
+            title: "Sources de pouvoir",
+            tables: [
+              {
+                caption: "Gains / pertes",
+                headers: ["Source", "Δ pouvoir", "Détail code"],
+                rows: [
+                  ["Création", "+65", "BASE 60 + POWER_PER_MEMBER 5 (chef)"],
+                  ["Join membre", "+5", "FactionManager#addMember"],
+                  ["Leave / kick", "−5", "Plancher 0 + retrait claims hors quota (plus récents d'abord)"],
+                  ["Kill PvP", "+5 tueur / −5 victime", "PlayerListener (si les deux ont une fac)"],
+                  ["Event faction top 5", "+50 / +35 / +25 / +15 / +10", "events.yml → FactionEventManager"],
+                  ["/f bank power", "+n achetés", "Débit banque, courbe power_purchased"],
+                  ["/admin addpower <fac> <n>", "+n", "Staff"],
+                ],
+              },
+              {
+                caption: "Quotas dérivés du pouvoir",
+                headers: ["Quota", "Formule"],
+                rows: [
+                  ["Claims max", "max(5, pouvoir / 10) — division entière"],
+                  ["F-homes max / joueur", "max(1, pouvoir / 20)"],
+                  ["Warps de fac", "si pouvoir < 60 → 1 ; sinon 1 + (pouvoir − 60) / 30"],
+                ],
+              },
+              {
+                caption: "Achat banque — config actuelle",
+                headers: ["Paramètre", "Valeur"],
+                rows: [
+                  ["Formule", "cost(i) = floor(base × growth^(i × 10)) · i = power_purchased"],
+                  ["base", "5 000 Cantox"],
+                  ["growth", "1,18"],
+                  ["max-per-purchase", "1 à 50 points"],
+                  ["1er point (i=0)", "5 000"],
+                  ["2e point (i=1)", "floor(5000 × 1,18^10) ≈ 26 168"],
+                ],
+              },
+            ],
+            list: [
+              "Exemple fac neuve (pouvoir 65) : claims max 6, fhomes 3, warps 1.",
+              "PowerManager (gains/pertes quotidiens) existe mais n'est pas branché → pas une source active.",
+            ],
+            commands: [
+              {
+                syntax: "/f bank power [nombre]",
+                description:
+                  "Achète du pouvoir avec le solde banque. Défaut 1. Officiers / chef (ou BANK_TAKE).",
+              },
+              {
+                syntax: "/admin addpower <faction> <montant>",
+                description: "Ajoute du pouvoir à une faction.",
+                note: "Staff",
+              },
             ],
           },
         ],
@@ -360,56 +744,146 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "claims-territoire",
         title: "Claims & territoire",
         summary:
-          "Revendiquer des chunks, lire la carte des claims et disparaître des radars avec le mode secret.",
-        related: ["creer-gerer-faction", "vie-de-faction", "items-forges"],
+          "Quota claims, distance minimale, wilderness, PASDIC, PvP (safe chez soi), casse/pose (stockage & explosifs) et mode secret.",
+        related: ["creer-gerer-faction", "vie-de-faction", "trois-vies", "items-forges"],
         sections: [
           {
             id: "revendiquer",
-            title: "Revendiquer un chunk",
-            paragraphs: [
-              "Le territoire se prend chunk par chunk. Les zones protégées (spawn, warps publics) sont inclaimables, et le nombre de claims est plafonné par le pouvoir de la faction.",
-              "Les claims protègent tes constructions : les items forgés eux-mêmes (Pickantaxe, Cantaxe, Multi-Cantool) respectent les claims et ne cassent pas les blocs protégés.",
+            title: "Claim / unclaim",
+            tables: [
+              {
+                headers: ["Règle", "Valeur"],
+                rows: [
+                  ["Quota", "max(5, pouvoir / 10)"],
+                  ["Distance min autres facs", "2 chunks (Chebyshev) — voisins diagonaux inclus"],
+                  ["Zones protégées", "SpawnProtection.canClaim = false → claim refusé"],
+                  ["Perte de pouvoir", "Claims en trop retirés (plus récents d'abord)"],
+                  ["/f autoclaim", "Mêmes règles que /f claim, silencieux si échec"],
+                ],
+              },
             ],
             commands: [
               {
                 syntax: "/f claim",
-                description: "Revendique le chunk actuel pour ta faction.",
+                description: "Revendique le chunk actuel.",
+                note: "ADD_CLAIMS (Membre+)",
               },
               {
                 syntax: "/f unclaim",
-                description: "Retire le claim du chunk actuel.",
+                description: "Retire uniquement un claim de ta propre faction.",
+                note: "REMOVE_CLAIMS (Officier+)",
               },
               {
                 syntax: "/f autoclaim on|off",
-                description:
-                  "Revendique automatiquement chaque chunk traversé en marchant.",
+                description: "Claim auto en marchant en wilderness.",
+              },
+              {
+                syntax: "/f map",
+                description: "Carte 11×11 : toi (bleu), ta fac (vert), autre (jaune), wilderness (gris).",
+                note: "Cooldown 30 s",
               },
             ],
           },
           {
-            id: "carte",
-            title: "Carte des claims",
+            id: "wilderness",
+            title: "Wilderness (hors claim)",
+            list: [
+              "Casse, pose et interactions libres (coffres/portes des structures inclus).",
+              "Exception : blocs de stockage (liste config) — pose interdite hors claim de ta propre faction.",
+              "PvP libre (aucun ClaimListener).",
+              "Autoclaim ne s'applique qu'en wilderness.",
+            ],
+          },
+          {
+            id: "pvp-claims",
+            title: "PvP dans les claims",
+            paragraphs: [
+              "ClaimListener#onEntityDamage (joueurs + projectiles). Position = claim sous la victime.",
+            ],
+            tables: [
+              {
+                headers: ["Situation", "PvP"],
+                rows: [
+                  ["Wilderness (pas de claim)", "Libre"],
+                  ["Claim PASDIC (spawn/warp)", "Annulé — pas de PvP"],
+                  ["Victime dans le claim de SA propre faction", "Annulé — message « protégé dans le claim de sa faction »"],
+                  ["Victime dans un claim ennemi / sans fac / intrus chez toi", "Autorisé"],
+                  ["Attaquant op ou cantale.admin", "Pas de restriction claim"],
+                ],
+              },
+            ],
+            list: [
+              "Être chez soi = safe (même un ennemi ne peut pas te tuer dans ton claim).",
+              "Un intrus dans ton claim n'est pas safe : tu peux le tuer.",
+              "Friendly fire entre membres hors de leur claim : non géré ici (wilderness = libre).",
+            ],
+          },
+          {
+            id: "protection-claim",
+            title: "Protection d'un claim normal",
+            paragraphs: [
+              "Membres, alliés et cantale.admin/op : tout autorisé. Étrangers : règles ci-dessous (ClaimListener).",
+            ],
+            tables: [
+              {
+                headers: ["Action (étranger)", "Autorisé ?"],
+                rows: [
+                  ["Casser stockage / cultures", "Non"],
+                  ["Casser autre bloc", "Oui"],
+                  ["Poser TNT, obsidienne, cristal End, ancre, lit, seau d'eau", "Oui (liste explosive-place-blocks)"],
+                  ["Poser tout autre bloc", "Non"],
+                  ["Interagir (coffres, portes…)", "Non"],
+                  ["Explosions", "Oui (sauf blocs en claim PASDIC)"],
+                ],
+              },
+              {
+                caption: "Stockage — pose réservée au claim de SA faction",
+                headers: ["Catégorie (config storage-blocks)", "Exemples"],
+                rows: [
+                  ["Conteneurs", "CHEST, TRAPPED_CHEST, BARREL, HOPPER, DISPENSER, DROPPER, ENDER_CHEST"],
+                  ["Shulkers", "SHULKER_BOX + toutes couleurs"],
+                  ["Fours", "FURNACE, BLAST_FURNACE, SMOKER"],
+                  ["Tables / ateliers", "CRAFTING_TABLE, SMITHING_TABLE, LOOM, STONECUTTER, GRINDSTONE, FLETCHING_TABLE, CARTOGRAPHY_TABLE, BREWING_STAND, ANVIL…"],
+                ],
+              },
+            ],
+            list: [
+              "Pose de stockage : refusée en wilderness, claim ennemi et claim allié — uniquement claim de ta fac (sauf op/admin).",
+            ],
+          },
+          {
+            id: "pasdic",
+            title: "PASDIC",
+            list: [
+              "Flag par claim (admin : /pasdic set true|false).",
+              "Non-membres : aucune casse, aucune pose (TNT incluse), aucune interaction.",
+              "Pas de PvP (voir section PvP).",
+              "Entrée en Survival → Adventure forcé (sauf membres de la fac propriétaire, op, cantale.admin, créatif/spectateur).",
+              "Sortie → Survival rétabli si Adventure imposé par PASDIC.",
+              "Explosions : blocs PASDIC retirés de la liste de destruction.",
+              "Visible sur la carte site (layer PASDIC).",
+            ],
             commands: [
               {
-                syntax: "/f map",
-                description:
-                  "Affiche une carte des claims sur 11×11 chunks autour de toi.",
-                note: "Cooldown : 30 s",
+                syntax: "/pasdic set <true|false>",
+                description: "Marque le claim sous le joueur comme PASDIC.",
+                note: "Admin",
               },
             ],
           },
           {
             id: "secret",
             title: "Mode secret",
-            paragraphs: [
-              "Le mode secret cache les claims et le spawn de ta faction aux autres factions pendant une heure — de quoi déplacer une base ou préparer un coup sans laisser de trace.",
+            list: [
+              "Durée 1 h : claims et spawn cachés aux autres (site : secret_until).",
+              "Annonce serveur à l'activation.",
+              "Cooldown 24 h par joueur (SecretCooldownDAO).",
             ],
             commands: [
               {
                 syntax: "/f secret",
-                description:
-                  "Active le mode secret pendant 1 h. L'activation est annoncée au serveur.",
-                note: "Cooldown : 24 h",
+                description: "Active le mode secret 1 h.",
+                note: "SECRET (Officier+) · cooldown 24 h",
               },
             ],
           },
@@ -419,20 +893,17 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "vie-de-faction",
         title: "Vie de faction",
         summary:
-          "Chat privé, spawn et warps de faction, homes partagés et banque commune en Cantox.",
+          "Chat, f-spawn, f-homes, warps, banque Cantox et achat de pouvoir — quotas et rangs.",
         related: ["creer-gerer-faction", "claims-territoire", "discord-site"],
         sections: [
           {
             id: "chat",
             title: "Chat de faction",
-            paragraphs: [
-              "Un canal privé relie les membres de la faction, sans polluer le chat global.",
-            ],
             commands: [
               {
                 syntax: "/f c [message]",
                 description:
-                  "Sans message : bascule tous tes messages en chat de faction. Avec message : envoie directement dans le chat de faction.",
+                  "Sans message : bascule le chat fac on/off. Avec message : envoi immédiat aux membres online.",
               },
               {
                 syntax: "/fc [message]",
@@ -441,73 +912,122 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             ],
           },
           {
-            id: "deplacements",
-            title: "Spawn, homes & warps",
-            paragraphs: [
-              "Le spawn de faction est posé automatiquement à la création ; seul le chef peut le redéfinir, dans un claim de la faction. Les warps de faction doivent eux aussi être posés dans un claim, et leur nombre dépend du pouvoir.",
+            id: "spawn",
+            title: "Spawn de faction",
+            tables: [
+              {
+                headers: ["Commande", "Règle"],
+                rows: [
+                  ["/f spawn", "TP au f-spawn · cooldown 20 s"],
+                  ["/f go", "Même TP · pas de cooldown fspawn"],
+                  ["/f setspawn", "Chef seul · doit être dans un claim de la fac"],
+                ],
+              },
+            ],
+            list: [
+              "Posé automatiquement à la création sur le chunk claimé.",
+            ],
+          },
+          {
+            id: "homes",
+            title: "Homes de faction (f-homes)",
+            tables: [
+              {
+                headers: ["Règle", "Détail"],
+                rows: [
+                  ["Portée", "Par joueur (player_uuid), pas un pool partagé"],
+                  ["Quota", "max(1, pouvoir / 20) homes par joueur"],
+                  ["sethome", "Dans un claim de la fac · Recrue interdite"],
+                  ["/f home", "Sans nom = liste ; avec nom = TP (délai téléport)"],
+                ],
+              },
             ],
             commands: [
               {
-                syntax: "/f spawn",
-                description: "Téléporte au spawn de faction.",
-                note: "Cooldown : 20 s",
+                syntax: "/f home [nom]",
+                description: "Liste ou téléporte vers un de tes f-homes.",
               },
               {
-                syntax: "/f go",
-                description: "Téléporte au spawn de faction.",
+                syntax: "/f sethome <nom>",
+                description: "Crée un f-home à ta position (claim de fac requis).",
+                note: "Membre et plus",
               },
+            ],
+          },
+          {
+            id: "warps",
+            title: "Warps de faction",
+            tables: [
               {
-                syntax: "/f setspawn",
-                description:
-                  "Définit le spawn de faction à ta position.",
-                note: "Chef uniquement, dans un claim",
+                headers: ["Règle", "Détail"],
+                rows: [
+                  ["Portée", "Partagés (faction_warps), permission FWARP"],
+                  ["Quota", "pouvoir < 60 → 1 ; sinon 1 + (pouvoir − 60) / 30"],
+                  ["setwarp / delwarp", "FWARP · setwarp dans un claim de la fac"],
+                ],
               },
-              {
-                syntax: "/f home [nom] | /f sethome <nom>",
-                description: "Gère les homes de faction.",
-              },
+            ],
+            commands: [
               {
                 syntax: "/f warp [nom]",
-                description:
-                  "Sans nom : liste les warps de faction. Avec nom : s'y téléporte.",
+                description: "Sans nom : liste. Avec nom : TP.",
+                note: "FWARP (Membre+)",
               },
               {
                 syntax: "/f setwarp <nom>",
-                description:
-                  "Crée un warp de faction à ta position, dans un claim.",
+                description: "Crée un warp dans un claim de la fac.",
               },
               {
                 syntax: "/f delwarp <nom>",
-                description: "Supprime un warp de faction.",
+                description: "Supprime un warp.",
               },
             ],
           },
           {
             id: "banque",
-            title: "Banque de faction",
-            paragraphs: [
-              "La banque commune stocke les Cantox de la faction pour les projets collectifs.",
+            title: "Banque",
+            tables: [
+              {
+                headers: ["Action", "Permission"],
+                rows: [
+                  ["Voir /f bank", "INFO_BANK ou BANK_ADD ou chef"],
+                  ["add / deposit", "BANK_ADD (Recrue+) ou chef"],
+                  ["take / withdraw", "BANK_TAKE (Officier+) ou chef"],
+                  ["power [n]", "Chef, isOfficier, ou BANK_TAKE · 1–50"],
+                ],
+              },
+            ],
+            list: [
+              "Le solde banque paie l'achat de pouvoir (formule ×10 dans l'exposant — voir article Créer & gérer).",
+              "/f bank affiche aussi pouvoir, claims max et coût du prochain point.",
             ],
             commands: [
               {
                 syntax: "/f bank",
-                description: "Affiche le solde de la banque de faction.",
+                description: "Solde, pouvoir, claims max, prochain point.",
               },
               {
                 syntax: "/f bank add <montant>",
                 description: "Dépose des Cantox dans la banque.",
+                note: "Alias : deposit",
               },
               {
                 syntax: "/f bank take <montant>",
                 description: "Retire des Cantox de la banque.",
+                note: "Alias : withdraw",
+              },
+              {
+                syntax: "/f bank power [nombre]",
+                description: "Achète du pouvoir (défaut 1, max 50).",
               },
             ],
           },
           {
             id: "discord",
-            title: "Le lien Discord",
-            paragraphs: [
-              "Créations, arrivées, départs et dissolutions sont annoncés sur le Discord. Les joueurs qui ont lié leur compte reçoivent automatiquement le rôle de leur faction.",
+            title: "Discord",
+            list: [
+              "Création / dissolution annoncées si salon mc-factions configuré.",
+              "Joueurs liés : rôle Discord faction sync (join/leave/kick/disband).",
             ],
           },
         ],
@@ -719,37 +1239,110 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
     name: "Combat & Vies",
     tagline: "Trois vies, pas une de plus",
     description:
-      "Le système hardcore des trois vies, le bannissement, les dons de vies et les primes wanted.",
+      "Vies hardcore (config 3 au départ), mort, ban UUID/IP, item Vie, /givevie, combat tag, primes wanted et PvP dans les claims.",
     articles: [
       {
         slug: "trois-vies",
         title: "Le système des trois vies",
         summary:
-          "Trois encoches, zéro pitié : morts, bannissement définitif, dons de vies et déco combat.",
+          "Départ à 3 vies, −1 à chaque mort, ban PROFILE+IP à 0, item Vie, grades mensuels, déco combat 15 s.",
         featured: true,
-        related: ["primes-wanted", "commandes-joueur"],
+        related: ["primes-wanted", "claims-territoire", "grades-permissions", "caisses-cles"],
         sections: [
           {
-            id: "regles",
-            title: "Les règles",
-            paragraphs: [
-              "Ici, la mort n'est pas un retour au spawn. Chaque joueur est forgé avec trois encoches — trois vies. Perds-les toutes et le registre se ferme : bannissement définitif, par nom et par IP. Ton nom rejoint La Liste, le mémorial des bannis.",
+            id: "depart-mort",
+            title: "Départ & mort",
+            tables: [
+              {
+                caption: "config.yml → lives",
+                headers: ["Paramètre", "Valeur"],
+                rows: [
+                  ["default-lives", "3 (nouveau joueur via createOrUpdatePlayer)"],
+                  ["min-lives", "0"],
+                  ["ban-on-zero", "true"],
+                  ["buy-price", "10 000 Cantox — lu par ConfigManager, aucun achat in-game branché"],
+                ],
+              },
             ],
             list: [
-              "Chaque mort retire 1 vie, en PvP comme en PvE.",
-              "À 0 vie : bannissement définitif du serveur.",
-              "Se déconnecter en plein combat retire 1 vie, sans exception — la fuite ne paie pas.",
-              "Le stock de vies est plafonné à 10.",
+              "Chaque mort (PvP ou PvE) : −1 vie (LifeManager#handleDeath).",
+              "Permission cantale.admin : mort sans perte de vie (message « vies illimitées ») — sauf déco combat (voir ci-dessous).",
+              "Après respawn : invulnérabilité 10 s (noDamageTicks).",
+              "Kill PvP : +5 pouvoir à la fac du tueur, −5 à celle de la victime (si fac).",
+              "Items Vie custom dans l'inventaire à la mort : détruits (ne droppent pas).",
+              "Totem vanilla : bloqué. L'item Vie custom n'est pas un totem de résurrection.",
             ],
           },
           {
-            id: "etats",
-            title: "Les quatre états",
+            id: "zero-ban",
+            title: "À 0 vie — ban",
+            paragraphs: [
+              "Quand il reste ≤ 1 vie et que tu meurs (ou déco combat) : vies mises à 0, puis ban.",
+            ],
             list: [
-              "3/3 — En vie : toutes tes encoches brûlent.",
-              "2/3 — Entamé : la première entaille.",
-              "1/3 — Marqué : plus qu'une vie, chaque fight est peut-être le dernier.",
-              "0/3 — Banni : le registre se ferme.",
+              "Ban PROFILE (UUID) en priorité — résiste au changement de pseudo ; fallback BanList NAME si l'API profil échoue.",
+              "Ban IP (adresse du joueur) + enregistrement last_ip en BDD.",
+              "Kick avec le message config : « Vous n'avez plus de vies ! Achetez-en une ou attendez qu'un ami vous en donne une. »",
+              "Gate AsyncPlayerPreLoginEvent : si lives ≤ 0 et ban-on-zero, connexion refusée (même message) — empêche le bypass NAME via nouveau pseudo.",
+              "Apparition sur La Liste (/listemorts) : joueurs avec lives ≤ 0 et last_death > 0.",
+              "Restauration : /addlife (ou /givevie console/admin) lève NAME + PROFILE + IP via pardonLifeBan (IP online ou last_ip).",
+            ],
+          },
+          {
+            id: "deco-combat",
+            title: "Tag combat & déco",
+            tables: [
+              {
+                headers: ["Règle", "Valeur"],
+                rows: [
+                  ["Durée du tag", "15 s (rafraîchi à chaque coup joueur↔joueur)"],
+                  ["Déco pendant le tag", "−1 vie toujours (y compris cantale.admin / OP)"],
+                  ["À 0 après déco", "Même ban PROFILE + IP"],
+                  ["Téléport commandes", "Bloquées pendant le tag"],
+                  ["Exceptions TP", "Ender pearl, portail Nether, portail End autorisés"],
+                ],
+              },
+            ],
+            list: [
+              "Broadcast serveur à la déco combat (pseudo + perte d'1 vie).",
+              "Créatif / spectateur : pas de tag combat.",
+            ],
+          },
+          {
+            id: "obtenir-vies",
+            title: "Obtenir des vies",
+            tables: [
+              {
+                caption: "Sources codées",
+                headers: ["Source", "Effet"],
+                rows: [
+                  ["Item Vie (CustomItemType.VIE)", "Clic-droit main → +1 vie DB, item consommé (addLife, sans plafond)"],
+                  ["/dropvie", "−1 vie DB → reçoit 1 item Vie (min. 2 vies requises)"],
+                  ["/givevie <joueur> (joueur)", "Transfert 1 vie (émetteur ≥ 2 vies). Cible online."],
+                  ["Discord /givevie", "Compte lié : 1 à 5 vies, débit émetteur, crédit cible"],
+                  ["Grades mensuels", "Items Vie à la connexion (1×/mois calendaire) — voir tableau grades"],
+                  ["Caisses", "Loot tables Vote / Rare / Épique / Mythique peuvent donner 1–2 items Vie"],
+                  ["Boutique site", "Packs catalogue : 1 / 5 / 10 / 30 / 50 / 100 (EUR). Checkout si SHOP_ENABLED"],
+                  ["/addlife (admin/console)", "+N vies ; pardonne le ban vies si besoin"],
+                ],
+              },
+              {
+                caption: "Items Vie mensuels (PlayerRank)",
+                headers: ["Grade", "Items / mois"],
+                rows: [
+                  ["Joueur (NONE)", "0"],
+                  ["Aventurier", "1"],
+                  ["VIP", "2"],
+                  ["Chèvre (Héros)", "3"],
+                  ["Modo / Admin / Owner", "0 (pas de vies mensuelles staff)"],
+                ],
+              },
+            ],
+            list: [
+              "Récompense mensuelle : items Vie dans l'inventaire (drop au sol si plein), pas un +vie DB direct — il faut clic-droit.",
+              "Bossbar : affiche « Vies restantes : X/10 ». Seul addLives() plafonne à 10 ; item Vie, /givevie et /addlife passent par addLife (pas de plafond).",
+              "Pas d'achat de vies en Cantox in-game malgré lives.buy-price dans la config.",
+              "Permission in-game /givevie : cantale.givevie (plugin.yml default: op ; aussi listée pour Modo/Owner dans PermissionManager).",
             ],
           },
           {
@@ -758,30 +1351,43 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             commands: [
               {
                 syntax: "/dropvie",
-                description: "Sacrifie volontairement une vie.",
+                description: "Transforme 1 vie en item Vie (minimum 2 vies).",
               },
               {
                 syntax: "/givevie <joueur>",
                 description:
-                  "Donne une de tes vies à un joueur — il faut t'en garder plus d'une.",
-                note: "Permission : cantale.givevie",
+                  "Joueur→joueur : transfert 1 vie (min. 2). Console / admin sans assez de vies : grant +1 sans coût + pardon ban.",
+                note: "Permission : cantale.givevie · cible online",
+              },
+              {
+                syntax: "/addlife <joueur> <nombre>",
+                description: "Ajoute N vies (online ou offline). Pardonne ban vies.",
+                note: "Admin / console / OP",
+              },
+              {
+                syntax: "/removelife <joueur> <nombre>",
+                description: "Retire N vies (cible online).",
+                note: "Admin / console / OP",
               },
               {
                 syntax: "/lastdeath [joueur]",
-                description: "Affiche les informations de la dernière mort.",
+                description: "Horodatage de la dernière mort (BDD last_death).",
               },
               {
                 syntax: "/listemorts",
-                description: "Affiche La Liste des joueurs bannis.",
+                description: "La Liste : joueurs à 0 vie avec last_death > 0.",
                 note: "Alias : /list, /morts, /bans",
               },
             ],
           },
           {
             id: "suivi",
-            title: "Suivre ses vies",
-            paragraphs: [
-              "Tes vies sont visibles dans la bossbar d'infos et dans ton /profile. Les admins ont des vies illimitées — mais une déco combat leur coûte quand même une vie, la règle est la même pour tous.",
+            title: "Suivi",
+            list: [
+              "Bossbar perso rotative : slide Vies (et Wanted si prime active) — toggle dans /profile.",
+              "/profile : vies restantes.",
+              "Menu Système de Vies (UI) : raccourcis /dropvie, /givevie, rappel usage item.",
+              "PvP dans les claims : article Claims & territoire (safe chez soi, PASDIC no-PvP, wilderness libre).",
             ],
           },
         ],
@@ -790,14 +1396,46 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "primes-wanted",
         title: "Primes wanted",
         summary:
-          "Mets la tête d'un joueur à prix : le chasseur qui l'abat empoche la prime en Cantox.",
-        related: ["trois-vies", "cantox"],
+          "Primes Cantox cumulables, paliers 100K / 1M / 5M, tracker 5 min, Serial Killer 10 kills = 500.",
+        related: ["trois-vies", "cantox", "claims-territoire"],
         sections: [
           {
             id: "fonctionnement",
             title: "Fonctionnement",
-            paragraphs: [
-              "Une prime est posée en Cantox, avec une raison affichée au grand jour. Le chasseur qui tue la cible reçoit la prime. La cible voit sa tête mise à prix dans sa bossbar d'infos — impossible de l'ignorer.",
+            list: [
+              "/wanted add : débite le poseur, crée une entrée active (raison libre).",
+              "Plusieurs primes peuvent s'empiler sur la même cible ; total = somme des reward actives.",
+              "Kill de la cible : le tueur reçoit le total, toutes les primes sont clôturées (broadcast).",
+              "Aucun minimum de prix dans le code.",
+              "/wanted remove : retire toutes les primes actives de la cible et rembourse chaque émetteur. Pas de check permission staff.",
+              "Bossbar : slide Wanted si le joueur a une prime.",
+            ],
+          },
+          {
+            id: "paliers",
+            title: "Paliers (total cumulé)",
+            tables: [
+              {
+                headers: ["Palier", "Seuil total", "Effets codés"],
+                rows: [
+                  ["1", "< 100 000", "Pas d'annonce Discord à la pose"],
+                  ["2", "≥ 100 000", "Annonce Discord à la pose ; embed co/déco Discord"],
+                  ["3", "≥ 1 000 000", "Comme 2 + localisation Discord à la co (coords si hors claim ; « Dans un claim (caché) » sinon)"],
+                  ["4", "≥ 5 000 000", "Comme 3 + broadcast MC co/déco + tracker toutes les 5 min (coords ou claim caché)"],
+                ],
+              },
+            ],
+            list: [
+              "Labels code : NIVEAU 1 / 2 (100K+) / 3 (1M+) / 4 (5M+).",
+            ],
+          },
+          {
+            id: "serial-killer",
+            title: "Serial Killer",
+            list: [
+              "Seuil : 10 kills sans mourir (kill_streak).",
+              "Prime système : 500 Cantox, raison « Serial Killer (N kills sans morts) » — pas de débit Cantox au poseur.",
+              "Broadcast serveur à l'obtention du statut et à la mort du Serial Killer.",
             ],
           },
           {
@@ -806,20 +1444,20 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             commands: [
               {
                 syntax: "/wanted",
-                description: "Ouvre la liste des primes actives.",
+                description: "Ouvre l'UI des primes actives.",
                 note: "Alias : /prime, /primes",
               },
               {
                 syntax: "/wanted list",
-                description: "Affiche la liste des primes actives.",
+                description: "Même UI liste.",
               },
               {
-                syntax: "/wanted add <joueur> <prix> <raison>",
-                description: "Met une prime en Cantox sur la tête d'un joueur.",
+                syntax: "/wanted add <joueur> <prix> <raison…>",
+                description: "Pose une prime (Cantox débités immédiatement). Cible online.",
               },
               {
-                syntax: "/wanted remove <joueur> [raison]",
-                description: "Retire la prime active sur un joueur.",
+                syntax: "/wanted remove <joueur> [raison…]",
+                description: "Annule toutes les primes de la cible + remboursement des émetteurs.",
               },
             ],
           },
@@ -832,54 +1470,121 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
     name: "Événements",
     tagline: "Le serveur s'embrase",
     description:
-      "Événements de faction, réactions chat et récompenses régulières : le calendrier du serveur.",
+      "Événements de faction, réactions chat, clé hebdomadaire et récompenses — valeurs issues de events.yml.",
     articles: [
       {
         slug: "events-faction",
         title: "Événements de faction",
         summary:
-          "Récolte, minage et PvP : des événements d'une heure qui rapportent pouvoir et Cantox à ta faction.",
+          "Récolte, minage et PvP : 3–4 rendez-vous d'1 h/semaine, top 5 pouvoir + Cantox (events.yml).",
         featured: true,
-        related: ["reactions-chat", "recompenses-regulieres", "creer-gerer-faction"],
+        related: [
+          "reactions-chat",
+          "recompenses-regulieres",
+          "creer-gerer-faction",
+          "teleportation",
+        ],
         sections: [
           {
-            id: "types",
-            title: "Les trois types",
-            list: [
-              "Récolte (HARVEST) — une ressource agricole tirée au sort, ex. « Récolte de blé » : dépose ta récolte via /recolte.",
-              "Minage (MINING) — un minerai cible tiré au sort, ex. « Minage de diamant ».",
-              "PvP — la faction qui domine les combats l'emporte.",
+            id: "calendrier",
+            title: "Calendrier (events.yml)",
+            tables: [
+              {
+                caption: "faction-events",
+                headers: ["Paramètre", "Valeur"],
+                rows: [
+                  ["Par semaine", "3 à 4 (aléatoire)"],
+                  ["Durée", "60 minutes"],
+                  ["Fenêtre de démarrage", "14 h–22 h Europe/Paris"],
+                  ["Max par jour civil", "1"],
+                  ["Gap fin → début suivant", "8 heures minimum"],
+                  ["Types", "HARVEST / MINING / PVP (poids égaux)"],
+                ],
+              },
             ],
             paragraphs: [
-              "Chaque événement cible une seule ressource, jamais tout le pool : inutile de stocker à l'avance, il faut produire pendant l'événement.",
+              "Annonce serveur au démarrage ; scoreboard latéral en direct ; bossbar d'infos tant que l'event est actif.",
+              "/events liste seulement les warps d'événement staff (lieux cliquables), pas ce calendrier automatique.",
             ],
           },
           {
-            id: "deroulement",
-            title: "Déroulement",
+            id: "types",
+            title: "Comment marquer des points",
+            list: [
+              "Récolte — une ressource tirée au sort. Dépose via /recolte (UI). Faction obligatoire.",
+              "Minage — un minerai tiré au sort (+ variante deepslate = même type). +1 point par minerai à la casse.",
+              "PvP — +10 points par kill d'un joueur d'une autre faction (pas de points entre alliés).",
+            ],
+            tables: [
+              {
+                caption: "Points (events.yml → points)",
+                headers: ["Action", "Points"],
+                rows: [
+                  ["Récolte / item déposé", "1 × multiplicateur item (voir ci-dessous)"],
+                  ["Minerai cassé (cible)", "1"],
+                  ["Kill PvP (autre fac)", "10"],
+                ],
+              },
+            ],
+          },
+          {
+            id: "participer-recolte",
+            title: "Participer — Récolte (/recolte)",
             paragraphs: [
-              "Trois à quatre événements par semaine, d'une heure chacun, programmés entre 14 h et 22 h (heure de Paris). Jamais plus d'un par jour, et au moins huit heures entre deux événements : chaque rendez-vous compte.",
-              "Un scoreboard latéral suit le classement en direct. La commande /events liste les événements actifs et permet de s'y téléporter.",
+              "Ouvre une UI (3 lignes de dépôt). Place la ressource cible, clique Déposer (vert) pour convertir en points. Annuler ou fermer rend les items. Seule la ressource annoncée compte.",
+            ],
+            tables: [
+              {
+                caption: "Pool harvest-items (un seul tiré par event)",
+                headers: ["Item", "Multiplicateur"],
+                rows: [
+                  ["Blé, carotte, pomme de terre, betterave", "×1"],
+                  ["Canne à sucre, tranche de pastèque, baies, cacao", "×1"],
+                  ["Verrues du Nether, citrouille", "×2"],
+                ],
+              },
             ],
             commands: [
               {
-                syntax: "/events",
-                description:
-                  "Liste les événements actifs et permet de s'y téléporter.",
-              },
-              {
                 syntax: "/recolte",
-                description:
-                  "Ouvre l'interface de dépôt pendant un événement Récolte.",
+                description: "Ouvre l'UI de dépôt si une récolte est en cours.",
                 note: "Alias : /harvest, /depositrecolte",
               },
             ],
           },
           {
+            id: "participer-minage-pvp",
+            title: "Participer — Minage & PvP",
+            list: [
+              "Minage possible : charbon, fer, cuivre, or, redstone, lapis, diamant, émeraude, or du Nether, quartz, débris antiques (deepslate inclus).",
+              "Faction requise pour marquer ; pas de points sans fac.",
+            ],
+          },
+          {
             id: "recompenses",
-            title: "Récompenses",
-            paragraphs: [
-              "À la fin de l'événement, le top 5 des factions est récompensé en pouvoir et en Cantox. La bossbar d'infos affiche l'événement en cours tant qu'il est actif.",
+            title: "Récompenses top 5",
+            tables: [
+              {
+                caption: "events.yml — faction-events.rewards",
+                headers: ["Place", "Pouvoir (faction)", "Cantox / participant"],
+                rows: [
+                  ["#1", "+50", "2 000"],
+                  ["#2", "+35", "1 500"],
+                  ["#3", "+25", "1 000"],
+                  ["#4", "+15", "750"],
+                  ["#5", "+10", "500"],
+                ],
+              },
+            ],
+            list: [
+              "Pouvoir → faction. Cantox → chaque membre qui a marqué au moins 1 point (online ou offline).",
+            ],
+            commands: [
+              {
+                syntax: "/events",
+                description:
+                  "Warps d'événement actifs (staff) uniquement — pas le score faction.",
+              },
             ],
           },
         ],
@@ -888,25 +1593,53 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "reactions-chat",
         title: "Réactions chat",
         summary:
-          "Mot mélangé ou bloc à casser : le plus rapide gagne 200 à 500 Cantox.",
-        related: ["events-faction", "cantox"],
+          "Mot mélangé ou premier bloc : max 9/jour, 200–500 Cantox, fenêtre 90 s (events.yml).",
+        related: ["events-faction", "cantox", "profil-tags"],
         sections: [
           {
             id: "types",
             title: "Les deux épreuves",
             list: [
-              "Mot mélangé — un mot français brouillé apparaît dans le chat : le premier à l'écrire correctement gagne.",
-              "Premier bloc — un bloc est annoncé : le premier à en casser un gagne.",
+              "Mot mélangé (scramble-chance 0,55) — mot français brouillé : premier à l'écrire correctement (exact, minuscules) gagne.",
+              "Premier à casser — bloc annoncé : premier à en casser un gagne.",
+            ],
+            paragraphs: [
+              "Sans gagnant en 90 s (timeout-seconds) : annulation et message serveur.",
             ],
           },
           {
-            id: "regles",
-            title: "Règles & récompenses",
+            id: "calendrier",
+            title: "Calendrier (chat-reactions)",
+            tables: [
+              {
+                headers: ["Paramètre", "Valeur"],
+                rows: [
+                  ["Max / jour", "9 (Europe/Paris)"],
+                  ["Fenêtre", "10 h → 22 h Europe/Paris"],
+                  ["Intervalle entre deux", "45–120 minutes (aléatoire)"],
+                  ["Récompense Cantox", "200–500 (inclusif)"],
+                  ["Timeout", "90 secondes"],
+                ],
+              },
+            ],
             list: [
-              "Huit à neuf réactions par jour maximum.",
-              "Chaque victoire rapporte 200 à 500 Cantox.",
-              "Un classement dédié existe en jeu (/leaderboard chat) et sur Discord.",
-              "La bossbar d'infos signale une réaction en cours.",
+              "Aucun joueur en ligne → report au prochain créneau.",
+            ],
+          },
+          {
+            id: "classement",
+            title: "Classement",
+            list: [
+              "Chaque victoire incrémente le compteur réactions chat.",
+              "En jeu : /leaderboard chat (aussi chat_reactions, reactions).",
+              "Bossbar d'infos signale une réaction en cours.",
+            ],
+            commands: [
+              {
+                syntax: "/leaderboard chat",
+                description: "Top des victoires de réactions chat.",
+                note: "Alias : /top, /lb, /classement",
+              },
             ],
           },
         ],
@@ -915,14 +1648,14 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "recompenses-regulieres",
         title: "Récompenses régulières",
         summary:
-          "Récompense quotidienne, drop de clé hebdomadaire et rappels de vote : le revenu du joueur assidu.",
-        related: ["vote", "caisses-cles", "grades-permissions"],
+          "Daily Cantox et drop de clé hebdomadaire Rare / Épique / Mythique (events.yml).",
+        related: ["vote", "caisses-cles", "grades-permissions", "reactions-chat"],
         sections: [
           {
             id: "daily",
             title: "Récompense quotidienne",
             paragraphs: [
-              "Chaque jour, /daily verse 1 000 Cantox de base, plus un bonus selon ton grade. La récompense est synchronisée entre Minecraft et Discord.",
+              "Chaque jour, /daily verse 1 000 Cantox de base, plus un bonus selon ton grade. Synchronisé Minecraft / Discord.",
             ],
             commands: [
               {
@@ -936,7 +1669,20 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "drop-cle",
             title: "Drop de clé hebdomadaire",
             paragraphs: [
-              "Chaque semaine, un joueur connecté est tiré au sort et reçoit une clé Rare, Épique ou Mythique. Le drop est annoncé à tout le serveur.",
+              "Une fois par semaine, un joueur connecté reçoit une clé. Annonce serveur ; message privé (ouvrir au spawn). Inventaire plein → drop au sol.",
+            ],
+            tables: [
+              {
+                caption: "weekly-key-drop (events.yml)",
+                headers: ["Paramètre", "Valeur"],
+                rows: [
+                  ["Jour", "Aléatoire (lundi–dimanche)"],
+                  ["Heure", "Aléatoire 14 h–21 h Europe/Paris (pas de 15 min)"],
+                  ["Types (poids égaux)", "RARE, EPIC, MYTHIC"],
+                  ["Exclus", "LEGENDARY et VOTE"],
+                  ["Personne online", "Nouvel essai ~30 min plus tard"],
+                ],
+              },
             ],
           },
         ],
@@ -946,40 +1692,430 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
   {
     slug: "items",
     name: "Items",
-    tagline: "Forgés pour durer",
+    tagline: "Outils, armes, armure, consommables",
     description:
-      "Items forgés, armure du Garde et caisses : l'équipement qui n'existe que sur CANTALE.",
+      "Catalogue pratique des items custom : obtention, effets, durabilité, CMD resource pack.",
     articles: [
       {
         slug: "items-forges",
-        title: "Items forgés",
+        title: "Outils forgés",
         summary:
-          "Pickantaxe, Cantaxe, Multi-Cantool, Cantalame : les outils qui n'existent que sur CANTALE.",
-        related: ["armure-du-garde", "caisses-cles", "claims-territoire"],
+          "Pickantaxe, Cantaxe, Multi-Cantool : matériaux, zones, enchantements, caisses et commandes.",
+        featured: true,
+        related: [
+          "cantalame",
+          "armure-du-garde",
+          "item-vie",
+          "rune-de-fortification",
+          "caisses-cles",
+          "claims-territoire",
+        ],
         sections: [
           {
-            id: "raretes",
-            title: "Les quatre raretés",
-            list: [
-              "Rare — Pickantaxe : la pioche forgée.",
-              "Épique — Cantaxe : la hache forgée.",
-              "Mythique — Multi-Cantool : l'outil universel.",
-              "Légendaire — Cantalame : l'épée du registre.",
+            id: "catalogue",
+            title: "Familles (enum CustomItemType)",
+            paragraphs: [
+              "Tous les types ci-dessous sont non craftables (lore plugin). Absents de shop.yml. Resource pack requis pour les modèles CMD.",
+            ],
+            tables: [
+              {
+                caption: "Vue d'ensemble",
+                headers: ["Famille", "Matériaux de base", "Variantes", "Effet principal"],
+                rows: [
+                  [
+                    "Pickantaxe",
+                    "Pioche fer / diamant / netherite",
+                    "1×1, 3×3, 5×5, 7×7 (12 types)",
+                    "Minage de zone orientée au regard",
+                  ],
+                  [
+                    "Cantaxe",
+                    "Hache fer / diamant / netherite",
+                    "3 types",
+                    "Abattage LOG/WOOD/STEM (BFS, max 100 bûches)",
+                  ],
+                  [
+                    "Multi-Cantool",
+                    "Pioche fer / diamant / netherite",
+                    "1×1 + variante sans suffixe (6 types)",
+                    "Adaptation pioche/hache/pelle/cisailles + insta-break",
+                  ],
+                  [
+                    "Autres",
+                    "Voir articles liés",
+                    "Cantalame, Vie, Rune, Armure du Garde",
+                    "—",
+                  ],
+                ],
+              },
             ],
           },
           {
-            id: "outils",
-            title: "Ce qu'ils font",
+            id: "pickantaxe",
+            title: "Pickantaxe",
             paragraphs: [
-              "Le Multi-Cantool adapte automatiquement sa vitesse au bloc miné, casse en zone 3×3 et abat les arbres entiers. Comme la Pickantaxe et la Cantaxe, il respecte les claims : impossible de s'en servir pour grief un territoire revendiqué.",
-              "Ces items nécessitent le resource pack du serveur pour afficher leurs apparences forgées.",
+              "Zone : si pitch > 45° ou < −45°, surface horizontale (X,Z) ; sinon surface verticale selon le yaw. Blocs hors centre via breakExtraBlock (respect claims / PASDIC / stockages protégés). 1×1 = pas d'extra.",
+              "Enchantable (lore) : Fortune, Silk Touch, Unbreaking. Anvil : pas de blocage spécifique Pickantaxe.",
+            ],
+            tables: [
+              {
+                caption: "Stats à la création (CustomItemManager)",
+                headers: [
+                  "Variante",
+                  "Enchantements",
+                  "Durabilité",
+                  "CMD",
+                  "Obtention caisses",
+                ],
+                rows: [
+                  [
+                    "Fer 1×1 … 7×7",
+                    "Unbreaking V · Efficiency V",
+                    "Usure vanilla (Unbreaking V)",
+                    "1001–1004",
+                    "Rare « Pic du Mineur » → Fer 1×1 (poids 15)",
+                  ],
+                  [
+                    "Diamant 1×1 … 7×7",
+                    "Unbreaking VII · Efficiency VII",
+                    "Usure vanilla (Unbreaking VII)",
+                    "1011–1014",
+                    "Épique « Pic de Maître » → Diamant 1×1 (18) ; Mythique « Vœu de Puissance » → Diamant 3×3 (18)",
+                  ],
+                  [
+                    "Netherite 1×1 … 7×7",
+                    "Efficiency X (pas d'Unbreaking)",
+                    "Commentaire code « infini » sans setUnbreakable — usure vanilla non désactivée dans le listener",
+                    "1021–1024",
+                    "Mythique « Vœu Suprême » → Netherite 5×5 (poids 10, pack)",
+                  ],
+                ],
+              },
+            ],
+            list: [
+              "Variantes 3×3 / 5×5 / 7×7 (sauf caisses ci-dessus) : /customitem, giveaway Discord, Ticket Légendaire (choix staff).",
+              "Non vendues en boutique admin.",
+            ],
+          },
+          {
+            id: "cantaxe",
+            title: "Cantaxe",
+            paragraphs: [
+              "Sur LOG / WOOD / STEM : BFS voisinage 3×3×3, plafond 100 bûches ; les extras passent par canBreakExtraBlock (claims).",
+              "Lore : « One-shot tous les arbres » + « Mine comme une efficacité max ». Enchantable : Silk Touch, Unbreaking.",
+            ],
+            tables: [
+              {
+                headers: [
+                  "Type",
+                  "Enchantements",
+                  "Durabilité",
+                  "CMD",
+                  "Obtention caisses",
+                ],
+                rows: [
+                  [
+                    "Cantaxe Fer",
+                    "Efficiency V",
+                    "Usure vanilla (pas d'Unbreaking à la création)",
+                    "2001",
+                    "Rare « Bénédiction Rare » (10) ; Épique « Mérite du Combattant » (20)",
+                  ],
+                  [
+                    "Cantaxe Diamant",
+                    "Efficiency VII",
+                    "Usure vanilla",
+                    "2002",
+                    "Épique « Bénédiction Épique » (12) ; Mythique « Vœu de Vol » (17, pack)",
+                  ],
+                  [
+                    "Cantaxe Netherite",
+                    "Efficiency X",
+                    "Commentaire « infini » sans setUnbreakable",
+                    "2003",
+                    "Mythique « Vœu Légendaire » (15, pack)",
+                  ],
+                ],
+              },
+            ],
+          },
+          {
+            id: "multi-cantool",
+            title: "Multi-Cantool",
+            paragraphs: [
+              "Listener : insta-break sur blocs minables (sauf AIR/BEDROCK, hors spawn protégé) ; drops via outil virtuel (pioche/hache/pelle/cisailles + Efficiency selon tier + Fortune III sur virtuel) ; damageItem(+1) à chaque casse gérée.",
+              "Lore toujours « Mode 1x1 (un seul bloc) ». miningRadius = 1 pour les types …_1X1, = 0 pour la variante sans suffixe — aucune casse de zone ni abattage d'arbre dans handleMultiCantool. Différence de gameplay 1×1 vs sans suffixe : non documentée dans le code (CMD / display name distincts).",
+            ],
+            tables: [
+              {
+                headers: [
+                  "Type",
+                  "Enchantements item",
+                  "Durabilité",
+                  "CMD",
+                  "Obtention caisses",
+                ],
+                rows: [
+                  [
+                    "Fer 1×1 / Fer",
+                    "Unbreaking V · Efficiency V",
+                    "Usure via damageItem (+ Unbreaking)",
+                    "3001 / 3002",
+                    "Vote « Coffre de Lames » → Fer 1×1 (poids 5) ; Rare idem (18)",
+                  ],
+                  [
+                    "Diamant 1×1 / Diamant",
+                    "Unbreaking VII · Efficiency VII",
+                    "Usure via damageItem",
+                    "3011 / 3012",
+                    "Rare « Légende Rapprochée » → Diamant 1×1 (1) ; Épique « Multi-Outil Épique » → Diamant 1×1 (15)",
+                  ],
+                  [
+                    "Netherite 1×1 / Netherite",
+                    "Efficiency X",
+                    "Commentaire « pas de durabilité » sans setUnbreakable ; damageItem reste appelé",
+                    "3021 / 3022",
+                    "Épique « Victoire Épique » → Netherite 1×1 (2) ; Mythique « Vœu de Vol » / « Vœu Suprême » → Netherite 1×1",
+                  ],
+                ],
+              },
+            ],
+            list: [
+              "Adaptateur visuel client (MultiCantoolVisualAdapter) : option config ; faux outil selon le bloc visé, même CMD.",
+              "Variantes sans suffixe : staff / giveaway / Ticket Légendaire uniquement (absentes des tables de caisses).",
+            ],
+          },
+          {
+            id: "obtention",
+            title: "Obtention (hors boutique)",
+            tables: [
+              {
+                caption: "Sources confirmées dans le code",
+                headers: ["Source", "Détail"],
+                rows: [
+                  [
+                    "Caisses",
+                    "CrateRewardTable — poids = chance relative dans la table (totaux Vote 98,5 ; Rare/Épique/Mythique 100). Voir aussi article Caisses.",
+                  ],
+                  [
+                    "Ticket Légendaire",
+                    "Audience Royale (poids 100) : ticket Discord → item au choix (staff).",
+                  ],
+                  [
+                    "Vote",
+                    "Donne des caisses Vote (Cadeau du Roi), pas d'outil custom direct.",
+                  ],
+                  [
+                    "Giveaway Discord",
+                    "Catégories Pickantaxe / Cantaxe / Multi-Cantool / Autres.",
+                  ],
+                  [
+                    "/customitem <type> [joueur]",
+                    "Permission cantale.admin (console : type + joueur).",
+                  ],
+                  [
+                    "Shop Cantox",
+                    "Aucun item custom listé dans shop.yml.",
+                  ],
+                ],
+              },
+            ],
+          },
+          {
+            id: "apparence",
+            title: "Apparence (resource pack)",
+            paragraphs: [
+              "CustomModelData posé à la création. Dispatch 1.21+ dans assets/minecraft/items/*.json → modèles cantale:item/…. Textures : PNG custom pour outils (pickantaxe_*, cantaxe_*, multicantool_*) selon docs/RESOURCE_PACK_GUIDE.md ; stubs garde/caisses en fallback vanilla tant que PNG manquants.",
+            ],
+          },
+          {
+            id: "commandes",
+            title: "Commandes",
+            commands: [
+              {
+                syntax: "/customitem <type> [joueur]",
+                description:
+                  "Donne n'importe quel CustomItemType (noms enum en minuscules, ex. pickantaxe_iron_3x3).",
+                note: "Permission : cantale.admin",
+              },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "cantalame",
+        title: "Cantalame",
+        summary:
+          "Épée netherite évolutive : kills uniques, paliers d'enchantements, drop de tête.",
+        related: ["items-forges", "caisses-cles", "trois-vies"],
+        sections: [
+          {
+            id: "base",
+            title: "Base",
+            tables: [
+              {
+                headers: ["Propriété", "Valeur (code)"],
+                rows: [
+                  ["Matériau", "NETHERITE_SWORD"],
+                  ["CMD", "5001 → cantale:item/cantalame"],
+                  ["Craft", "Non-craftable (lore)"],
+                  [
+                    "Durabilité",
+                    "setUnbreakable(true) via CantalameManager.createCantalame()",
+                  ],
+                  [
+                    "Progression",
+                    "Kills de joueurs uniques (UUID), plafond 100 ; re-tuer le même UUID n'ajoute pas",
+                  ],
+                  [
+                    "Trophée",
+                    "À chaque kill compté : tête du vaincu droppée au sol (« Tête de <pseudo> »)",
+                  ],
+                ],
+              },
+            ],
+            paragraphs: [
+              "/customitem cantalame utilise CantalameManager (PDC cantalame + Unbreakable). Les caisses appellent createCustomItem(CANTALAME) : PDC custom_item + lore évolutive, sans clé cantalame ni Unbreakable — chemins distincts dans le code.",
+            ],
+          },
+          {
+            id: "paliers",
+            title: "Paliers (CantalameManager.applyUpgrades)",
+            tables: [
+              {
+                caption: "Seuils de kills uniques → enchantements cumulés (dernier seuil gagne)",
+                headers: ["Kills", "Nom affiché", "Enchantements appliqués"],
+                rows: [
+                  ["0–4", "Débutant", "Aucun"],
+                  ["5–9", "Novice", "Sharpness I"],
+                  ["10–14", "Apprenti", "Sharpness II"],
+                  ["15–19", "Compétent", "Sharpness III · Looting I"],
+                  ["20–24", "Expérimenté", "Sharpness IV · Looting II"],
+                  ["25–34", "Expert", "Sharpness V · Looting III · Fire Aspect I"],
+                  ["35–44", "Maître", "+ Sweeping Edge III"],
+                  ["45–54", "Grand Maître", "Fire Aspect II · Mending"],
+                  ["55–64", "Légende", "Unbreaking III"],
+                  ["65–74", "Mythique", "Knockback II"],
+                  ["75–84", "Divin", "Sharpness X"],
+                  ["85–94", "Démoniaque", "Smite V · Bane of Arthropods V"],
+                  ["95–99", "Infernal", "Sweeping Edge V"],
+                  [
+                    "100",
+                    "SURPUISSANT",
+                    "Sharpness X · Looting V · Fire Aspect III · Sweeping Edge X · Unbreaking X",
+                  ],
+                ],
+              },
             ],
           },
           {
             id: "obtention",
             title: "Obtention",
-            paragraphs: [
-              "Les items forgés s'obtiennent dans les caisses — les tables de butin favorisent les outils, les ressources et la nourriture. Le staff peut aussi les distribuer via /customitem <type>.",
+            tables: [
+              {
+                headers: ["Source", "Récompense", "Poids"],
+                rows: [
+                  ["Vote", "Chance Légendaire (+ 2500 Cantox)", "0,5 / 98,5"],
+                  ["Rare", "Fortune Oubliée (+ 12000 Cantox)", "3"],
+                  ["Épique", "Gloire du Tournoi (+ pommes + 30000)", "5"],
+                  ["Épique", "Victoire Épique (pack + Multi Netherite 1×1 + Vie)", "2"],
+                  ["Mythique", "Vœu Légendaire / Vœu Suprême (packs)", "15 / 10"],
+                  ["Ticket Légendaire", "Item au choix via Discord", "100"],
+                  ["/customitem / giveaway", "Staff", "—"],
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "item-vie",
+        title: "Item Vie",
+        summary:
+          "Totem consommable : +1 vie au clic-droit. Grades mensuels et caisses.",
+        related: ["trois-vies", "items-forges", "caisses-cles", "grades-permissions"],
+        sections: [
+          {
+            id: "effet",
+            title: "Effet",
+            tables: [
+              {
+                headers: ["Propriété", "Valeur (code)"],
+                rows: [
+                  ["Matériau", "TOTEM_OF_UNDYING"],
+                  ["CMD", "7001"],
+                  ["Usage", "Clic-droit air/bloc → LifeManager.addLife(+1), stack −1"],
+                  ["Craft", "Non-craftable"],
+                  [
+                    "Plafond à l'usage",
+                    "addLife n'applique pas de cap — plafond éventuel non documenté dans ce listener",
+                  ],
+                ],
+              },
+            ],
+          },
+          {
+            id: "obtention",
+            title: "Obtention",
+            tables: [
+              {
+                headers: ["Source", "Détail"],
+                rows: [
+                  [
+                    "Grades (mensuel)",
+                    "Aventurier 1 · VIP 2 · Chèvre 3 items Vie / mois (PlayerRank.monthlyLives)",
+                  ],
+                  ["Vote", "Cadeau Exceptionnel (poids 1) : item + +1 vie directe + 1000 Cantox"],
+                  ["Rare", "Trésor du Peuple (6) ; Légende Rapprochée (1, pack)"],
+                  ["Épique", "Trophée du Champion (8) ; Victoire Épique (2, pack)"],
+                  ["Mythique", "Vœu Légendaire (15, 1 Vie) ; Vœu Suprême (10, 2 Vies)"],
+                  ["Ticket Légendaire / /customitem / giveaway", "Staff"],
+                ],
+              },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "rune-de-fortification",
+        title: "Rune de Fortification",
+        summary:
+          "1 rune = 1 chunk fortifié : casse réservée aux membres, explosions annulées, taxe 50 Cantox/jour.",
+        related: ["claims-territoire", "vie-de-faction", "items-forges"],
+        sections: [
+          {
+            id: "effet",
+            title: "Effet",
+            tables: [
+              {
+                headers: ["Propriété", "Valeur (code)"],
+                rows: [
+                  ["Matériau", "PAPER"],
+                  ["CMD", "6001"],
+                  ["Pose", "Clic-droit dans un claim de ta faction → consomme 1 rune, fortifie le chunk"],
+                  [
+                    "Retrait",
+                    "Sneak + clic-droit (rune en main ou main vide) → défait + rend une rune",
+                  ],
+                  [
+                    "Protection",
+                    "Casse blocs : membres faction seulement ; explosions retirées du chunk fortifié",
+                  ],
+                  [
+                    "Interactions",
+                    "Coffres / inventaires non bloqués par la rune (commentaire listener)",
+                  ],
+                  ["Taxe", "50 Cantox / jour / chunk fortifié (TerritoryTaxManager)"],
+                  [
+                    "Impayé",
+                    "Runes de la faction retirées en premier si solde insuffisant pour la taxe",
+                  ],
+                ],
+              },
+            ],
+            list: [
+              "Absente des tables de caisses (CrateRewardTable).",
+              "Obtention joueur : staff (/customitem, giveaway catégorie Autres) — pas d'autre source dans le code.",
             ],
           },
         ],
@@ -988,28 +2124,96 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "armure-du-garde",
         title: "Armure du Garde",
         summary:
-          "Quatre pièces en netherite sur-enchantées, avec un bonus de set cumulatif.",
-        related: ["items-forges", "events-faction"],
+          "4 pièces netherite : enchantements, bonus de set par pièce, obtention staff, CMD 9001–9004.",
+        related: ["items-forges", "events-faction", "caisses-cles"],
         sections: [
           {
             id: "pieces",
-            title: "Les quatre pièces",
+            title: "Pièces",
+            tables: [
+              {
+                headers: [
+                  "Pièce",
+                  "Matériau",
+                  "CMD",
+                  "Enchantements communs",
+                  "Extras",
+                ],
+                rows: [
+                  [
+                    "Casque du Garde",
+                    "NETHERITE_HELMET",
+                    "9001",
+                    "Protection IX · Thorns V · Unbreaking X · Mending",
+                    "Respiration III · Aqua Affinity",
+                  ],
+                  [
+                    "Plastron du Garde",
+                    "NETHERITE_CHESTPLATE",
+                    "9002",
+                    "Protection IX · Thorns V · Unbreaking X · Mending",
+                    "Aucun extra code",
+                  ],
+                  [
+                    "Jambières du Garde",
+                    "NETHERITE_LEGGINGS",
+                    "9003",
+                    "Protection IX · Thorns V · Unbreaking X · Mending",
+                    "Swift Sneak III",
+                  ],
+                  [
+                    "Bottes du Garde",
+                    "NETHERITE_BOOTS",
+                    "9004",
+                    "Protection IX · Thorns V · Unbreaking X · Mending",
+                    "Feather Falling IV · Depth Strider III · Soul Speed III",
+                  ],
+                ],
+              },
+            ],
             paragraphs: [
-              "Casque, plastron, jambières et bottes du Garde : du netherite poussé au-delà des limites vanilla — Protection 9, Thorns 5, Solidité 10, Raccommodage, et enchantements supplémentaires.",
+              "Durabilité : Unbreaking X + Mending (pas de setUnbreakable). Craft : non (lore).",
             ],
           },
           {
             id: "bonus",
-            title: "Bonus de set",
+            title: "Bonus de set (GardeArmorListener)",
             paragraphs: [
-              "Chaque pièce équipée apporte 25 % du bonus de set. L'armure complète confère +12 points de vie, +30 % de vitesse et +25 % de hauteur de saut.",
+              "Chaque pièce Garde authentique équipée = 25 % du set. Modifiers NamespacedKey cantale:garde_health|speed|jump. Refresh join / respawn / changement d'armure / clic inventaire.",
+            ],
+            tables: [
+              {
+                headers: ["Pièces", "MAX_HEALTH", "MOVEMENT_SPEED", "JUMP_STRENGTH"],
+                rows: [
+                  ["1", "+3 HP (+1,5 cœur)", "+7,5 % (ADD_SCALAR)", "+6,25 %"],
+                  ["2", "+6 HP", "+15 %", "+12,5 %"],
+                  ["3", "+9 HP", "+22,5 %", "+18,75 %"],
+                  ["4 (set)", "+12 HP (+6 cœurs)", "+30 %", "+25 %"],
+                ],
+              },
+            ],
+          },
+          {
+            id: "apparence",
+            title: "Apparence",
+            paragraphs: [
+              "Modèles cantale:item/garde_* dispatchés sur netherite_* .json. Placeholders actuels : layer0 = texture vanilla netherite (PNG custom prévus dans docs/BlockbenchArtGuide.md, non livrés tant que checklist art ouverte).",
             ],
           },
           {
             id: "obtention",
             title: "Obtention",
-            paragraphs: [
-              "L'armure du Garde est distribuée par le staff via /customitem. Elle nécessite le resource pack du serveur pour ses apparences.",
+            tables: [
+              {
+                headers: ["Source", "Statut"],
+                rows: [
+                  ["Caisses (CrateRewardTable)", "Absente"],
+                  ["shop.yml", "Absente"],
+                  ["/customitem garde_helmet|chestplate|leggings|boots", "Oui (cantale.admin)"],
+                  ["Giveaway Discord → Autres", "Oui"],
+                  ["Events faction / drop clé", "Non documenté comme drop d'armure dans le code"],
+                ],
+              },
             ],
           },
         ],
@@ -1018,32 +2222,88 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "caisses-cles",
         title: "Caisses & clés",
         summary:
-          "Cinq caisses, cinq rituels : boîte aux lettres, coffre du spawn, autel, fontaine et ticket Discord.",
+          "Cinq caisses, rituels d'ouverture, tables de butin items custom (poids).",
         featured: true,
-        related: ["vote", "items-forges", "coffres-inventaires"],
+        related: ["vote", "items-forges", "cantalame", "item-vie", "coffres-inventaires"],
         sections: [
           {
             id: "types",
             title: "Les cinq caisses",
+            list: [
+              "Vote — Cadeau du Roi : boîte aux lettres spawn (BARREL / LOOM).",
+              "Rare — Trésor Public : coffre configuré (crate.yml).",
+              "Épique — Médaille du Tournoi : autel (beacon / table d'enchantement).",
+              "Mythique — Pièce Mythique : jeter (Q) dans l'eau / zone fontaine.",
+              "Légendaire — Ticket Légendaire : ticket Discord numéroté (item au choix).",
+            ],
+          },
+          {
+            id: "butin-custom",
+            title: "Butin items custom (poids)",
             paragraphs: [
-              "Chaque caisse a son item, son rituel et son lieu. On ne clique pas sur une caisse Cantale : on la vit.",
+              "Poids relatifs dans CrateRewardTable. Ascensions : Vote→Rare 4 % ; Rare→Épique 5 % ; Épique→Mythique 5 % ; Mythique→Légendaire 4 %.",
+            ],
+            tables: [
+              {
+                caption: "Récompenses qui donnent un item custom",
+                headers: ["Caisse", "Nom", "Poids", "Items custom"],
+                rows: [
+                  ["Vote", "Coffre de Lames", "5", "Multi-Cantool Fer 1×1"],
+                  ["Vote", "Cadeau Exceptionnel", "1", "Vie (+1 vie directe)"],
+                  ["Vote", "Chance Légendaire", "0,5", "Cantalame*"],
+                  ["Rare", "Coffre de Lames", "18", "Multi-Cantool Fer 1×1"],
+                  ["Rare", "Pic du Mineur", "15", "Pickantaxe Fer 1×1"],
+                  ["Rare", "Bénédiction Rare", "10", "Cantaxe Fer"],
+                  ["Rare", "Trésor du Peuple", "6", "Vie"],
+                  ["Rare", "Fortune Oubliée", "3", "Cantalame*"],
+                  ["Rare", "Légende Rapprochée", "1", "Multi-Cantool Diamant 1×1 + Vie"],
+                  ["Épique", "Mérite du Combattant", "20", "Cantaxe Fer"],
+                  ["Épique", "Pic de Maître", "18", "Pickantaxe Diamant 1×1"],
+                  ["Épique", "Multi-Outil Épique", "15", "Multi-Cantool Diamant 1×1"],
+                  ["Épique", "Bénédiction Épique", "12", "Cantaxe Diamant"],
+                  ["Épique", "Trophée du Champion", "8", "Vie"],
+                  ["Épique", "Gloire du Tournoi", "5", "Cantalame*"],
+                  [
+                    "Épique",
+                    "Victoire Épique",
+                    "2",
+                    "Cantalame* + Multi Netherite 1×1 + Vie",
+                  ],
+                  ["Mythique", "Vœu de Puissance", "18", "Pickantaxe Diamant 3×3"],
+                  [
+                    "Mythique",
+                    "Vœu de Vol",
+                    "17",
+                    "Multi Netherite 1×1 + Cantaxe Diamant",
+                  ],
+                  [
+                    "Mythique",
+                    "Vœu Légendaire",
+                    "15",
+                    "Cantalame* + Cantaxe Netherite + Vie",
+                  ],
+                  [
+                    "Mythique",
+                    "Vœu Suprême",
+                    "10",
+                    "Cantalame* + Multi Netherite 1×1 + Pickantaxe Netherite 5×5 + 2× Vie",
+                  ],
+                  ["Légendaire", "Audience Royale", "100", "Choix Discord (staff)"],
+                ],
+              },
             ],
             list: [
-              "Vote — Cadeau du Roi : à déposer dans la boîte aux lettres du spawn (tonneau ou métier à tisser).",
-              "Rare — Trésor Public : à ouvrir au coffre configuré au spawn.",
-              "Épique — Médaille du Tournoi : à présenter sur l'autel (beacon ou table d'enchantement).",
-              "Mythique — Pièce Mythique : à jeter (touche Q) dans l'eau de la fontaine.",
-              "Légendaire — Ticket Légendaire : ouvre automatiquement un ticket Discord numéroté.",
+              "* Cantalame caisses : createCustomItem (voir article Cantalame pour le chemin évolutif).",
+              "Armure du Garde et Rune : absentes de ces tables.",
             ],
           },
           {
             id: "regles",
-            title: "Bon à savoir",
+            title: "Règles",
             list: [
-              "Si ton inventaire déborde, le surplus de récompenses est stocké dans ton coffre privé (/pc).",
-              "Seules les ouvertures Mythique et Légendaire sont annoncées publiquement.",
-              "Les caisses se gagnent par le vote, le drop de clé hebdomadaire et les événements.",
-              "Le grade Chèvre s'obtient en atteignant la caisse Légendaire depuis une caisse Vote, étape par étape.",
+              "Inventaire plein → surplus vers coffre privé (/pc).",
+              "Annonce publique : ouvertures Mythique et Légendaire seulement.",
+              "Sources de caisses : vote, drop clé hebdo (Rare/Épique/Mythique), events, /crate give (admin).",
             ],
           },
           {
@@ -1057,7 +2317,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               },
               {
                 syntax: "/crate reload",
-                description: "Recharge la configuration des emplacements.",
+                description: "Recharge crate.yml (emplacements).",
                 note: "Permission : cantale.admin",
               },
             ],
@@ -1071,40 +2331,77 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
     name: "Autre",
     tagline: "Tout le reste du registre",
     description:
-      "Coffres virtuels, liaison Discord et site, profil, tags et bossbar : les systèmes transverses.",
+      "Coffres, Discord, site, AFK, clear-lag, profil et tags : les systèmes transverses.",
     articles: [
       {
         slug: "coffres-inventaires",
         title: "Coffres & inventaires",
         summary:
-          "Coffres privés virtuels et Ender Chest : ton butin te suit partout, sauvegardé en base.",
-        related: ["caisses-cles", "grades-permissions"],
+          "Coffres privés virtuels (/pc, /pc2, /pc3) : tailles et accès selon PrivateChestService et le grade.",
+        related: ["caisses-cles", "grades-permissions", "commandes-joueur"],
         sections: [
           {
             id: "coffres",
             title: "Coffres privés",
             paragraphs: [
-              "Les coffres privés sont virtuels : leur contenu est sauvegardé en base de données et mis en cache en mémoire pour éviter toute perte. Le surplus des récompenses de caisses y est stocké automatiquement.",
+              "Contenu sauvegardé en base et mis en cache. Nombre de coffres : Joueur/Aventurier = 1 · VIP = 2 · Chèvre/staff = 3. Taille : 27 slots pour Joueur, 54 pour tous les autres grades.",
             ],
             commands: [
               {
                 syntax: "/pc",
-                description: "Ouvre ton coffre privé virtuel.",
+                description: "Ouvre le coffre privé #1.",
+                note: "Tous les joueurs",
               },
               {
                 syntax: "/pc2",
-                description: "Ouvre le second coffre privé.",
-                note: "Grades VIP et Chèvre",
+                description: "Ouvre le coffre privé #2.",
+                note: "VIP, Chèvre, staff (cantale.admin traité comme Chèvre pour l'accès)",
               },
               {
                 syntax: "/pc3",
-                description: "Ouvre le troisième coffre privé.",
-                note: "Grade Chèvre",
+                description: "Ouvre le coffre privé #3.",
+                note: "Chèvre / staff",
               },
               {
                 syntax: "/ec",
-                description: "Ouvre l'Ender Chest.",
+                description:
+                  "Ouvre l'Ender Chest vanilla Minecraft (migration éventuelle depuis l'ancien stockage virtuel).",
+                note: "Tous les joueurs",
               },
+            ],
+          },
+        ],
+      },
+      {
+        slug: "afk-clearlag",
+        title: "AFK & clear-lag",
+        summary:
+          "Délais de kick AFK par grade, et nettoyage automatique des items au sol avec compte à rebours.",
+        related: ["grades-permissions", "teleportation", "claims-territoire"],
+        sections: [
+          {
+            id: "afk",
+            title: "Kick AFK",
+            paragraphs: [
+              "Sans activité (changement de bloc ou de regard, message chat, commande, clic / interaction), le serveur te déconnecte. Message de kick : inactivité avec le nombre de minutes du palier.",
+            ],
+            list: [
+              "Joueur — 10 minutes.",
+              "Aventurier — 30 minutes.",
+              "VIP — 60 minutes.",
+              "Chèvre / Modérateur / Admin / Owner — pas de kick AFK.",
+            ],
+          },
+          {
+            id: "clearlag",
+            title: "Clear-lag (items au sol)",
+            paragraphs: [
+              "Toutes les 3 minutes (180 s par défaut), le serveur supprime les items au sol dans tous les mondes. Ce n'est pas une commande joueur : tu vois seulement les annonces et le bilan.",
+            ],
+            list: [
+              "Avertissements dans le chat à 30 s, puis 10, 5, 3, 2 et 1 seconde avant le clear.",
+              "À l'instant T : annonce du nombre d'items supprimés.",
+              "Seuls les items posés au sol sont concernés (pas les mobs, pas l'inventaire).",
             ],
           },
         ],
@@ -1113,8 +2410,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "discord-site",
         title: "Discord & site",
         summary:
-          "Lie tes comptes Discord et site web : rôles synchronisés, tickets et passerelle de chat.",
-        related: ["profil-tags", "vie-de-faction"],
+          "Lie tes comptes Discord et site web : rôles synchronisés, tickets, carte et passerelle de chat.",
+        related: ["profil-tags", "vie-de-faction", "claims-territoire"],
         sections: [
           {
             id: "discord",
@@ -1147,7 +2444,10 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
           },
           {
             id: "site",
-            title: "Liaison au site",
+            title: "Site web",
+            paragraphs: [
+              "Après liaison (/web link), le site affiche ton profil, les classements, les factions et la carte des territoires (/carte) : claims, PASDIC et warps, sans les factions en mode secret.",
+            ],
             commands: [
               {
                 syntax: "/web link <code>",
@@ -1163,7 +2463,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         title: "Profil, tags & bossbar",
         summary:
           "/profile : statistiques, tags cosmétiques et réglage de la bossbar d'infos.",
-        related: ["discord-site", "commandes-joueur"],
+        related: ["discord-site", "commandes-joueur", "events-faction", "reactions-chat"],
         sections: [
           {
             id: "profil",
@@ -1183,7 +2483,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "bossbar",
             title: "La bossbar d'infos",
             paragraphs: [
-              "Une barre personnelle et rotative affiche tour à tour : solde Cantox, vies restantes, prime wanted (si tu es recherché), événement de faction en cours, réaction chat active et tag de combat. Elle se désactive depuis /profile.",
+              "Une barre personnelle tourne toutes les 5 secondes (réglable serveur) : Cantox → vies → faction (si tu en as une) → prime wanted (si > 0) → événement de faction (si actif) → réaction chat (si active) → tag de combat (si tagué). Tu peux la désactiver depuis /profile.",
             ],
           },
           {
@@ -1259,6 +2559,11 @@ export function getSearchIndex(): WikiSearchEntry[] {
           section.title,
           ...(section.paragraphs ?? []),
           ...(section.list ?? []),
+          ...(section.tables ?? []).flatMap((table) => [
+            table.caption ?? "",
+            ...table.headers,
+            ...table.rows.flat(),
+          ]),
           ...(section.commands ?? []).map(
             (command) =>
               `${command.syntax} ${command.description} ${command.note ?? ""}`,

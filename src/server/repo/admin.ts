@@ -33,13 +33,26 @@ export async function getOnlinePlayersFromStatus(): Promise<{
   type Row = {
     online_count: number;
     max_players: number | null;
-    online_json: string | null;
+    online_json?: string | null;
     updated_at: Date | string;
   };
-  const rows = await query<Row>(
-    `SELECT online_count, max_players, online_json, updated_at
-     FROM server_status ORDER BY updated_at DESC LIMIT 1`,
-  );
+
+  let rows: Row[];
+  try {
+    rows = await query<Row>(
+      `SELECT online_count, max_players, online_json, updated_at
+       FROM server_status ORDER BY updated_at DESC LIMIT 1`,
+    );
+  } catch (error) {
+    // Colonne online_json absente tant que le JAR n'a pas migré : fallback compteurs seuls.
+    const msg = error instanceof Error ? error.message : String(error);
+    if (!/online_json|Unknown column/i.test(msg)) throw error;
+    rows = await query<Row>(
+      `SELECT online_count, max_players, updated_at
+       FROM server_status ORDER BY updated_at DESC LIMIT 1`,
+    );
+  }
+
   const row = rows[0];
   if (!row) return { online: 0, max: null, updatedAt: null, players: [] };
 
@@ -96,6 +109,97 @@ export async function lookupPlayer(q: string): Promise<AdminPlayerRow | null> {
   };
 }
 
+export type AdminListedPlayer = {
+  uuid: string;
+  username: string;
+  lives: number;
+  balance: number;
+};
+
+const ADMIN_PLAYER_LIST_DEFAULT = 50;
+const ADMIN_PLAYER_LIST_MAX = 100;
+
+function clampAdminListLimit(limit: number): number {
+  if (!Number.isFinite(limit)) return ADMIN_PLAYER_LIST_DEFAULT;
+  return Math.max(1, Math.min(ADMIN_PLAYER_LIST_MAX, Math.floor(limit)));
+}
+
+function clampAdminPage(page: number): number {
+  if (!Number.isFinite(page)) return 1;
+  return Math.max(1, Math.floor(page));
+}
+
+/** UUID Minecraft strict — sûr à inliner dans un IN (…) pour le tri online-first. */
+function sanitizeUuidForSql(uuid: string): string | null {
+  const normalized = uuid.trim().toLowerCase();
+  if (!/^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/.test(normalized)) {
+    return null;
+  }
+  return normalized;
+}
+
+/**
+ * Liste paginée de tous les joueurs (online + offline) pour l'admin.
+ * Recherche pseudo / UUID (LIKE). Tri : online d'abord si des UUID sont fournis, puis pseudo.
+ */
+export async function listPlayersForAdmin(opts: {
+  q?: string;
+  page?: number;
+  limit?: number;
+  /** UUID online (server_status) pour badge + tri. */
+  onlineUuids?: string[];
+}): Promise<{ players: AdminListedPlayer[]; total: number; page: number; limit: number }> {
+  const page = clampAdminPage(opts.page ?? 1);
+  const limit = clampAdminListLimit(opts.limit ?? ADMIN_PLAYER_LIST_DEFAULT);
+  const offset = (page - 1) * limit;
+  const rawQ = (opts.q ?? "").trim();
+  const hasQ = rawQ.length > 0;
+  const like = `%${rawQ}%`;
+
+  const where = hasQ ? "WHERE p.username LIKE :like OR p.uuid LIKE :like" : "";
+  const params: Record<string, SqlValue> = hasQ ? { like } : {};
+
+  const countRows = await query<{ total: number | string }>(
+    `SELECT COUNT(*) AS total FROM players p ${where}`,
+    params,
+  );
+  const total = Number(countRows[0]?.total ?? 0) || 0;
+
+  const safeOnline = (opts.onlineUuids ?? [])
+    .map(sanitizeUuidForSql)
+    .filter((u): u is string => u != null);
+  const orderOnline =
+    safeOnline.length > 0
+      ? `CASE WHEN LOWER(p.uuid) IN (${safeOnline.map((u) => `'${u}'`).join(",")}) THEN 0 ELSE 1 END,`
+      : "";
+
+  const rows = await query<{
+    uuid: string;
+    username: string;
+    lives: number | string;
+    balance: number | string;
+  }>(
+    `SELECT p.uuid, p.username, p.lives, p.balance
+     FROM players p
+     ${where}
+     ORDER BY ${orderOnline} p.username ASC
+     LIMIT ${limit} OFFSET ${offset}`,
+    params,
+  );
+
+  return {
+    players: rows.map((row) => ({
+      uuid: row.uuid,
+      username: row.username,
+      lives: Number(row.lives) || 0,
+      balance: Number(row.balance) || 0,
+    })),
+    total,
+    page,
+    limit,
+  };
+}
+
 export async function enqueueAdminAction(input: {
   type: string;
   targetUuid: string | null;
@@ -130,6 +234,50 @@ export async function getAdminActionStatus(id: number): Promise<{
   const row = rows[0];
   if (!row) return null;
   return { id: Number(row.id), status: row.status, result: row.result };
+}
+
+export type AdminSnapshotRow = {
+  id: number;
+  actionId: number;
+  playerUuid: string;
+  kind: string;
+  payload: unknown;
+  createdAt: string;
+};
+
+export async function getAdminSnapshot(id: number): Promise<AdminSnapshotRow | null> {
+  const rows = await query<{
+    id: number | string;
+    action_id: number | string;
+    player_uuid: string;
+    kind: string;
+    payload: string;
+    created_at: Date | string;
+  }>(
+    `SELECT id, action_id, player_uuid, kind, payload, created_at
+     FROM web_admin_snapshots WHERE id = :id LIMIT 1`,
+    { id },
+  );
+  const row = rows[0];
+  if (!row) return null;
+  let payload: unknown = row.payload;
+  try {
+    payload = JSON.parse(row.payload) as unknown;
+  } catch {
+    /* leave string */
+  }
+  const createdAt =
+    row.created_at instanceof Date
+      ? row.created_at.toISOString()
+      : new Date(row.created_at).toISOString();
+  return {
+    id: Number(row.id),
+    actionId: Number(row.action_id),
+    playerUuid: row.player_uuid,
+    kind: row.kind,
+    payload,
+    createdAt,
+  };
 }
 
 /** Liste les salons tickets Discord (catégorie support) via REST bot. */
