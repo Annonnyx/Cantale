@@ -8,6 +8,7 @@ const NAV_LINKS = [
   { href: "/factions", label: "Factions" },
   { href: "/classements", label: "Classements" },
   { href: "/carte", label: "Carte" },
+  { href: "/chat", label: "Chat" },
   { href: "/wiki", label: "Wiki" },
   { href: "/vote", label: "Vote" },
   { href: "/recrutement", label: "Recrutement" },

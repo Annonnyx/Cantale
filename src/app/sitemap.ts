@@ -24,6 +24,7 @@ export default function sitemap(): MetadataRoute.Sitemap {
     entry("/classements", "daily", 0.7),
     entry("/stats", "hourly", 0.7),
     entry("/carte", "hourly", 0.7),
+    entry("/chat", "hourly", 0.7),
     entry("/vote", "weekly", 0.7),
     entry("/la-liste", "daily", 0.6),
     entry("/boutique", "weekly", 0.6),

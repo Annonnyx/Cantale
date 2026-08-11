@@ -19,6 +19,7 @@ const FOOTER_LINKS = [
       { href: "/classements", label: "Classements" },
       { href: "/stats", label: "Statistiques" },
       { href: "/carte", label: "Carte" },
+      { href: "/chat", label: "Chat" },
       { href: "/la-liste", label: "La Liste" },
     ],
   },
