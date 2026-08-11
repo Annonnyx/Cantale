@@ -24,7 +24,10 @@ export function mapProviderUpstream(): string | null {
 
 /**
  * URL à placer dans l'iframe / le lien « ouvrir ».
- * - HTTP upstream → `/map-provider/` (évite mixed content)
+ * - HTTP upstream → `/map-provider/index.html` (évite mixed content).
+ *   On utilise `index.html` (pas `/map-provider/`) car Next renvoie 308
+ *   `/map-provider/` → `/map-provider`, ce qui casse les chemins relatifs
+ *   Squaremap (`./assets/…`, `tiles/…`).
  * - HTTPS upstream → URL directe (moins de latence)
  */
 export function mapProviderPublicUrl(): string | null {
@@ -33,7 +36,7 @@ export function mapProviderPublicUrl(): string | null {
   try {
     const url = new URL(raw);
     if (url.protocol === "http:") {
-      return `${PROXY_BASE}/`;
+      return `${PROXY_BASE}/index.html`;
     }
     if (url.protocol === "https:") {
       return url.toString();

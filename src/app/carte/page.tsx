@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 
 export default async function CartePage() {
   const [claims, warps] = await Promise.all([getMapClaims(), getMapWarps()]);
-  // HTTP → `/map-provider/` (rewrite same-origin) pour éviter le mixed content.
+  // HTTP → `/map-provider/index.html` (rewrite same-origin) pour éviter le mixed content.
   const providerUrl = mapProviderPublicUrl();
   const generatedAt = new Date().toISOString();
 
