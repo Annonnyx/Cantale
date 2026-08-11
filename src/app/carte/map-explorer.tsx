@@ -1,5 +1,6 @@
 "use client";
 
+import dynamic from "next/dynamic";
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
   SERVER_SPAWN_BLOCK,
@@ -13,7 +14,19 @@ import {
 } from "@/lib/map-utils";
 import { squaremapWorldForBukkit } from "@/lib/map-squaremap";
 import { TerritoryCanvas, type MapFocus, type MapLayers } from "./territory-canvas";
-import { WorldMap } from "./world-map";
+
+/** Leaflet touche `window` — pas de SSR. */
+const WorldMap = dynamic(
+  () => import("./world-map").then((mod) => mod.WorldMap),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex h-full w-full items-center justify-center bg-ash-deep text-xs text-steel">
+        Chargement de la carte…
+      </div>
+    ),
+  },
+);
 
 /** Cadence de rafraîchissement silencieux, alignée sur le cache des routes. */
 const REFRESH_MS = 30_000;
