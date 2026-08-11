@@ -4,9 +4,8 @@ import { env, DISCORD_ROLES, DISCORD_TICKET_CATEGORY } from "./env";
  * Création de tickets Discord via l'API REST (token bot), sans dépendance.
  * Reprend les conventions du TicketListener Java (bot natif) pour que les
  * tickets web se comportent comme les tickets créés en jeu :
- *  - nom de salon normalisé (minuscules, tirets, max 100 caractères)
- *  - topic "ticket:<ownerId>:<raison>" — la commande /ticket close du bot
- *    natif fonctionne donc aussi sur les tickets ouverts depuis le site
+ *  - nom de salon "open-<prefix>-<slug>-<nom>" (convention bot natif open/closed)
+ *  - topic "ticket:<ownerId>:<raison>" — /ticket close du bot natif compatible
  *  - mêmes permissions : @everyone masqué, staff + demandeur en accès
  * Jamais d'exception : toute défaillance se résout en { ok: false, error }.
  */
@@ -105,14 +104,14 @@ function sanitizeNamePart(value: string, fallback: string): string {
   return out || fallback;
 }
 
-/** Nom de salon style ticket natif : "<prefix>-<slug>-<nom>" (max 100 car.). */
+/** Nom de salon style ticket natif : "open-<prefix>-<slug>-<nom>" (max 100 car.). */
 function buildTicketChannelName(
   prefix: string,
   slug: string,
   applicantName: string,
   nameFallback: string,
 ): string {
-  const name = `${sanitizeNamePart(prefix, "ticket")}-${sanitizeNamePart(slug, "demande")}-${sanitizeNamePart(applicantName, nameFallback)}`;
+  const name = `open-${sanitizeNamePart(prefix, "ticket")}-${sanitizeNamePart(slug, "demande")}-${sanitizeNamePart(applicantName, nameFallback)}`;
   return name.length > MAX_CHANNEL_NAME_LENGTH ? name.slice(0, MAX_CHANNEL_NAME_LENGTH) : name;
 }
 

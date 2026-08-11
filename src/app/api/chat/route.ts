@@ -3,8 +3,12 @@ import {
   CHAT_MESSAGE_MAX_LENGTH,
   clampChatLimit,
   enqueueChatMessage,
-  getChatMessagesAfter,
-  getRecentChatMessages,
+  getFactionChatAfter,
+  getFactionName,
+  getGlobalChatAfter,
+  getPlayerFactionId,
+  getRecentFactionChat,
+  getRecentGlobalChat,
 } from "@/server/repo/chat";
 
 export const dynamic = "force-dynamic";
@@ -36,27 +40,60 @@ function sanitizeMessage(raw: string): string | null {
 }
 
 /**
- * GET /api/chat?after=<id>&limit=80
- * Fil public (lecture anonyme). Sans after → derniers messages.
+ * GET /api/chat?scope=global|faction&after=&limit=
+ * Faction : réservé aux membres (compte lié + faction_members).
  */
 export async function GET(request: Request) {
   const params = new URL(request.url).searchParams;
+  const scope = params.get("scope") === "faction" ? "faction" : "global";
   const afterRaw = params.get("after");
   const limit = clampChatLimit(params.get("limit") ?? undefined);
+  const afterId = afterRaw ? Number.parseInt(afterRaw, 10) : 0;
 
   try {
-    const afterId = afterRaw ? Number.parseInt(afterRaw, 10) : 0;
+    const session = await getSessionUser();
+    let factionId: number | null = null;
+    let factionName: string | null = null;
+
+    if (session.mc) {
+      factionId = await getPlayerFactionId(session.mc.uuid).catch(() => null);
+      if (factionId) factionName = await getFactionName(factionId).catch(() => null);
+    }
+
+    if (scope === "faction") {
+      if (!session.mc || !factionId) {
+        return Response.json({ error: "Chat faction réservé aux membres." }, { status: 403 });
+      }
+      const messages =
+        Number.isFinite(afterId) && afterId > 0
+          ? await getFactionChatAfter(factionId, afterId, limit)
+          : await getRecentFactionChat(factionId, limit);
+      return Response.json(
+        {
+          scope: "faction",
+          messages,
+          canSpeak: true,
+          speaker: session.mc.username,
+          factionId,
+          factionName,
+        },
+        { headers: { "Cache-Control": "no-store" } },
+      );
+    }
+
     const messages =
       Number.isFinite(afterId) && afterId > 0
-        ? await getChatMessagesAfter(afterId, limit)
-        : await getRecentChatMessages(limit);
+        ? await getGlobalChatAfter(afterId, limit)
+        : await getRecentGlobalChat(limit);
 
-    const session = await getSessionUser();
     return Response.json(
       {
+        scope: "global",
         messages,
         canSpeak: session.mc !== null,
         speaker: session.mc?.username ?? null,
+        factionId,
+        factionName,
       },
       { headers: { "Cache-Control": "no-store" } },
     );
@@ -67,8 +104,7 @@ export async function GET(request: Request) {
 }
 
 /**
- * POST /api/chat { message }
- * Réservé aux comptes Discord liés à Minecraft.
+ * POST /api/chat { message, scope?: 'global'|'faction' }
  */
 export async function POST(request: Request) {
   const check = await requireLinked();
@@ -81,21 +117,27 @@ export async function POST(request: Request) {
     return Response.json({ error: "Corps JSON invalide." }, { status: 400 });
   }
 
-  const messageRaw =
-    typeof body === "object" && body !== null && "message" in body
-      ? String((body as { message: unknown }).message ?? "")
-      : "";
-  const message = sanitizeMessage(messageRaw);
+  const obj = typeof body === "object" && body !== null ? (body as Record<string, unknown>) : {};
+  const message = sanitizeMessage(String(obj.message ?? ""));
   if (!message) {
     return Response.json(
-      { error: `Message invalide (1–${CHAT_MESSAGE_MAX_LENGTH} caractères, sans @everyone/@here).` },
+      { error: `Message invalide (1–${CHAT_MESSAGE_MAX_LENGTH} caractères).` },
       { status: 400 },
     );
   }
 
+  const scope = obj.scope === "faction" ? "faction" : "global";
   const uuid = check.user.mc!.uuid;
-  if (isRateLimited(uuid)) {
+  if (isRateLimited(`${scope}:${uuid}`)) {
     return Response.json({ error: "Doucement — un message toutes les 3 secondes." }, { status: 429 });
+  }
+
+  let factionId: number | null = null;
+  if (scope === "faction") {
+    factionId = await getPlayerFactionId(uuid).catch(() => null);
+    if (!factionId) {
+      return Response.json({ error: "Tu n'es dans aucune faction." }, { status: 403 });
+    }
   }
 
   const playerName = check.user.mc!.username?.trim() || check.user.discordUser?.username || "Joueur";
@@ -105,9 +147,10 @@ export async function POST(request: Request) {
       playerUuid: uuid,
       playerName,
       message,
+      factionId,
     });
     return Response.json(
-      { ok: true, id, queued: true },
+      { ok: true, id, queued: true, scope },
       { status: 202, headers: { "Cache-Control": "no-store" } },
     );
   } catch (error) {

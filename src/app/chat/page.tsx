@@ -1,6 +1,10 @@
 import type { Metadata } from "next";
 import { getSessionUser } from "@/server/session";
-import { getRecentChatMessages } from "@/server/repo/chat";
+import {
+  getFactionName,
+  getPlayerFactionId,
+  getRecentGlobalChat,
+} from "@/server/repo/chat";
 import { ChatPanel } from "./chat-panel";
 
 export const dynamic = "force-dynamic";
@@ -8,14 +12,18 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Chat",
   description:
-    "Chat global de CANTALE en direct — lis le jeu depuis le site, parle si ton compte Minecraft est lié.",
+    "Chat global et chat de faction de CANTALE — lis le jeu depuis le site, parle si ton compte est lié.",
 };
 
 export default async function ChatPage() {
-  const [session, messages] = await Promise.all([
-    getSessionUser(),
-    getRecentChatMessages(80).catch(() => []),
-  ]);
+  const session = await getSessionUser();
+  const messages = await getRecentGlobalChat(80).catch(() => []);
+  let factionId: number | null = null;
+  let factionName: string | null = null;
+  if (session.mc) {
+    factionId = await getPlayerFactionId(session.mc.uuid).catch(() => null);
+    if (factionId) factionName = await getFactionName(factionId).catch(() => null);
+  }
 
   return (
     <main className="mx-auto w-full max-w-7xl px-5 pb-24 pt-28 sm:px-8">
@@ -24,14 +32,17 @@ export default async function ChatPage() {
       </span>
       <h1 className="mt-3 font-display text-4xl font-semibold text-bone sm:text-5xl">Chat</h1>
       <p className="mt-4 max-w-2xl text-sm leading-relaxed text-steel-light sm:text-base">
-        Le fil public du serveur. Tout le monde peut lire ; seuls les comptes Discord liés à
-        Minecraft peuvent envoyer un message.
+        Onglet Global pour tout le serveur ; onglet Faction pour ta fac uniquement (compte lié +
+        membre). En jeu,{" "}
+        <span className="font-tech text-ember-glow">/fc</span> bascule le chat faction.
       </p>
 
       <div className="mt-10">
         <ChatPanel
           initialMessages={messages}
-          canSpeak={session.mc !== null}
+          canSpeakGlobal={session.mc !== null}
+          hasFaction={factionId !== null}
+          factionName={factionName}
           speaker={session.mc?.username ?? null}
         />
       </div>

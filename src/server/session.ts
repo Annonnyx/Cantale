@@ -181,3 +181,19 @@ export async function requireLeader(): Promise<AuthCheck> {
   }
   return check;
 }
+
+/** Garde API / page : Discord ID présent dans ADMIN_DISCORD_ID (env Vercel). */
+export async function requireSiteAdmin(): Promise<AuthCheck> {
+  const user = await getSessionUser();
+  if (user.tier === "anonymous" || !user.discordUser) {
+    return { ok: false, response: jsonError(401, "Connexion Discord requise.") };
+  }
+  const allowed = env.adminDiscordIds;
+  if (allowed.length === 0) {
+    return { ok: false, response: jsonError(503, "ADMIN_DISCORD_ID non configuré.") };
+  }
+  if (!allowed.includes(user.discordUser.id)) {
+    return { ok: false, response: jsonError(403, "Accès admin refusé.") };
+  }
+  return { ok: true, user };
+}

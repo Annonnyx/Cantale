@@ -84,6 +84,18 @@ export const env = {
   get discordPartnershipsCategoryId(): string | null {
     return readEnv("DISCORD_PARTNERSHIPS_CATEGORY_ID");
   },
+  /**
+   * ID Discord autorisé pour /admin (séparé par virgules si plusieurs).
+   * Jamais hardcodé côté client — uniquement variables d'environnement.
+   */
+  get adminDiscordIds(): string[] {
+    const raw = readEnv("ADMIN_DISCORD_ID") ?? readEnv("ADMIN_DISCORD_IDS");
+    if (!raw) return [];
+    return raw
+      .split(",")
+      .map((id) => id.trim())
+      .filter((id) => /^\d{5,32}$/.test(id));
+  },
 };
 
 export const DISCORD_ROLES = {

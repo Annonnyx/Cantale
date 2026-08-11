@@ -3,7 +3,8 @@
 import Link from "next/link";
 import { useEffect, useRef, useState } from "react";
 
-type ChatSource = "mc" | "discord" | "web" | "system";
+type ChatSource = "mc" | "discord" | "web" | "system" | "faction";
+type Scope = "global" | "faction";
 
 type ChatMessage = {
   id: number;
@@ -11,6 +12,7 @@ type ChatMessage = {
   playerUuid: string | null;
   playerName: string;
   message: string;
+  factionId: number | null;
   createdAt: string;
 };
 
@@ -22,6 +24,7 @@ const SOURCE_LABEL: Record<ChatSource, string> = {
   discord: "Discord",
   web: "Web",
   system: "Système",
+  faction: "Fac",
 };
 
 function formatTime(iso: string): string {
@@ -38,13 +41,18 @@ function formatTime(iso: string): string {
 
 export function ChatPanel({
   initialMessages,
-  canSpeak,
+  canSpeakGlobal,
+  hasFaction,
+  factionName,
   speaker,
 }: {
   initialMessages: ChatMessage[];
-  canSpeak: boolean;
+  canSpeakGlobal: boolean;
+  hasFaction: boolean;
+  factionName: string | null;
   speaker: string | null;
 }) {
+  const [scope, setScope] = useState<Scope>("global");
   const [messages, setMessages] = useState(initialMessages);
   const [draft, setDraft] = useState("");
   const [sending, setSending] = useState(false);
@@ -54,6 +62,16 @@ export function ChatPanel({
   const stickToBottom = useRef(true);
   const listRef = useRef<HTMLDivElement>(null);
   const lastIdRef = useRef(initialMessages.at(-1)?.id ?? 0);
+  const scopeRef = useRef<Scope>("global");
+
+  const canSpeak = scope === "global" ? canSpeakGlobal : hasFaction;
+
+  useEffect(() => {
+    scopeRef.current = scope;
+    lastIdRef.current = 0;
+    setMessages([]);
+    setError(null);
+  }, [scope]);
 
   useEffect(() => {
     lastIdRef.current = messages.at(-1)?.id ?? lastIdRef.current;
@@ -80,15 +98,19 @@ export function ChatPanel({
     let timer: ReturnType<typeof setTimeout>;
 
     const poll = async () => {
+      const currentScope = scopeRef.current;
       try {
         const after = lastIdRef.current;
-        const url = after > 0 ? `/api/chat?after=${after}&limit=80` : "/api/chat?limit=80";
+        const url =
+          after > 0
+            ? `/api/chat?scope=${currentScope}&after=${after}&limit=80`
+            : `/api/chat?scope=${currentScope}&limit=80`;
         const res = await fetch(url, { cache: "no-store" });
         if (!res.ok) {
           if (!cancelled) setLive(false);
         } else {
           const data = (await res.json()) as { messages?: ChatMessage[] };
-          if (!cancelled) {
+          if (!cancelled && scopeRef.current === currentScope) {
             setLive(true);
             const incoming = data.messages ?? [];
             if (after <= 0) {
@@ -115,12 +137,12 @@ export function ChatPanel({
       }
     };
 
-    timer = setTimeout(poll, POLL_MS);
+    timer = setTimeout(poll, 100);
     return () => {
       cancelled = true;
       clearTimeout(timer);
     };
-  }, []);
+  }, [scope]);
 
   async function onSubmit(event: React.FormEvent) {
     event.preventDefault();
@@ -134,7 +156,7 @@ export function ChatPanel({
       const res = await fetch("/api/chat", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ message: text }),
+        body: JSON.stringify({ message: text, scope }),
       });
       const data = (await res.json().catch(() => ({}))) as { error?: string };
       if (!res.ok) {
@@ -151,10 +173,37 @@ export function ChatPanel({
 
   return (
     <div className="border border-iron-line bg-iron">
-      <div className="flex items-center justify-between border-b border-iron-line/60 px-4 py-3 sm:px-5">
-        <span className="font-tech text-[10px] uppercase tracking-[0.28em] text-ember-glow">
-          Chat global
-        </span>
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-iron-line/60 px-4 py-3 sm:px-5">
+        <div className="flex gap-2" role="tablist" aria-label="Canal de chat">
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scope === "global"}
+            onClick={() => setScope("global")}
+            className={`pressable border px-3 py-2 font-tech text-[10px] uppercase tracking-[0.22em] ${
+              scope === "global"
+                ? "border-ember text-ember-glow"
+                : "border-iron-line text-steel-light hover:text-bone"
+            }`}
+          >
+            Global
+          </button>
+          <button
+            type="button"
+            role="tab"
+            aria-selected={scope === "faction"}
+            disabled={!hasFaction}
+            onClick={() => hasFaction && setScope("faction")}
+            className={`pressable border px-3 py-2 font-tech text-[10px] uppercase tracking-[0.22em] disabled:opacity-40 ${
+              scope === "faction"
+                ? "border-ember text-ember-glow"
+                : "border-iron-line text-steel-light hover:text-bone"
+            }`}
+            title={hasFaction ? factionName ?? "Faction" : "Rejoins une faction pour ouvrir cet onglet"}
+          >
+            Faction{factionName ? ` · ${factionName}` : ""}
+          </button>
+        </div>
         <span
           className={`font-tech text-[10px] uppercase tracking-[0.22em] ${live ? "text-steel-light" : "text-ember"}`}
         >
@@ -167,11 +216,12 @@ export function ChatPanel({
         className="flex h-[min(60vh,28rem)] flex-col gap-3 overflow-y-auto px-4 py-4 sm:px-5"
         role="log"
         aria-live="polite"
-        aria-relevant="additions"
       >
         {messages.length === 0 ? (
           <p className="font-tech text-xs uppercase tracking-[0.2em] text-steel">
-            Le fil est silencieux — les messages du serveur apparaîtront ici.
+            {scope === "faction"
+              ? "Aucun message de faction pour l'instant. En jeu : /fc ou /f c"
+              : "Le fil est silencieux — les messages du serveur apparaîtront ici."}
           </p>
         ) : (
           messages.map((msg) => (
@@ -195,9 +245,6 @@ export function ChatPanel({
       <div className="border-t border-iron-line/60 px-4 py-4 sm:px-5">
         {canSpeak ? (
           <form onSubmit={onSubmit} className="flex flex-col gap-3">
-            <label className="sr-only" htmlFor="chat-draft">
-              Message
-            </label>
             <div className="flex flex-col gap-3 sm:flex-row">
               <input
                 id="chat-draft"
@@ -205,7 +252,13 @@ export function ChatPanel({
                 value={draft}
                 maxLength={MAX_CHARS}
                 onChange={(e) => setDraft(e.target.value)}
-                placeholder={speaker ? `Parler en tant que ${speaker}…` : "Ton message…"}
+                placeholder={
+                  scope === "faction"
+                    ? `Faction${factionName ? ` ${factionName}` : ""}…`
+                    : speaker
+                      ? `Parler en tant que ${speaker}…`
+                      : "Ton message…"
+                }
                 disabled={sending}
                 className="min-w-0 flex-1 border border-iron-line bg-ash-deep px-4 py-3 font-sans text-sm text-bone placeholder:text-steel focus:border-ember focus:outline-none"
               />
@@ -221,9 +274,16 @@ export function ChatPanel({
               <p className="font-tech text-[10px] uppercase tracking-[0.2em] text-ember">{error}</p>
             )}
             <p className="font-tech text-[10px] uppercase tracking-[0.2em] text-steel">
-              Visible en jeu sous le préfixe [Web] — délai ~2 s.
+              {scope === "faction"
+                ? "Visible uniquement pour ta faction (~2 s). En jeu : /fc"
+                : "Visible en jeu sous [Web] — délai ~2 s."}
             </p>
           </form>
+        ) : scope === "faction" ? (
+          <p className="text-sm text-steel-light">
+            Rejoins une faction (compte lié) pour utiliser cet onglet. En jeu :{" "}
+            <span className="font-tech text-ember-glow">/fc</span> bascule le chat faction.
+          </p>
         ) : (
           <p className="text-sm leading-relaxed text-steel-light">
             Lecture libre. Pour parler,{" "}
