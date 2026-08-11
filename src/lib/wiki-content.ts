@@ -789,7 +789,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             title: "Wilderness (hors claim)",
             list: [
               "Casse, pose et interactions libres (coffres/portes des structures inclus).",
-              "Exception : blocs de stockage (liste config) — pose interdite hors claim de ta propre faction.",
+              "Exception : blocs de stockage (liste config) — pose interdite hors claim de ta propre faction, sauf CRAFTING_TABLE et fours (FURNACE, BLAST_FURNACE, SMOKER).",
               "PvP libre (aucun ClaimListener).",
               "Autoclaim ne s'applique qu'en wilderness.",
             ],
@@ -849,7 +849,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             ],
             list: [
               "Pose de stockage : refusée en wilderness, claim ennemi et claim allié — uniquement claim de ta fac (sauf op/admin).",
-              "Exception : CRAFTING_TABLE posable en wilderness (reste protégée à la casse dans les claims via storage-blocks). Autres ateliers (smithing, loom, etc.) : toujours réservés au claim de ta fac.",
+              "Exception wilderness : CRAFTING_TABLE, FURNACE, BLAST_FURNACE, SMOKER posables hors claim (restent protégés à la casse dans les claims via storage-blocks). Autres ateliers (smithing, loom, etc.) et conteneurs (coffres, shulkers, hoppers…) : toujours réservés au claim de ta fac.",
             ],
           },
           {
