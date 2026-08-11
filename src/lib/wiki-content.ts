@@ -55,7 +55,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
     name: "Commandes",
     tagline: "Le réflexe du clavier",
     description:
-      "Toutes les commandes accessibles en jeu : informations, téléportations, grades et permissions.",
+      "Commandes joueur (essentiels hors /f), téléportations avec cooldowns, grades VIP et permissions.",
     articles: [
       {
         slug: "commandes-joueur",
@@ -324,7 +324,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         title: "Téléportation",
         summary:
           "Spawn, homes, warps, /rtp et /events : délais, cooldowns par grade et warps d'événement.",
-        related: ["commandes-joueur", "vie-de-faction", "events-faction"],
+        related: ["commandes-joueur", "grades-permissions", "vie-de-faction", "events-faction"],
         sections: [
           {
             id: "fonctionnement",
@@ -527,7 +527,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "chevre-par-le-jeu",
             title: "Chèvre par les caisses",
             paragraphs: [
-              "Le grade Chèvre peut aussi être attribué automatiquement en atteignant la caisse Légendaire (chaîne de caisses). Voir Caisses & clés.",
+              "Le code prévoit l'attribution du grade Chèvre si un Cadeau du Roi aboutit en Légendaire. Ouverture normale d'un Ticket Légendaire → ticket Discord. Voir Caisses & clés (ascension).",
             ],
           },
           {
@@ -887,6 +887,18 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               },
             ],
           },
+          {
+            id: "carte-site",
+            title: "Carte site (/carte)",
+            paragraphs: [
+              "Sur cantale.world/carte : canvas des claims (factions non secrètes), layer PASDIC, markers warps publics (permanents + événements actifs). Rafraîchissement silencieux toutes les 30 s. Les factions en /f secret sont exclues en SQL (secret_until).",
+              "Onglet « carte du monde détaillée » (Squaremap/BlueMap) uniquement si MAP_PROVIDER_URL est configuré côté site.",
+            ],
+            list: [
+              "En jeu : /f map = grille 11×11 autour de toi (cooldown 30 s).",
+              "Spawn serveur : pas en base warps — non inventé sur la carte site.",
+            ],
+          },
         ],
       },
       {
@@ -1039,51 +1051,58 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
     name: "Économie",
     tagline: "La Cantox ne dort jamais",
     description:
-      "Monnaie, hôtel des ventes, échanges entre joueurs, boutique admin et récompenses de vote.",
+      "Cantox, /shop (caps & sinks), /ah, /daily, votes et caisses — règles tirées du plugin.",
     articles: [
       {
         slug: "cantox",
         title: "La Cantox",
         summary:
-          "La monnaie du serveur : solde, paiements entre joueurs et sources de revenus.",
+          "Monnaie du serveur : solde de départ, paiements, sources et sinks.",
         featured: true,
-        related: ["hotel-des-ventes-echanges", "boutique-admin", "vote"],
+        related: [
+          "hotel-des-ventes-echanges",
+          "boutique-admin",
+          "vote",
+          "recompenses-regulieres",
+        ],
         sections: [
           {
             id: "bases",
             title: "Solde & paiements",
+            paragraphs: [
+              "Nouveau joueur : 10 000 Cantox (economy.start-balance). Solde visible dans la bossbar d'infos (désactivable via /profile).",
+            ],
             commands: [
               {
                 syntax: "/balance [joueur]",
-                description: "Affiche le solde Cantox, le tien ou celui d'un autre joueur.",
+                description:
+                  "Affiche le solde Cantox, le tien ou celui d'un autre joueur.",
                 note: "Alias : /bal, /money",
               },
               {
                 syntax: "/pay <joueur> <montant>",
-                description: "Paie un joueur en Cantox.",
+                description: "Transfère des Cantox à un autre joueur.",
               },
             ],
           },
           {
             id: "gagner",
             title: "Gagner des Cantox",
-            paragraphs: [
-              "La Cantox se gagne à la sueur. Ton solde s'affiche en permanence dans la bossbar d'infos (désactivable depuis /profile).",
-            ],
             list: [
-              "Vendre des ressources à la boutique admin (/shop).",
-              "Vendre aux autres joueurs à l'hôtel des ventes (/ah).",
-              "Réagir le premier aux réactions chat : 200 à 500 Cantox.",
-              "Briller dans les événements de faction : pouvoir et Cantox pour le top 5.",
-              "Réclamer la récompense quotidienne (/daily).",
-              "Abattre un joueur wanted pour empocher sa prime.",
+              "Vendre au /shop (plancher serveur).",
+              "Vendre aux joueurs via /ah.",
+              "/daily : 1 000 de base + bonus de grade (aussi Discord si lié).",
+              "Réaction chat : 200 à 500 Cantox au premier.",
+              "Top 5 des événements de faction (pouvoir + Cantox).",
+              "Prime wanted : tuer la cible empoche la mise.",
+              "Caisses : certaines lignes de butin versent des Cantox.",
             ],
           },
           {
             id: "depenser",
-            title: "Dépenser des Cantox",
+            title: "Dépenser & circulation",
             paragraphs: [
-              "La boutique admin sert de plancher de prix et de puits économique : les Cantox dépensées au /shop sortent de la circulation. Les primes wanted, l'hôtel des ventes et les échanges font circuler le reste entre joueurs.",
+              "/shop = sink (Cantox payées au serveur hors circulation). /ah, /pay, /trade et primes wanted font circuler entre joueurs. Banque de faction : /f bank.",
             ],
           },
         ],
@@ -1092,20 +1111,54 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "hotel-des-ventes-echanges",
         title: "Hôtel des ventes & échanges",
         summary:
-          "Vendre aux enchères à tout le serveur ou trader en face à face, sans intermédiaire.",
-        related: ["cantox", "boutique-admin"],
+          "/ah entre joueurs (7 jours, limite de types selon le grade) et /trade face à face.",
+        related: ["cantox", "boutique-admin", "grades-permissions"],
         sections: [
           {
             id: "hotel-des-ventes",
-            title: "Hôtel des ventes",
+            title: "Hôtel des ventes (/ah)",
             paragraphs: [
-              "L'hôtel des ventes met tes items en vitrine pour tout le serveur : les acheteurs paient en Cantox.",
+              "Marché joueur contre joueur : prix unitaire en Cantox. Durée d'annonce : 7 jours ; à expiration, item rendu si le vendeur est en ligne. Limite = nombre de types de Material en vente (pas le nombre d'unités).",
+            ],
+            tables: [
+              {
+                caption: "Types max en vente (PlayerRank.maxAhListings)",
+                headers: ["Grade", "Types /ah"],
+                rows: [
+                  ["Joueur", "3"],
+                  ["Aventurier", "5"],
+                  ["VIP", "12"],
+                  ["Chèvre / Staff", "20"],
+                ],
+              },
             ],
             commands: [
               {
                 syntax: "/ah",
-                description: "Ouvre l'hôtel des ventes.",
+                description: "Ouvre le menu de l'hôtel des ventes.",
                 note: "Alias : /auction",
+              },
+              {
+                syntax: "/ah sell <quantité|all> <prix>",
+                description:
+                  "Met en vente l'item en main (prix = Cantox par unité).",
+              },
+              {
+                syntax: "/ah buy <id> [quantité]",
+                description: "Achète une annonce par id.",
+              },
+              {
+                syntax: "/ah cancel <id>",
+                description: "Annule une de tes annonces et rend l'item.",
+              },
+              {
+                syntax: "/ah list",
+                description: "Parcourt les annonces (même menu que /ah).",
+                note: "Alias : /ah browse",
+              },
+              {
+                syntax: "/ah my",
+                description: "Tes annonces actives.",
               },
             ],
           },
@@ -1113,21 +1166,21 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "echanges",
             title: "Échanges entre joueurs",
             paragraphs: [
-              "Pour un échange direct, la commande /trade ouvre une interface sécurisée : les deux parties posent leurs items et valident.",
+              "/trade : échange direct sécurisé — dépôt d'items des deux côtés puis validation.",
             ],
             commands: [
               {
                 syntax: "/trade <joueur>",
-                description: "Propose un échange à un joueur.",
+                description: "Propose un échange.",
                 note: "Alias : /trades",
               },
               {
                 syntax: "/trade accept",
-                description: "Accepte la demande d'échange reçue.",
+                description: "Accepte la demande reçue.",
               },
               {
                 syntax: "/trade decline",
-                description: "Refuse la demande d'échange reçue.",
+                description: "Refuse la demande reçue.",
               },
             ],
           },
@@ -1137,38 +1190,87 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "boutique-admin",
         title: "Boutique admin",
         summary:
-          "Le /shop : commerce avec le serveur — achat clic gauche, vente clic droit, plafonds quotidiens.",
+          "/shop : achat/vente serveur, plafonds quotidiens, sinks endgame (shop.yml).",
         related: ["cantox", "hotel-des-ventes-echanges"],
         sections: [
           {
             id: "utilisation",
-            title: "Utilisation",
+            title: "Ouvrir & acheter / vendre",
             paragraphs: [
-              "La boutique admin est organisée en catégories paginées (minerais, bois, agriculture, guerre & PvP, Nether & End…).",
+              "Plancher de prix + sink anti-inflation — pas un marché équitable (/ah reste le marché joueur). Catégories : Blocs & Matériaux, Bois & Déco, Minerais & Métaux, Nether & End, Agriculture & Nourriture, Drops de Mobs, Redstone & Mécanismes, Guerre & PvP.",
             ],
             commands: [
               {
                 syntax: "/shop",
-                description: "Ouvre la boutique admin.",
+                description: "Ouvre la boutique (catégories → items paginés).",
                 note: "Alias : /adminshop, /boutique",
+              },
+              {
+                syntax: "/shop buy <item> <quantité>",
+                description: "Achat sans UI.",
+              },
+              {
+                syntax: "/shop sell <item|hand> <quantité|all>",
+                description: "Vente sans UI.",
               },
             ],
             list: [
-              "Clic gauche : acheter.",
-              "Clic droit : vendre.",
-              "Shift : acheter ou vendre par 64 / tout le stock.",
+              "Clic gauche : acheter 1.",
+              "Shift + clic gauche : acheter 64.",
+              "Clic droit : vendre 1.",
+              "Shift + clic droit : vendre tout (plafond / stock).",
             ],
           },
           {
-            id: "prix",
-            title: "Prix & limites",
+            id: "plafonds",
+            title: "Plafonds quotidiens",
             paragraphs: [
-              "Les prix sont pensés comme un sink : les ventes de farm basique (agriculture, laines, drops de mobs) sont plafonnées à 1 Cantox, et les prix d'achat sont majorés — doublés sur la plupart des catégories, multipliés par 12 sur la catégorie Guerre & PvP (TNT, obsidienne, boucliers, lits…).",
+              "daily-buy-cap / daily-sell-cap = quantité max par joueur et par jour (0 = illimité). Reset à minuit. Message : « Limite quotidienne… (reset à minuit) ».",
             ],
             list: [
-              "Netherite, shulker et cristaux de l'End : prix d'achat massifs et plafond d'achat quotidien, remis à zéro à minuit.",
-              "Les hoppers ne peuvent pas être vendus à la boutique.",
-              "Les minerais (charbon à émeraude) conservent leurs prix d'origine.",
+              "Achat toujours > revente shop.",
+              "Ventes farm / drops basiques souvent à 1 Cantox.",
+              "Item absent du catalogue = non négociable. Blacklist code (bedrock, barrier, spawners…).",
+              "Hoppers absents du catalogue (retirés pour le lag).",
+            ],
+          },
+          {
+            id: "endgame",
+            title: "Sinks endgame & rares",
+            paragraphs: [
+              "Prix shop.yml (1 item). Élytra et cristal d'End : pas de revente shop.",
+            ],
+            tables: [
+              {
+                caption: "Netherite & debris",
+                headers: [
+                  "Item",
+                  "Achat",
+                  "Vente",
+                  "Cap achat/j",
+                  "Cap vente/j",
+                ],
+                rows: [
+                  ["Netherite scrap", "75 000", "500", "8", "8"],
+                  ["Ancient debris", "120 000", "900", "4", "16"],
+                  ["Lingot netherite", "250 000", "1 300", "2", "4"],
+                  ["Bloc netherite", "850 000", "8 500", "1", "—"],
+                ],
+              },
+              {
+                caption: "Nether & End rares",
+                headers: ["Item", "Achat", "Vente", "Cap achat/j"],
+                rows: [
+                  ["End crystal", "100 000", "non", "8"],
+                  ["Coquille de shulker", "350 000", "1 800", "4"],
+                  ["Boîte de shulker", "500 000", "3 200", "2"],
+                  ["Élytra", "2 000 000", "non", "1"],
+                ],
+              },
+            ],
+            list: [
+              "Guerre : TNT 1 320 (achat seul), obsidienne 5 040 / vente 40 (cap vente 128), bouclier 3 480 (achat seul).",
+              "Repères : diamant 1 000 / 150 (cap vente 64), émeraude 1 500 / 220 (cap vente 32).",
             ],
           },
         ],
@@ -1177,57 +1279,70 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "vote",
         title: "Vote & récompenses",
         summary:
-          "Voter rapporte des Cadeaux du Roi : 1 à 3 caisses selon le site, streaks, Vote Party et classement mensuel.",
+          "Sites, Cadeaux du Roi, /vote, Vote Party, paliers et top mensuel.",
         related: ["caisses-cles", "cantox", "recompenses-regulieres"],
         sections: [
           {
-            id: "voter",
-            title: "Voter",
+            id: "sites",
+            title: "Sites de vote",
             paragraphs: [
-              "Chaque site de vote a son propre cooldown. Si tu votes en étant hors-ligne, la récompense est mise de côté et délivrée à ta prochaine connexion — ou via /vote claim.",
+              "Récompense = uniquement Cadeaux du Roi (caisse Vote). Quantité selon cooldown site : ≥24 h → 3, ≥3 h → 2, sinon 1. Sites config.yml actuels :",
+            ],
+            tables: [
+              {
+                headers: ["Site", "Cooldown", "Cadeaux du Roi"],
+                rows: [
+                  ["Top-Serveurs.net", "3 h", "2"],
+                  ["Serveur-Prive.net", "1 h", "1"],
+                  ["ServeurListe.com", "1 h", "1"],
+                ],
+              },
+            ],
+            list: [
+              "Top-Serveurs : https://top-serveurs.net/minecraft/vote/cantale",
+              "Serveur-Prive : https://serveur-prive.net/minecraft/cantale/vote",
+              "ServeurListe : https://www.serveurliste.com/fr/minecraft/cantale/vote",
+            ],
+          },
+          {
+            id: "commandes",
+            title: "Commandes",
+            paragraphs: [
+              "Hors-ligne : récompense en attente (reconnexion ou /vote claim). Inventaire plein → /pc, sinon drop au sol.",
             ],
             commands: [
               {
                 syntax: "/vote",
-                description: "Liste les sites de vote et leurs récompenses.",
+                description: "Sites, liens, nombre de Cadeaux du Roi.",
               },
               {
                 syntax: "/vote claim",
-                description: "Récupère les récompenses reçues hors-ligne.",
+                description: "Récupère les récompenses en attente.",
               },
               {
-                syntax: "/vote stats",
-                description: "Affiche tes statistiques de vote et ta série.",
+                syntax: "/vote stats [pseudo]",
+                description: "Total, votes du mois, streak (jours).",
               },
               {
-                syntax: "/vote top",
-                description: "Affiche le classement des voteurs.",
+                syntax: "/vote top [n]",
+                description: "Classement (défaut 10, max 50).",
               },
               {
                 syntax: "/vote help",
-                description: "Affiche l'aide du système de vote.",
+                description: "Aide vote.",
               },
             ],
           },
           {
-            id: "recompenses",
-            title: "Récompenses",
-            paragraphs: [
-              "Chaque vote rapporte des Cadeaux du Roi, la caisse Vote du serveur. Le nombre dépend du cooldown du site :",
-            ],
+            id: "party-paliers",
+            title: "Vote Party, paliers & mensuel",
             list: [
-              "Site à cooldown 24 h : 3 Cadeaux du Roi.",
-              "Site à cooldown 3 h : 2 Cadeaux du Roi.",
-              "Site à cooldown 1 h : 1 Cadeau du Roi.",
-            ],
-          },
-          {
-            id: "bon-a-savoir",
-            title: "Bon à savoir",
-            list: [
-              "Anti-abus : un cooldown par IP empêche les votes multiples.",
-              "Vote Party, paliers de votes, classement mensuel et rappels de vote rythment le système.",
-              "Les Cadeaux du Roi s'ouvrent dans la boîte aux lettres du spawn — voir l'article Caisses & clés.",
+              "Anti-abus : cooldown IP 1 h par site.",
+              "Rappels toutes les 30 min.",
+              "Vote Party : 50 votes serveur / jour → 1 Cadeau du Roi à un online au hasard.",
+              "Paliers à vie : 10 → 2× Cadeau du Roi ; 50 → 1× Trésor Public ; 100 → 1× Médaille du Tournoi.",
+              "Top mensuel (1er du mois) : 1er Ticket Légendaire ; 2e Pièce Mythique ; 3e Médaille du Tournoi.",
+              "Ouverture Cadeau du Roi : boîte aux lettres (tonneau / métier à tisser) — article Caisses & clés.",
             ],
           },
         ],
@@ -1648,19 +1763,32 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "recompenses-regulieres",
         title: "Récompenses régulières",
         summary:
-          "Daily Cantox et drop de clé hebdomadaire Rare / Épique / Mythique (events.yml).",
-        related: ["vote", "caisses-cles", "grades-permissions", "reactions-chat"],
+          "/daily par grade et drop de clé hebdomadaire Rare / Épique / Mythique.",
+        related: ["vote", "caisses-cles", "grades-permissions", "cantox", "reactions-chat"],
         sections: [
           {
             id: "daily",
-            title: "Récompense quotidienne",
+            title: "Récompense quotidienne (/daily)",
             paragraphs: [
-              "Chaque jour, /daily verse 1 000 Cantox de base, plus un bonus selon ton grade. Synchronisé Minecraft / Discord.",
+              "Une fois par jour civil (LocalDate). Base 1 000 + bonus PlayerRank. Staff (Modo/Admin/Owner) : base seule. Même montant via Discord (compte lié).",
+            ],
+            tables: [
+              {
+                caption: "Montants /daily (DailyCommand + PlayerRank)",
+                headers: ["Grade", "Base", "Bonus", "Total"],
+                rows: [
+                  ["Joueur", "1 000", "0", "1 000"],
+                  ["Aventurier", "1 000", "2 500", "3 500"],
+                  ["VIP", "1 000", "10 000", "11 000"],
+                  ["Chèvre", "1 000", "100 000", "101 000"],
+                  ["Modo / Admin / Owner", "1 000", "0", "1 000"],
+                ],
+              },
             ],
             commands: [
               {
                 syntax: "/daily",
-                description: "Réclame la récompense quotidienne.",
+                description: "Réclame la récompense du jour.",
                 note: "Alias : /journalier",
               },
             ],
@@ -2222,26 +2350,72 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "caisses-cles",
         title: "Caisses & clés",
         summary:
-          "Cinq caisses, rituels d'ouverture, tables de butin items custom (poids).",
+          "Cinq types, interactions, sources de clés, ascension et butin custom.",
         featured: true,
-        related: ["vote", "items-forges", "cantalame", "item-vie", "coffres-inventaires"],
+        related: [
+          "vote",
+          "items-forges",
+          "cantalame",
+          "item-vie",
+          "coffres-inventaires",
+          "recompenses-regulieres",
+        ],
         sections: [
           {
             id: "types",
-            title: "Les cinq caisses",
+            title: "Types & interactions",
+            paragraphs: [
+              "Tenir l'item + action au bon endroit (emplacements crate.yml).",
+            ],
+            tables: [
+              {
+                headers: ["Type", "Item", "Interaction"],
+                rows: [
+                  [
+                    "Vote",
+                    "Cadeau du Roi",
+                    "Clic droit sur boîte aux lettres (BARREL / LOOM)",
+                  ],
+                  [
+                    "Rare",
+                    "Trésor Public (clef)",
+                    "Clic droit sur le coffre spawn configuré",
+                  ],
+                  [
+                    "Épique",
+                    "Médaille du Tournoi",
+                    "Clic droit sur balise ou table d'enchantement",
+                  ],
+                  [
+                    "Mythique",
+                    "Pièce Mythique",
+                    "Jeter (Q) dans l'eau / zone fontaine",
+                  ],
+                  [
+                    "Légendaire",
+                    "Ticket Légendaire",
+                    "Clic droit → ticket Discord numéroté (choix staff)",
+                  ],
+                ],
+              },
+            ],
+          },
+          {
+            id: "sources",
+            title: "Sources de clés",
             list: [
-              "Vote — Cadeau du Roi : boîte aux lettres spawn (BARREL / LOOM).",
-              "Rare — Trésor Public : coffre configuré (crate.yml).",
-              "Épique — Médaille du Tournoi : autel (beacon / table d'enchantement).",
-              "Mythique — Pièce Mythique : jeter (Q) dans l'eau / zone fontaine.",
-              "Légendaire — Ticket Légendaire : ticket Discord numéroté (item au choix).",
+              "Vote : 1–2 Cadeaux du Roi selon le site ; Vote Party (50 votes/jour) → 1 Cadeau à un online.",
+              "Paliers votes : 10 → 2× Vote ; 50 → 1× Rare ; 100 → 1× Épique.",
+              "Top mensuel votes : 1er Légendaire, 2e Mythique, 3e Épique.",
+              "Drop hebdo : 1 online → Rare / Épique / Mythique (1/3).",
+              "Staff : /crate give …",
             ],
           },
           {
             id: "butin-custom",
             title: "Butin items custom (poids)",
             paragraphs: [
-              "Poids relatifs dans CrateRewardTable. Ascensions : Vote→Rare 4 % ; Rare→Épique 5 % ; Épique→Mythique 5 % ; Mythique→Légendaire 4 %.",
+              "Poids relatifs dans CrateRewardTable. Ascension d'un cran à l'ouverture : Vote→Rare 4 % ; Rare→Épique 5 % ; Épique→Mythique 5 % ; Mythique→Légendaire 4 % (nouvel item à rouvrir avec le rituel correspondant).",
             ],
             tables: [
               {
@@ -2293,7 +2467,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               },
             ],
             list: [
-              "* Cantalame caisses : createCustomItem (voir article Cantalame pour le chemin évolutif).",
+              "* Cantalame caisses : createCustomItem (voir article Cantalame).",
               "Armure du Garde et Rune : absentes de ces tables.",
             ],
           },
@@ -2301,9 +2475,9 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "regles",
             title: "Règles",
             list: [
-              "Inventaire plein → surplus vers coffre privé (/pc).",
-              "Annonce publique : ouvertures Mythique et Légendaire seulement.",
-              "Sources de caisses : vote, drop clé hebdo (Rare/Épique/Mythique), events, /crate give (admin).",
+              "Inventaire plein → surplus vers /pc.",
+              "Annonce publique : Mythique et Légendaire seulement.",
+              "Ticket Légendaire (ouverture normale) → ticket Discord. Le code prévoit aussi le grade Chèvre si un Cadeau du Roi aboutit en Légendaire.",
             ],
           },
           {
@@ -2311,7 +2485,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             title: "Côté staff",
             commands: [
               {
-                syntax: "/crate give <joueur> <vote|rare|epic|mythic|legendary> [quantité]",
+                syntax:
+                  "/crate give <joueur> <vote|rare|epic|mythic|legendary> [quantité]",
                 description: "Donne une caisse à un joueur.",
                 note: "Permission : cantale.admin",
               },
@@ -2410,50 +2585,100 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "discord-site",
         title: "Discord & site",
         summary:
-          "Lie tes comptes Discord et site web : rôles synchronisés, tickets, carte et passerelle de chat.",
-        related: ["profil-tags", "vie-de-faction", "claims-territoire"],
+          "Liaison Discord (/link + slash Discord), /linkforce admin, compte site (OAuth Discord) et /web link.",
+        related: ["profil-tags", "commandes-joueur", "vie-de-faction"],
         sections: [
           {
-            id: "discord",
-            title: "Liaison Discord",
+            id: "liaison-discord",
+            title: "Liaison Discord ↔ Minecraft",
             paragraphs: [
-              "La liaison se fait par code : /link génère un code en jeu, à saisir côté Discord. Une fois lié, ton compte reçoit automatiquement le rôle de ta faction, et le chat est relayé entre les deux mondes.",
+              "Un seul flux joueur : le code est créé en jeu, validé sur Discord.",
+            ],
+            list: [
+              "1. En jeu : /link — si tu n'es pas déjà lié, le serveur génère un code à 6 caractères (alphabet sans I/O/0/1), valable 10 minutes. Clique sur le code pour le copier (hover « Clique pour copier »).",
+              "2. Sur Discord (invite discord.gg/eDTfYWtuYp) : slash /link avec le code et ton pseudo Minecraft exact (majuscules).",
+              "3. Succès : entrée dans discord_links, rôle Joueur Discord attribué, sync du rôle de faction si tu en as une.",
+              "Si un code actif existe déjà, /link le réaffiche au lieu d'en créer un nouveau. Compte déjà lié : message d'erreur (changement via admin).",
             ],
             commands: [
               {
                 syntax: "/link",
-                description: "Génère un code pour lier ton compte Discord.",
+                description: "Génère ou réaffiche le code de liaison Discord (Minecraft).",
+                note: "Tous les joueurs",
               },
               {
-                syntax: "/discord <message>",
-                description: "Envoie un message sur Discord depuis Minecraft.",
+                syntax: "/link <code> <pseudo>",
+                description: "Slash Discord : valide le code et le pseudo Minecraft.",
+                note: "Bot Discord CANTALE",
               },
+            ],
+          },
+          {
+            id: "linkforce",
+            title: "Liaison forcée (admin)",
+            paragraphs: [
+              "Pour corriger un compte sans passer par le code joueur.",
+            ],
+            commands: [
               {
-                syntax: "/discord mp <joueur> <message>",
+                syntax: "/linkforce <Pseudo MC> <ID Discord>",
                 description:
-                  "Envoie un message privé Discord à un joueur, par son nom Discord ou Minecraft.",
+                  "Force la liaison Discord ↔ Minecraft (upsert discord_links, gère les conflits, invalide les codes en attente).",
+                note: "Minecraft : cantale.admin · Discord slash : permission ADMINISTRATOR",
               },
             ],
           },
           {
-            id: "tickets",
-            title: "Tickets",
+            id: "compte-site",
+            title: "Compte sur le site (cantale.world)",
             paragraphs: [
-              "Les tickets passent par le Discord : support dédié, et salon automatique numéroté pour chaque Ticket Légendaire ouvert.",
+              "Le site Next.js se connecte via Discord OAuth (page /connexion), pas un mot de passe. Paliers : anonymous → discord (OAuth OK) → linked (présence dans discord_links) → leader (rôle leader Discord).",
+            ],
+            list: [
+              "Visiteur : « Se connecter avec Discord » sur /connexion.",
+              "Discord connecté mais pas de ligne discord_links : le site demande de faire /link en jeu puis /link sur Discord, puis de recharger la page.",
+              "Compte lié : profil (skin, vies, stats, faction) et capacités selon les rôles Discord.",
             ],
           },
           {
-            id: "site",
-            title: "Site web",
+            id: "web-link",
+            title: "Flux /web link (code site → Minecraft)",
             paragraphs: [
-              "Après liaison (/web link), le site affiche ton profil, les classements, les factions et la carte des territoires (/carte) : claims, PASDIC et warps, sans les factions en mode secret.",
+              "Commande plugin séparée : le site (backend legacy) peut émettre un code 6 chiffres ; le joueur tape /web link <code> en jeu pour consommer web_link_codes. Distinct de la liaison Discord ci-dessus.",
             ],
             commands: [
               {
                 syntax: "/web link <code>",
-                description: "Lie ton compte Minecraft au site Cantale.",
-                note: "Alias : /website, /site",
+                description: "Lie Minecraft au code 6 chiffres affiché par le site.",
+                note: "Alias : /website, /site — code numérique uniquement",
               },
+            ],
+          },
+          {
+            id: "apres-liaison",
+            title: "Après liaison Discord",
+            commands: [
+              {
+                syntax: "/discord <message>",
+                description: "Envoie un message sur le salon Discord chat depuis Minecraft.",
+                note: "Tous les joueurs",
+              },
+              {
+                syntax: "/discord mp <joueur> <message>",
+                description:
+                  "MP Discord au compte lié (pseudo MC ou nom Discord stocké).",
+                note: "Tous les joueurs",
+              },
+              {
+                syntax: "/daily",
+                description:
+                  "Aussi disponible en slash Discord une fois le compte lié (même quota journalier).",
+                note: "Alias Discord : /journalier",
+              },
+            ],
+            list: [
+              "Tickets support et Ticket Légendaire : côté Discord.",
+              "Rôle de faction Discord synchronisé quand tu rejoins / quittes une faction.",
             ],
           },
         ],
