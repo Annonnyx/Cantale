@@ -4,6 +4,8 @@ import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type { KeyboardEvent, ReactNode } from "react";
 import {
   MAP_COLORS,
+  SERVER_SPAWN_BLOCK,
+  SERVER_SPAWN_CHUNK,
   chunkToBlock,
   factionFill,
   factionStroke,
@@ -31,11 +33,9 @@ const SCALE_MIN = 1.5;
 const SCALE_MAX = 160;
 /**
  * Zoom par défaut : ~12 px / chunk → ~±500 blocs visibles sur 800 px de large.
- * Assez large pour le spawn / l’origine, assez serré pour lire les claims proches.
+ * Assez large pour le spawn, assez serré pour lire les claims proches.
  */
 const DEFAULT_SCALE = 12;
-/** Centre du chunk 0 (blocs 0–15) = origine monde / spawn schématique. */
-const ORIGIN_CHUNK = 0.5;
 const MARKER_HIT_RADIUS = 10;
 const ZOOM_STEP = 1.4;
 
@@ -78,7 +78,11 @@ export function TerritoryCanvas({
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
-  const camRef = useRef<Camera>({ x: ORIGIN_CHUNK, z: ORIGIN_CHUNK, scale: DEFAULT_SCALE });
+  const camRef = useRef<Camera>({
+    x: SERVER_SPAWN_CHUNK.x,
+    z: SERVER_SPAWN_CHUNK.z,
+    scale: DEFAULT_SCALE,
+  });
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
   const rafRef = useRef(0);
   const animRef = useRef(0);
@@ -123,14 +127,14 @@ export function TerritoryCanvas({
   }, []);
 
   /**
-   * Vue par défaut stable : toujours l’origine monde (chunk 0,0 / spawn
-   * schématique) au centre, zoom fixe. Évite de atterrir au milieu de nulle
-   * part quand les claims sont épars ou loin du spawn (ancien fit-to-bounds).
+   * Vue par défaut stable : toujours le spawn serveur (`/spawn`, blocs
+   * SERVER_SPAWN_BLOCK) au centre, zoom fixe. Évite de atterrir au milieu de
+   * nulle part quand les claims sont épars (ancien fit-to-bounds).
    */
   const resetView = useCallback(() => {
     const cam = camRef.current;
-    cam.x = ORIGIN_CHUNK;
-    cam.z = ORIGIN_CHUNK;
+    cam.x = SERVER_SPAWN_CHUNK.x;
+    cam.z = SERVER_SPAWN_CHUNK.z;
     cam.scale = DEFAULT_SCALE;
     scheduleDraw();
   }, [scheduleDraw]);
@@ -623,7 +627,7 @@ export function TerritoryCanvas({
         role="img"
         tabIndex={0}
         onKeyDown={onKeyDown}
-        aria-label="Carte interactive des territoires. Glisser pour déplacer, molette pour zoomer. Au clavier : flèches pour déplacer, touches plus et moins pour zoomer, zéro pour recentrer sur l'origine."
+        aria-label={`Carte interactive des territoires. Glisser pour déplacer, molette pour zoomer. Au clavier : flèches pour déplacer, touches plus et moins pour zoomer, zéro pour recentrer sur le spawn (${SERVER_SPAWN_BLOCK.x} · ${SERVER_SPAWN_BLOCK.z}).`}
         className="block h-full w-full cursor-grab touch-none"
       />
 
@@ -638,8 +642,10 @@ export function TerritoryCanvas({
             <path d="M1 7h12" />
           </svg>
         </MapButton>
-        <MapButton label="Recentrer sur l'origine (0 · 0)" onClick={() => resetRef.current()}>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
+        <MapButton
+          label={`Recentrer sur le spawn (${SERVER_SPAWN_BLOCK.x} · ${SERVER_SPAWN_BLOCK.z})`}
+          onClick={() => resetRef.current()}
+        >          <svg width="14" height="14" viewBox="0 0 14 14" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true">
             <path d="M1 5V1h4M9 1h4v4M13 9v4H9M5 13H1V9" />
           </svg>
         </MapButton>

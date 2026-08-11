@@ -156,3 +156,19 @@ export function claimsCentroid(points: readonly { x: number; z: number }[]): { x
 export function chunkToBlock(chunk: number): number {
   return chunk * 16;
 }
+
+/**
+ * Spawn serveur (`/spawn` → `world.getSpawnLocation()`).
+ *
+ * Non stocké en base warps : lu au runtime depuis le monde Bukkit.
+ * Coordonnées X/Z alignées sur Squaremap prod
+ * (`/tiles/minecraft_overworld/settings.json` → `spawn`, marqueur « Spawn »).
+ * Si le `/setworldspawn` change en jeu, mettre à jour ici.
+ */
+export const SERVER_SPAWN_BLOCK = { x: -67, z: -144 } as const;
+
+/** Centre caméra carte (coords chunk continues = blocs / 16). */
+export const SERVER_SPAWN_CHUNK = {
+  x: SERVER_SPAWN_BLOCK.x / 16,
+  z: SERVER_SPAWN_BLOCK.z / 16,
+} as const;
