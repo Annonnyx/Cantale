@@ -18,7 +18,7 @@ export const PUBLIC_RANKING_EXCLUDED_UUIDS = [] as const;
  * Noms de factions exclus des classements publics.
  * Inclut Ø (unicode), o latin, et ∅ (ensemble vide) — le nom en jeu peut varier.
  */
-export const PUBLIC_RANKING_EXCLUDED_FACTION_NAMES = ["Ø", "O", "∅"] as const;
+export const PUBLIC_RANKING_EXCLUDED_FACTION_NAMES: readonly string[] = ["Ø", "O", "∅"];
 
 function sqlStringLiterals(values: readonly string[]): string {
   return values
