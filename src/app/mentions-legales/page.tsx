@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 const UPDATED = "12 août 2026";
 const DISCORD = "https://discord.gg/65a9upGPHx";
+const CONTACT_EMAIL = "contact@cantale.fun";
 
 const SECTIONS: LegalSection[] = [
   {
@@ -28,7 +29,10 @@ const SECTIONS: LegalSection[] = [
             Directeur de la publication : <strong className="text-bone">Barneron Noé</strong>
           </li>
           <li>
-            Contact : via le{" "}
+            Contact :{" "}
+            <LegalLink href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</LegalLink>
+            {" · "}
+            via le{" "}
             <LegalLink href={DISCORD} external>
               Discord CANTALE
             </LegalLink>{" "}

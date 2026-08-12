@@ -9,6 +9,7 @@ export const metadata: Metadata = {
 
 const UPDATED = "12 août 2026";
 const DISCORD = "https://discord.gg/65a9upGPHx";
+const CONTACT_EMAIL = "contact@cantale.fun";
 
 const SECTIONS: LegalSection[] = [
   {
@@ -25,7 +26,10 @@ const SECTIONS: LegalSection[] = [
             <strong className="text-bone">Barneron Noé</strong>
           </li>
           <li>
-            Contact RGPD / demandes d&apos;exercice des droits : via le{" "}
+            Contact RGPD / demandes d&apos;exercice des droits :{" "}
+            <LegalLink href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</LegalLink>
+            {" · "}
+            via le{" "}
             <LegalLink href={DISCORD} external>
               Discord CANTALE
             </LegalLink>{" "}
@@ -188,7 +192,10 @@ const SECTIONS: LegalSection[] = [
           <li>portabilité lorsque applicable.</li>
         </ul>
         <p>
-          Pour exercer ces droits : contactez la Direction via le{" "}
+          Pour exercer ces droits : écrivez à{" "}
+          <LegalLink href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</LegalLink>
+          {" "}
+          ou contactez la Direction via le{" "}
           <LegalLink href={DISCORD} external>
             Discord
           </LegalLink>
@@ -230,7 +237,10 @@ const SECTIONS: LegalSection[] = [
         <p>
           Minecraft et Discord ont leurs propres règles d&apos;âge. Les parents / tuteurs sont
           responsables de l&apos;usage du service par un mineur. Pour une demande relative à un
-          compte de mineur, contactez-nous via Discord avec les éléments permettant de vérifier la
+          compte de mineur, écrivez à{" "}
+          <LegalLink href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</LegalLink>
+          {" "}
+          ou contactez-nous via Discord avec les éléments permettant de vérifier la
           demande.
         </p>
       </>

@@ -8,6 +8,7 @@ export const metadata: Metadata = {
 };
 
 const UPDATED = "12 août 2026";
+const CONTACT_EMAIL = "contact@cantale.fun";
 
 const SECTIONS: LegalSection[] = [
   {
@@ -128,6 +129,8 @@ const SECTIONS: LegalSection[] = [
           Plus de détails sur les données :{" "}
           <LegalLink href="/confidentialite">politique de confidentialité</LegalLink>. Cadre
           général : <LegalLink href="/mentions-legales">mentions légales & CGU</LegalLink>.
+          Contact :{" "}
+          <LegalLink href={`mailto:${CONTACT_EMAIL}`}>{CONTACT_EMAIL}</LegalLink>.
         </p>
       </>
     ),

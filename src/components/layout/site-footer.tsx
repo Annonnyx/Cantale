@@ -97,6 +97,9 @@ export function SiteFooter() {
             <Link href="/cookies" className="hover:text-bone">
               Cookies
             </Link>
+            <a href="mailto:contact@cantale.fun" className="hover:text-bone">
+              contact@cantale.fun
+            </a>
             <span>Non affilié à Mojang ni Microsoft</span>
           </span>
         </div>
