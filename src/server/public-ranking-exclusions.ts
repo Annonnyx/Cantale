@@ -1,14 +1,24 @@
 /**
- * Comptes exclus des classements publics et des agrégats de circulation
+ * Comptes / factions exclus des classements publics et des agrégats de circulation
  * (Cantox / vies / records / tops). Liste centrale — à réutiliser dans tous
  * les repos SQL publics, jamais en dur dans un composant UI.
  *
- * Matching : username case-insensitive (LOWER). UUID optionnel si le pseudo change.
+ * Matching : username / nom de faction case-insensitive (LOWER).
+ * UUID joueur optionnel si le pseudo change.
+ *
+ * Factions : exclusion des tops (pouvoir / richesse / membres) uniquement —
+ * la faction reste en jeu et accessible par slug si connue.
  */
 export const PUBLIC_RANKING_EXCLUDED_USERNAMES = ["Anox26"] as const;
 
 /** Remplir quand l'UUID offline est connu — plus durable qu'un pseudo. */
 export const PUBLIC_RANKING_EXCLUDED_UUIDS = [] as const;
+
+/**
+ * Noms de factions exclus des classements publics.
+ * Inclut Ø (unicode), o latin, et ∅ (ensemble vide) — le nom en jeu peut varier.
+ */
+export const PUBLIC_RANKING_EXCLUDED_FACTION_NAMES = ["Ø", "O", "∅"] as const;
 
 function sqlStringLiterals(values: readonly string[]): string {
   return values
@@ -37,6 +47,28 @@ export function publicRankingExcludeSql(
   }
 
   return parts.length > 0 ? parts.join(" AND ") : "1=1";
+}
+
+/**
+ * Clause SQL (sans WHERE/AND) excluant les factions listées (nom et/ou tag).
+ * @param nameColumn ex. `f.name`, `name`
+ * @param tagColumn  ex. `f.tag`, `tag` — null pour ignorer le tag
+ */
+export function publicRankingExcludeFactionSql(
+  nameColumn: string,
+  tagColumn: string | null = "tag",
+): string {
+  if (PUBLIC_RANKING_EXCLUDED_FACTION_NAMES.length === 0) return "1=1";
+
+  const lowered = PUBLIC_RANKING_EXCLUDED_FACTION_NAMES.map((name) => name.toLowerCase());
+  const list = sqlStringLiterals(lowered);
+  const parts = [`LOWER(${nameColumn}) NOT IN (${list})`];
+
+  if (tagColumn) {
+    parts.push(`LOWER(${tagColumn}) NOT IN (${list})`);
+  }
+
+  return parts.join(" AND ");
 }
 
 /** Préfixe `WHERE …` ou `AND …` selon qu'une clause WHERE existe déjà. */

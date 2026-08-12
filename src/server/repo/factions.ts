@@ -1,4 +1,5 @@
 import { query } from "../db";
+import { publicRankingExcludeFactionSql } from "../public-ranking-exclusions";
 
 /**
  * Tables `factions`, `faction_members`, `claims` du plugin CANTALE — lecture seule.
@@ -6,8 +7,13 @@ import { query } from "../db";
  * RÈGLE ABSOLUE : toute requête exclut au niveau SQL les factions en mode
  * /f secret (`secret_until > UNIX_TIMESTAMP()`, unix secondes — voir
  * Faction.isSecret() côté plugin). Aucune fuite vers le client.
+ *
+ * Classements / annuaire trié : factions listées dans
+ * PUBLIC_RANKING_EXCLUDED_FACTION_NAMES (ex. Ø) sont aussi exclues ici.
+ * getFactionBySlug reste accessible si l'URL est connue.
  */
 const NOT_SECRET = "COALESCE(f.secret_until, 0) <= UNIX_TIMESTAMP()";
+const NOT_RANKING_EXCLUDED = publicRankingExcludeFactionSql("f.name", "f.tag");
 
 /** Rangs de faction, miroir de FactionRank.java (colonne VARCHAR libre). */
 const FACTION_RANKS = ["LEADER", "OFFICER", "VETERAN", "MEMBER", "RECRUIT"] as const;
@@ -113,7 +119,7 @@ function clampLimit(limit: number, fallback = 50, max = 200): number {
   return Math.max(1, Math.min(max, Math.floor(limit)));
 }
 
-/** Annuaire public des factions — les factions secrètes sont exclues en SQL. */
+/** Annuaire public des factions — secrètes + exclus des classements filtrés en SQL. */
 export async function listFactions(sort: FactionSort = "power", limit = 50): Promise<FactionSummary[]> {
   const orderBy = FACTION_SORTS[sort];
   const safeLimit = clampLimit(limit);
@@ -122,6 +128,7 @@ export async function listFactions(sort: FactionSort = "power", limit = 50): Pro
      FROM factions f
      LEFT JOIN faction_members fm ON fm.faction_id = f.id
      WHERE ${NOT_SECRET}
+       AND ${NOT_RANKING_EXCLUDED}
      GROUP BY f.id
      ORDER BY ${orderBy}, f.name ASC
      LIMIT ${safeLimit}`,
