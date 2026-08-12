@@ -107,8 +107,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               },
               {
                 syntax: "/lastdeath [joueur]",
-                description: "Infos sur la dernière mort.",
-                note: "Tous les joueurs",
+                description: "Date, total de morts et coords (monde + X/Y/Z) de la dernière mort.",
+                note: "Tous les joueurs · cible online ou offline si connue en BDD",
               },
             ],
           },
@@ -286,10 +286,10 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 note: "Finaliser avec /link sur Discord",
               },
               {
-                syntax: "/web link <code>",
+                syntax: "/web",
                 description:
-                  "Lie Minecraft à un code 6 chiffres fourni par le site (table web_link_codes).",
-                note: "Alias : /website, /site",
+                  "Obsolète : affiche le lien vers https://www.cantale.world/connexion (OAuth Discord).",
+                note: "Alias : /website, /site — plus de /web link",
               },
               {
                 syntax: "/discord <message>",
@@ -508,10 +508,30 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "staff",
             title: "Grades staff",
             list: [
-              "Modérateur — cantale.moderator : /moderation, /vanish, /tag, /modhelp. Coffres ×3, homes 999, /ah 20, pas d'AFK, warmup 0. Pas de vol en claim (ni vol créatif, ni fouille coffres étrangers).",
+              "Modérateur — cantale.moderator : /moderation, /vanish, /tag, /modhelp, /adminhome, /adminec, /adminpc. Coffres ×3, homes 999, /ah 20, pas d'AFK, warmup 0. Pas de vol en claim (ni vol créatif, ni fouille coffres étrangers).",
               "Admin / Owner — cantale.admin (enfants : givevie, moderator, feed, anticheat…). Mêmes avantages coffres/homes/AFK côté rank ; pas de vol en claim via le grade. Bypass claim (op / cantale.admin) = outil de modération, pas un perk « vol ».",
             ],
             commands: [
+              {
+                syntax: "/adminhome check <joueur>",
+                description: "Liste les homes du joueur (coords + monde).",
+                note: "cantale.moderator / cantale.admin — aliases : list, ls",
+              },
+              {
+                syntax: "/adminhome <joueur> <nom>",
+                description: "Téléporte le staff vers ce home (immédiat, sans cooldown).",
+                note: "Aussi /adminhome tp <joueur> <nom> — aliases commande : /ahome, /seehome",
+              },
+              {
+                syntax: "/adminec <joueur>",
+                description: "Ouvre l'ender chest du joueur. Édition live si en ligne. Hors ligne : Paper n'expose pas OfflinePlayer#getEnderChest — legacy DB seulement si encore présent.",
+                note: "cantale.moderator — aliases : /aec, /seeec",
+              },
+              {
+                syntax: "/adminpc <joueur> [1|2|3]",
+                description: "Ouvre les coffres privés (PC) du joueur (DB/cache, éditable en ligne ou hors ligne). Navigation entre PC selon le grade de la cible.",
+                note: "cantale.moderator — aliases : /apc, /sepc",
+              },
               {
                 syntax: "/rank <set|remove|info> <joueur> [grade]",
                 description: "Gère le grade en base (player_permissions).",
@@ -575,6 +595,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["/f", "Menu de faction", "Tous"],
                   ["/f help", "Liste d'aide en chat", "Tous"],
                   ["/f create <nom>", "Crée la fac, claim le chunk, pose le f-spawn", "Hors faction ; zone claimable"],
+                  ["/f rename <nouveau_nom>", "Renomme + régénère le tag (chat/TAB/nametag/Discord)", "Chef · alias /f name, /f renommer"],
                   ["/f info [nom]", "Tag, chef, membres, claims, pouvoir, claims max", "Tous"],
                   ["/f list", "Liste des factions", "Tous"],
                   ["/f members", "Membres + rang + online", "Membre"],
@@ -604,7 +625,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["/f claim", "Claim chunk actuel", "ADD_CLAIMS (Membre+) · quota · contigu · distance 2"],
                   ["/f unclaim", "Unclaim si claim de ta fac", "REMOVE_CLAIMS (Officier+)"],
                   ["/f autoclaim on|off", "Claim auto en wilderness", "ADD_CLAIMS"],
-                  ["/f map", "Carte 11×11 : + toi (couleur du claim), # ta fac, @ allié, X ennemi, = autre, P PASDIC, - wild ; secret caché ; liste autour", "Cooldown 30 s"],
+                  ["/f map", "GUI inventaire 9×5 : claim/unclaim au clic (gris/vert), couleurs diplomatie", "Sans cooldown"],
+                  ["/f map chat", "Ancienne grille chat 11×11 (+ # @ X = P -)", "Cooldown 30 s"],
                   ["/f secret", "Cache claims/spawn 1 h", "SECRET (Officier+) · CD 24 h"],
                   ["/f spawn", "TP f-spawn", "Cooldown 20 s"],
                   ["/f go", "TP f-spawn sans cooldown spawn", "Membre"],
@@ -620,10 +642,12 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 caption: "Banque & chat",
                 headers: ["Commande", "Effet", "Qui"],
                 rows: [
-                  ["/f bank", "Solde, pouvoir, claims max, prix prochain point", "INFO_BANK / BANK_ADD / chef"],
+                  ["/f bank", "Ouvre la GUI banque (dépôt / retrait / pouvoir / historique)", "INFO_BANK / BANK_ADD / chef"],
                   ["/f bank add|deposit <n>", "Dépose Cantox perso → banque", "BANK_ADD (Recrue+) ou chef"],
                   ["/f bank take|withdraw <n>", "Retire banque → perso", "BANK_TAKE (Officier+) ou chef"],
-                  ["/f bank power [n]", "Achète 1–50 pouvoir (défaut 1)", "Chef, Officier, ou BANK_TAKE"],
+                  ["/f power", "GUI pouvoir : quotas, paliers, achat", "Membres (achat : chef/officier)"],
+                  ["/f bank power", "Même GUI pouvoir", "Membres (achat : chef/officier)"],
+                  ["/f bank power <n>", "Achète n unités (+10 pouvoir/unité) en chat (1–50)", "Chef, Officier, ou BANK_TAKE"],
                   ["/f c [msg]", "Toggle chat fac ou envoi direct", "Membre"],
                   ["/fc [msg]", "Raccourci chat fac", "Membre"],
                 ],
@@ -646,10 +670,20 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "creation",
             title: "Création",
             list: [
-              "Impossible si déjà en faction, nom déjà pris, zone protégée (spawn/warp), ou chunk déjà claim.",
+              "Impossible si déjà en faction, nom invalide / déjà pris, zone protégée (spawn/warp), ou chunk déjà claim.",
+              "Nom : 3–16 caractères, lettres (accents OK), chiffres, _ et - (pas d'espaces) — mêmes règles pour /f rename et /admin f rename.",
               "Tag auto : 4 premiers caractères du nom (majuscules), suffixe numérique si collision.",
               "Effets immédiats : claim du chunk actuel + f-spawn à ta position + annonce Discord si salon configuré.",
               "config factions.min-members-create (8) est lu mais non vérifié à la création (TODO dans le code).",
+            ],
+          },
+          {
+            id: "renommer",
+            title: "Renommer",
+            list: [
+              "Chef : /f rename <nouveau_nom> (alias /f name, /f renommer).",
+              "Staff : /admin f rename <faction> <nouveau_nom>.",
+              "Met à jour le nom et régénère le tag ; rafraîchit les préfixes (chat / TAB / nametag) des membres en ligne ; renomme le rôle Discord dédié s'il existe.",
             ],
           },
           {
@@ -696,8 +730,10 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["Leave / kick", "−5", "Plancher 0 + retrait claims hors quota (plus récents d'abord)"],
                   ["Kill PvP", "+5 tueur / −5 victime", "PlayerListener (si les deux ont une fac)"],
                   ["Event faction top 5", "+50 / +35 / +25 / +15 / +10", "events.yml → FactionEventManager"],
-                  ["/f bank power", "+n achetés", "Débit banque, courbe power_purchased"],
+                  ["/f bank power", "+10 pouvoir / unité achetée", "Débit banque ; power_purchased += unités"],
+                  ["/f power", "—", "GUI quotas + paliers + achat"],
                   ["/admin addpower <fac> <n>", "+n", "Staff"],
+                  ["/admin f rename <fac> <nom>", "—", "Staff : renomme + tag"],
                 ],
               },
               {
@@ -707,35 +743,57 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["Claims max", "max(5, pouvoir / 10) — division entière"],
                   ["F-homes max / joueur", "max(1, pouvoir / 20)"],
                   ["Warps de fac", "si pouvoir < 60 → 1 ; sinon 1 + (pouvoir − 60) / 30"],
+                  [
+                    "Hoppers posables (claims de la fac)",
+                    "max(0, pouvoir / 20) — config `factions.hopper-limit` (divisor 20, min 0)",
+                  ],
                 ],
               },
               {
                 caption: "Achat banque — config actuelle",
                 headers: ["Paramètre", "Valeur"],
                 rows: [
-                  ["Formule", "cost(i) = floor(base × growth^(i × 10)) · i = power_purchased"],
+                  ["Formule prix", "cost(i) = floor(base × growth^(i × 10)) · i = power_purchased (unités)"],
+                  ["power-per-unit", "10 — Acheter 1 → +10 pouvoir ; n → +10×n"],
                   ["base", "5 000 Cantox"],
                   ["growth", "1,18"],
-                  ["max-per-purchase", "1 à 50 points"],
-                  ["1er point (i=0)", "5 000"],
-                  ["2e point (i=1)", "floor(5000 × 1,18^10) ≈ 26 168"],
+                  ["max-per-purchase", "1 à 50 unités"],
+                  ["1re unité (i=0)", "5 000 Cantox → +10 pouvoir"],
+                  ["2e unité (i=1)", "floor(5000 × 1,18^10) ≈ 26 168 Cantox → +10 pouvoir"],
                 ],
               },
             ],
             list: [
-              "Exemple fac neuve (pouvoir 65) : claims max 6, fhomes 3, warps 1.",
+              "Exemple fac neuve (pouvoir 65) : claims max 6, fhomes 3, warps 1, hoppers 3.",
               "PowerManager (gains/pertes quotidiens) existe mais n'est pas branché → pas une source active.",
             ],
             commands: [
               {
-                syntax: "/f bank power [nombre]",
+                syntax: "/f power",
                 description:
-                  "Achète du pouvoir avec le solde banque. Défaut 1. Officiers / chef (ou BANK_TAKE).",
+                  "GUI : pouvoir actuel, formules claims/fhomes/warps/hoppers, paliers suivants, achat 1/2/3/5/max unités (1 → +10 pouvoir).",
+                note: "Tous les membres voient l'info ; achat réservé officiers / chef (ou BANK_TAKE). Alias : /f pouvoir",
+              },
+              {
+                syntax: "/f bank power",
+                description:
+                  "Ouvre la même GUI pouvoir. Aussi accessible depuis /f et /f bank.",
+              },
+              {
+                syntax: "/f bank power <nombre>",
+                description:
+                  "Achète n unités en chat (+10 pouvoir/unité). Officiers / chef (ou BANK_TAKE). Max 50.",
               },
               {
                 syntax: "/admin addpower <faction> <montant>",
                 description: "Ajoute du pouvoir à une faction.",
                 note: "Staff",
+              },
+              {
+                syntax: "/admin f rename <faction> <nouveau_nom>",
+                description:
+                  "Renomme une faction, régénère le tag, rafraîchit les nametags en ligne et le rôle Discord.",
+                note: "Staff (op) · alias sous-commande : renommer",
               },
             ],
           },
@@ -782,7 +840,12 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               {
                 syntax: "/f map",
                 description:
-                  "Carte chat 11×11 (N en haut) : + = toi (couleur du claim sous tes pieds), # ta fac, @ allié, X ennemi, = autre, P PASDIC, - wilderness. Légende dynamique + ligne « Ici » + tags autour. Claims en /f secret masqués aux non-membres.",
+                  "Ouvre la carte inventaire (grille 9×5 chunks centrée sur toi). Vert = ta fac, lime = ta position, gris = claimable (clic gauche), rouge = interdit/ennemi, bleu = allié, orange = autre, violet = PASDIC. Clic droit sur un claim de ta fac = unclaim. Mêmes règles que /f claim et /f unclaim (quota, contiguïté N/S/E/O, distance 2, zone protégée). Fermer / actualiser en bas.",
+              },
+              {
+                syntax: "/f map chat",
+                description:
+                  "Ancienne carte chat 11×11 (N en haut) : + = toi, # ta fac, @ allié, X ennemi, = autre, P PASDIC, - wilderness. Claims en /f secret masqués aux non-membres.",
                 note: "Cooldown 30 s",
               },
             ],
@@ -865,6 +928,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             list: [
               "Pose de stockage : refusée en wilderness, claim ennemi et claim allié — uniquement claim de ta fac (sauf op/admin).",
               "Exception wilderness : CRAFTING_TABLE, FURNACE, BLAST_FURNACE, SMOKER posables hors claim (restent protégés à la casse dans les claims via storage-blocks). Autres ateliers (smithing, loom, etc.) et conteneurs (coffres, shulkers, hoppers…) : toujours réservés au claim de ta fac.",
+              "Hoppers (anti-lag) : craft vanilla interdit (hopper + wagonnet à hopper). Achat au /shop uniquement (150 000 Cantox, cap 4/j, pas de revente). Pose limitée par le pouvoir de fac : max(0, pouvoir / 20) hoppers dans les claims de la fac (comptage des hoppers déjà posés). Place-only : unclaim / dépassement ne retire pas les hoppers existants.",
             ],
           },
           {
@@ -912,7 +976,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Si MAP_PROVIDER_URL est en HTTP, les tuiles passent par le proxy same-origin /map-provider/* (évite le mixed content). Plein écran, lien externe Squaremap, recherche faction/tag/warp et champs X/Z (blocs). Centre par défaut : spawn /spawn (−67 · −144).",
             ],
             list: [
-              "En jeu : /f map = grille chat 11×11 (légende, claim vs wild, highlight ta fac, diplomatie, PASDIC, secret masqué, cooldown 30 s).",
+              "En jeu : /f map = carte inventaire 9×5 (claim/unclaim au clic) ; /f map chat = grille ASCII 11×11 (cooldown 30 s). Secret masqué aux non-membres.",
               "Spawn serveur (−67 · −144) : injecté comme marqueur warp « Spawn » (API markers + recherche /carte), pas stocké en table warps.",
               "Ops Squaremap : world-settings.default.player-tracker.enabled: false (recommandé) pour couper la source côté serveur.",
             ],
@@ -1023,18 +1087,21 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["Voir /f bank", "INFO_BANK ou BANK_ADD ou chef"],
                   ["add / deposit", "BANK_ADD (Recrue+) ou chef"],
                   ["take / withdraw", "BANK_TAKE (Officier+) ou chef"],
-                  ["power [n]", "Chef, isOfficier, ou BANK_TAKE · 1–50"],
+                  ["/f power ou /f bank power", "Tous membres (GUI info)"],
+                  ["power <n> (achat chat)", "Chef, isOfficier, ou BANK_TAKE · 1–50"],
+                  ["Achat GUI (boutons)", "Chef, isOfficier, ou BANK_TAKE"],
                 ],
               },
             ],
             list: [
-              "Le solde banque paie l'achat de pouvoir (formule ×10 dans l'exposant — voir article Créer & gérer).",
-              "/f bank affiche aussi pouvoir, claims max et coût du prochain point.",
+              "Le solde banque paie l'achat de pouvoir (1 unité → +10 pouvoir ; formule prix ×10 dans l'exposant — voir article Créer & gérer).",
+              "/f bank ouvre la GUI banque (bouton pouvoir + historique). /f power montre quotas, paliers et achat.",
+              "Historique (bouton livre dans /f bank) : dépôts, retraits, achats de pouvoir et mouvements admin — qui, montant, solde après, date (paginé).",
             ],
             commands: [
               {
                 syntax: "/f bank",
-                description: "Solde, pouvoir, claims max, prochain point.",
+                description: "GUI banque : dépôt, retrait, accès pouvoir, historique des transactions.",
               },
               {
                 syntax: "/f bank add <montant>",
@@ -1047,8 +1114,12 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 note: "Alias : withdraw",
               },
               {
+                syntax: "/f power",
+                description: "GUI pouvoir : quotas claims/fhomes/warps/hoppers, paliers, achat 1/2/3/5/max (1 → +10 pouvoir).",
+              },
+              {
                 syntax: "/f bank power [nombre]",
-                description: "Achète du pouvoir (défaut 1, max 50).",
+                description: "Sans n : GUI pouvoir. Avec n : achat n unités (+10 pouvoir/unité, max 50).",
               },
             ],
           },
@@ -1249,7 +1320,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Achat toujours > revente shop.",
               "Ventes farm / drops basiques souvent à 1 Cantox.",
               "Item absent du catalogue = non négociable. Blacklist code (bedrock, barrier, spawners…).",
-              "Hoppers absents du catalogue (retirés pour le lag).",
+              "Hopper : craft bloqué ; /shop 150 000 Cantox, sell off, daily-buy-cap 4 (entre cristal End et coquille shulker). Pose plafonnée par pouvoir de fac.",
             ],
           },
           {
@@ -1280,6 +1351,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 headers: ["Item", "Achat", "Vente", "Cap achat/j"],
                 rows: [
                   ["End crystal", "100 000", "non", "8"],
+                  ["Hopper (Redstone)", "150 000", "non", "4"],
                   ["Coquille de shulker", "350 000", "1 800", "4"],
                   ["Boîte de shulker", "500 000", "3 200", "2"],
                   ["Élytra", "2 000 000", "non", "1"],
@@ -1394,13 +1466,14 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["min-lives", "0"],
                   ["ban-on-zero", "true"],
                   ["buy-price", "10 000 Cantox — lu par ConfigManager, aucun achat in-game branché"],
+                  ["respawn-saturation-seconds", "150 (~2,5 min) — effet Saturation amp 0 au respawn"],
                 ],
               },
             ],
             list: [
               "Chaque mort (PvP ou PvE) : −1 vie (LifeManager#handleDeath).",
               "Permission cantale.admin : mort sans perte de vie (message « vies illimitées ») — sauf déco combat (voir ci-dessous).",
-              "Après respawn : invulnérabilité 10 s (noDamageTicks).",
+              "Après respawn : invulnérabilité 10 s (noDamageTicks) + Saturation amp 0 pendant lives.respawn-saturation-seconds (défaut 150). Durée rafraîchie à chaque respawn.",
               "Kill PvP : +5 pouvoir à la fac du tueur, −5 à celle de la victime (si fac).",
               "Items Vie custom dans l'inventaire à la mort : détruits (ne droppent pas).",
               "Totem vanilla : bloqué. L'item Vie custom n'est pas un totem de résurrection.",
@@ -1508,7 +1581,9 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               },
               {
                 syntax: "/lastdeath [joueur]",
-                description: "Horodatage de la dernière mort (BDD last_death).",
+                description:
+                  "Horodatage, total de morts et localisation (monde + X/Y/Z) de la dernière mort (BDD last_death + last_death_*).",
+                note: "Cible online ou offline si connue en BDD",
               },
               {
                 syntax: "/listemorts",
@@ -2565,6 +2640,17 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   "Ouvre l'Ender Chest vanilla Minecraft (migration éventuelle depuis l'ancien stockage virtuel).",
                 note: "Tous les joueurs",
               },
+              {
+                syntax: "/adminpc <joueur> [1|2|3]",
+                description: "Staff : ouvre/édite les PC d'un joueur (DB, online ou offline).",
+                note: "cantale.moderator — aliases /apc, /sepc",
+              },
+              {
+                syntax: "/adminec <joueur>",
+                description:
+                  "Staff : ouvre l'EC (live si online ; hors ligne = legacy DB seulement, Paper n'expose pas OfflinePlayer#getEnderChest).",
+                note: "cantale.moderator — aliases /aec, /seeec",
+              },
             ],
           },
         ],
@@ -2573,7 +2659,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "afk-clearlag",
         title: "AFK & clear-lag",
         summary:
-          "Délais de kick AFK par grade, et nettoyage automatique des items au sol avec compte à rebours.",
+          "Délais de kick AFK par grade, clear-lag des items au sol, plafond d'entités par chunk, et empilement des animaux passifs.",
         related: ["grades-permissions", "teleportation", "claims-territoire"],
         sections: [
           {
@@ -2597,9 +2683,25 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             ],
             list: [
               "Avertissements dans le chat à 30 s, puis 10, 5, 3, 2 et 1 seconde avant le clear.",
-              "À l'instant T : annonce du nombre d'items supprimés.",
-              "Seuls les items posés au sol sont concernés (pas les mobs, pas l'inventaire).",
-              "L'optimiseur serveur limite aussi les entités par chunk, mais exclut les animaux passifs et les bêtes apprivoisées (hostiles / décoratifs peuvent être réduits).",
+              "À l'instant T : annonce du nombre d'items supprimés (items récents / loot de mort protégés quelques minutes).",
+              "Le clear annoncé concerne les items au sol — pas l'inventaire.",
+              "Au même moment (et aussi ~toutes les 60 s via l'optimiseur) : plafond de 15 entités par chunk pour hostiles, armor stands, bateaux, etc. — pas les animaux passifs (voir empilement).",
+              "Toujours protégés du plafond : joueurs, villageois, items, Animals, mobs nommés (hors stacks Cantale), bêtes apprivoisées (Tameable), NPCs Cantale.",
+            ],
+          },
+          {
+            id: "mob-stacking",
+            title: "Empilement des animaux passifs",
+            paragraphs: [
+              "Les animaux de ferme d'un même type (et même variante) proches sont empilés en une seule entité simulée, avec un libellé au-dessus du type « Mouton ×12 ». Cela remplace le cull des Animals : les fermes denses ne sont plus réduites à 15 têtes par chunk.",
+            ],
+            list: [
+              "Types empilés : mouton, vache, poulet, cochon, lapin, champimeuh, chèvre.",
+              "Moutons : même couleur et même état tondu/laine (un stack « tondu » reste séparé d'un stack « laine »).",
+              "Non empilés (défaut) : bébés, mobs nommés par un joueur, Tameable apprivoisés, entités en laisse ou avec passager.",
+              "Kill / dégâts létaux : le stack diminue de 1, loot + XP d'une mort vanilla ; l'entité reste jusqu'au dernier. Le dernier kill retire vraiment le mob.",
+              "Tonte / reproduction : comportement vanilla sur l'entité visible (le stack entier peut apparaître tondu ; la reproduction spawn un bébé non empilé).",
+              "Config : optimization.mob-stacking (enabled, max-stack, radius, interval-seconds, stack-babies / named / tamed).",
             ],
           },
         ],
@@ -2608,7 +2710,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "discord-site",
         title: "Discord & site",
         summary:
-          "Liaison Discord (/link + slash Discord), /linkforce admin, compte site (OAuth Discord) et /web link.",
+          "Liaison Discord (/link + slash Discord), /linkforce admin, compte site (OAuth Discord sur /connexion), salon compteur.",
         related: ["profil-tags", "commandes-joueur", "vie-de-faction"],
         sections: [
           {
@@ -2665,16 +2767,9 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
           },
           {
             id: "web-link",
-            title: "Flux /web link (code site → Minecraft)",
+            title: "Ancienne commande /web link (obsolète)",
             paragraphs: [
-              "Commande plugin séparée : le site (backend legacy) peut émettre un code 6 chiffres ; le joueur tape /web link <code> en jeu pour consommer web_link_codes. Distinct de la liaison Discord ci-dessus.",
-            ],
-            commands: [
-              {
-                syntax: "/web link <code>",
-                description: "Lie Minecraft au code 6 chiffres affiché par le site.",
-                note: "Alias : /website, /site — code numérique uniquement",
-              },
+              "L'ancien flux « code 6 chiffres sur le site → /web link en jeu » n'existe plus. Le site se connecte uniquement via Discord OAuth sur https://www.cantale.world/connexion. La commande /web (alias /website, /site) affiche encore ce lien en jeu. La liaison Discord ↔ Minecraft reste /link (Minecraft) puis /link (slash Discord).",
             ],
           },
           {
@@ -2702,6 +2797,18 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             list: [
               "Tickets support et Ticket Légendaire : côté Discord.",
               "Rôle de faction Discord synchronisé quand tu rejoins / quittes une faction.",
+            ],
+          },
+          {
+            id: "salon-compteur",
+            title: "Salon compteur",
+            paragraphs: [
+              "Un salon Discord dédié fait progresser un compteur partagé. Le bot vérifie le nombre et laisse le chat libre quand il n'y a aucun chiffre.",
+            ],
+            list: [
+              "Avec un chiffre : le nombre du compteur doit être le précédent + 1 (souvent en début de message, ou seul nombre du message). Sinon le message est supprimé et un court avertissement s'affiche.",
+              "Sans aucun chiffre : tu peux écrire librement ; le compteur n'avance pas.",
+              "Le compteur est sauvegardé côté serveur (reprise après redémarrage du bot).",
             ],
           },
         ],
