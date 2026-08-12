@@ -40,16 +40,17 @@ function ComingSoon() {
             La boutique
           </h1>
           <Stamp tone="gold" rotation={-2}>
-            Bientôt
+            Fermée
           </Stamp>
         </header>
 
         <div className="flex w-full flex-col gap-6 border border-iron-line bg-iron p-6 sm:p-8">
           <p className="max-w-xl text-base leading-relaxed text-steel">
-            La boutique n&apos;est pas encore ouverte. Les rangs, les vies et les clés de
-            caisse sont déjà gravés dans le registre — il ne manque que la prise de
-            paiement, en cours d&apos;intégration. Aucun achat n&apos;est possible pour
-            l&apos;instant, et rien ne sera prélevé sans que ce soit annoncé.
+            La boutique est fermée : les conditions de notre hébergeur actuel ne
+            permettent pas d&apos;ouvrir les paiements. Elle ouvrira pour la S1, dès le
+            changement d&apos;hébergeur. Les rangs, les vies et les clés de caisse sont
+            déjà au registre — aucun achat n&apos;est possible pour l&apos;instant, et
+            rien ne sera prélevé sans annonce.
           </p>
 
           <ul className="grid gap-4 sm:grid-cols-3">

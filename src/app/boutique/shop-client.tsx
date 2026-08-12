@@ -375,7 +375,9 @@ export function BoutiqueShop() {
       } else if (response.status === 503) {
         setCheckout({
           status: "error",
-          message: data.error ?? "Boutique désactivée",
+          message:
+            data.error ??
+            "Boutique fermée — ouverture prévue pour la S1 après changement d'hébergeur.",
         });
       } else if (response.status === 501) {
         setCheckout({

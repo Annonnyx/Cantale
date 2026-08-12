@@ -61,7 +61,13 @@ function parseCart(body: unknown): { lines: CartLine[] } | { error: string } {
 
 export async function POST(request: Request) {
   if (!env.shopEnabled) {
-    return Response.json({ error: "Boutique désactivée" }, { status: 503 });
+    return Response.json(
+      {
+        error:
+          "Boutique fermée — ouverture prévue pour la S1 après changement d'hébergeur.",
+      },
+      { status: 503 },
+    );
   }
 
   const user = await getSessionUser().catch(() => null);
