@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { fontVariables } from "@/lib/fonts";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { ScrollStability } from "@/components/layout/scroll-stability";
 import { CookieNotice } from "@/components/legal/cookie-notice";
 import { RevealObserver } from "@/components/ui/reveal-observer";
 import "./globals.css";
@@ -38,6 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
     <html lang="fr" className={`${fontVariables} h-full antialiased`}>
       <body className="flex min-h-full flex-col bg-ash font-sans text-bone">
+        <ScrollStability />
         <RevealObserver />
         <SiteHeader />
         <div className="flex flex-1 flex-col">{children}</div>

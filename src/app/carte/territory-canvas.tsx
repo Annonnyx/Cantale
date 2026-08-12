@@ -627,6 +627,10 @@ export function TerritoryCanvas({
         role="img"
         tabIndex={0}
         onKeyDown={onKeyDown}
+        onPointerDown={(event) => {
+          // Focus clavier sans scrollIntoView natif (évite le saut de page).
+          event.currentTarget.focus({ preventScroll: true });
+        }}
         aria-label={`Carte interactive des territoires. Glisser pour déplacer, molette pour zoomer. Au clavier : flèches pour déplacer, touches plus et moins pour zoomer, zéro pour recentrer sur le spawn (${SERVER_SPAWN_BLOCK.x} · ${SERVER_SPAWN_BLOCK.z}).`}
         className="block h-full w-full cursor-grab touch-none"
       />

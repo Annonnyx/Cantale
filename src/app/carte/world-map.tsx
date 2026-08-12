@@ -112,6 +112,26 @@ export function WorldMap({
       zoomControl: true,
     });
 
+    /*
+     * Leaflet, au mousedown, fait container.focus() puis window.scrollTo pour
+     * « restaurer » le scroll. Avec un focus natif (scroll into view), la page
+     * saute — souvent vers le bas sur /carte. On force preventScroll.
+     */
+    const keyboard = (
+      map as L.Map & {
+        keyboard?: { _onMouseDown?: () => void; _focused?: boolean };
+      }
+    ).keyboard;
+    if (keyboard) {
+      keyboard._onMouseDown = function onMapMouseDown(this: {
+        _focused?: boolean;
+        _map: L.Map;
+      }) {
+        if (this._focused) return;
+        this._map.getContainer().focus({ preventScroll: true });
+      };
+    }
+
     const overlays = L.layerGroup().addTo(map);
     overlaysRef.current = overlays;
     mapRef.current = map;

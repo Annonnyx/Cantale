@@ -88,9 +88,11 @@ export function ChatPanel({
   }, []);
 
   useEffect(() => {
-    if (stickToBottom.current) {
-      bottomRef.current?.scrollIntoView({ behavior: "smooth" });
-    }
+    if (!stickToBottom.current) return;
+    const list = listRef.current;
+    if (!list) return;
+    // Scroll interne uniquement — scrollIntoView ferait sauter toute la page.
+    list.scrollTop = list.scrollHeight;
   }, [messages]);
 
   useEffect(() => {

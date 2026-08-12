@@ -6,6 +6,8 @@
   background: #0e0c09;
   font: inherit;
   z-index: 0;
+  /* Évite les sauts de scroll-anchoring quand les tuiles / overlays se chargent. */
+  overflow-anchor: none;
 }
 .cantale-world-map .leaflet-control-attribution {
   display: none;
@@ -71,8 +73,22 @@
   --shadow-card-soft: 5px 6px 0 0 rgba(0, 0, 0, 0.72);
 }
 
+/*
+ * Pas de `scroll-behavior: smooth` global sur `html` :
+ * Leaflet (focus clavier + window.scrollTo) et Next.js se battent avec,
+ * ce qui provoquait des sauts vers le bas/haut au clic sur la carte et
+ * d'autres contrôles. Le smooth des ancres in-page est géré par
+ * `ScrollStability` (comportement explicite + respect reduced-motion).
+ */
 html {
-  scroll-behavior: smooth;
+  scroll-behavior: auto;
+}
+
+/* Ancres sous le header fixe (h-16). */
+:target,
+#rejoindre,
+#formulaire-partenariat {
+  scroll-margin-top: 5.5rem;
 }
 
 body {
@@ -463,10 +479,6 @@ body {
 }
 
 @media (prefers-reduced-motion: reduce) {
-  html {
-    scroll-behavior: auto;
-  }
-
   .hero-letter,
   .hero-fade,
   .marquee-track,
