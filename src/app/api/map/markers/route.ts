@@ -7,9 +7,8 @@ export const dynamic = "force-dynamic";
  * GET /api/map/markers → { markers: [{ name, world, x, y, z, kind }],
  * generatedAt }
  *
- * Warps publics permanents + warps d'événement actifs. Pas de spawn : la
- * position du spawn n'est pas stockée en base (monde Bukkit), on ne l'invente
- * pas.
+ * Spawn serveur (injecté, −67 · −144) + warps publics permanents + warps
+ * d'événement actifs.
  */
 export async function GET() {
   const markers = await getMapWarps();

@@ -1,5 +1,10 @@
 import { query } from "../db";
-import type { MapClaim, MapMarker } from "@/lib/map-utils";
+import {
+  SERVER_SPAWN_MARKER,
+  isServerSpawnMarkerName,
+  type MapClaim,
+  type MapMarker,
+} from "@/lib/map-utils";
 
 /**
  * Tables `claims`, `factions` et `warps` du plugin CANTALE — lecture seule.
@@ -70,8 +75,9 @@ type WarpRow = {
  * ou un warp d'événement activé — miroir de WarpManager.teleportWarp().
  * Les warps d'événement désactivés sont donc exclus.
  *
- * Le spawn du serveur n'existe pas en base (il vient du monde Bukkit) :
- * il n'est volontairement pas inventé ici.
+ * Le spawn serveur n'est pas en table `warps` (monde Bukkit) : on l'injecte
+ * en tête comme marqueur warp (`SERVER_SPAWN_MARKER`, −67 · −144) pour la
+ * recherche `/carte` et `/api/map/markers`.
  */
 export async function getMapWarps(): Promise<MapMarker[] | null> {
   try {
@@ -81,16 +87,20 @@ export async function getMapWarps(): Promise<MapMarker[] | null> {
        WHERE is_event = 0 OR is_active = 1
        ORDER BY is_event ASC, name ASC`,
     );
-    return rows.map((row) => ({
-      name: row.name,
-      world: row.world,
-      x: Number(row.x),
-      y: Number(row.y),
-      z: Number(row.z),
-      kind: Number(row.is_event) === 1 ? "event" : "warp",
-    }));
+    const fromDb = rows
+      .map((row) => ({
+        name: row.name,
+        world: row.world,
+        x: Number(row.x),
+        y: Number(row.y),
+        z: Number(row.z),
+        kind: (Number(row.is_event) === 1 ? "event" : "warp") as MapMarker["kind"],
+      }))
+      .filter((marker) => !isServerSpawnMarkerName(marker.name));
+    return [SERVER_SPAWN_MARKER, ...fromDb];
   } catch (error) {
     console.error("[repo/map] getMapWarps — base injoignable :", error);
-    return null;
+    // Spawn reste disponible même si la table warps est muette.
+    return [SERVER_SPAWN_MARKER];
   }
 }

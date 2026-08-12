@@ -285,43 +285,33 @@ export function WorldMap({
       for (const marker of markers) {
         const latlng = blockToLatLng(marker.x, marker.z, maxZoom);
         const event = marker.kind === "event";
+        const spawn =
+          marker.name.trim().toLowerCase() === "spawn" &&
+          Math.round(marker.x) === SERVER_SPAWN_BLOCK.x &&
+          Math.round(marker.z) === SERVER_SPAWN_BLOCK.z;
         const color = event ? MAP_COLORS.emberGlow : MAP_COLORS.gold;
         L.circleMarker(latlng, {
           renderer,
-          radius: event ? 7 : 5,
-          color: event ? MAP_COLORS.ember : color,
-          weight: event ? 2 : 1.5,
-          fillColor: color,
-          fillOpacity: 0.95,
+          radius: spawn ? 6 : event ? 7 : 5,
+          color: spawn ? MAP_COLORS.ember : event ? MAP_COLORS.ember : color,
+          weight: spawn || event ? 2 : 1.5,
+          fillColor: spawn ? MAP_COLORS.bone : color,
+          fillOpacity: spawn ? 1 : 0.95,
         })
-          .bindTooltip(`${marker.name}${event ? " (événement)" : ""}`, {
-            sticky: true,
-            direction: "top",
-            opacity: 0.95,
-          })
-          .addTo(group);
-      }
-
-      // Repère spawn overworld (pas en base warps).
-      if (squaremapWorld === "minecraft_overworld") {
-        const spawnLl = blockToLatLng(SERVER_SPAWN_BLOCK.x, SERVER_SPAWN_BLOCK.z, maxZoom);
-        L.circleMarker(spawnLl, {
-          renderer,
-          radius: 6,
-          color: MAP_COLORS.ember,
-          weight: 2,
-          fillColor: MAP_COLORS.bone,
-          fillOpacity: 1,
-        })
-          .bindTooltip(`Spawn (${SERVER_SPAWN_BLOCK.x} · ${SERVER_SPAWN_BLOCK.z})`, {
-            sticky: true,
-            direction: "top",
-            opacity: 0.95,
-          })
+          .bindTooltip(
+            spawn
+              ? `Spawn (${SERVER_SPAWN_BLOCK.x} · ${SERVER_SPAWN_BLOCK.z})`
+              : `${marker.name}${event ? " (événement)" : ""}`,
+            {
+              sticky: true,
+              direction: "top",
+              opacity: 0.95,
+            },
+          )
           .addTo(group);
       }
     }
-  }, [claims, markers, layers, highlightFactionId, squaremapWorld]);
+  }, [claims, markers, layers, highlightFactionId]);
 
   // Focus externe (faction / coords) — coords = blocs.
   useEffect(() => {

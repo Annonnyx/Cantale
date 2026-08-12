@@ -499,7 +499,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             list: [
               "Vies mensuelles : items Vie à la connexion, une fois par mois calendaire (RankManager).",
               "/daily (MC ou Discord lié) : 1 000 + dailyCantox. Staff (Modo/Admin/Owner) : bonus grade 0 → 1 000 seulement.",
-              "Vol en claim : uniquement grade Chèvre (`PlayerRank.CHEVRE` / `hasUnlimitedFlight`) — double-tap espace dans un claim de ta faction. Modérateur, Admin et Owner n'y ont pas droit (sauf s'ils ont le grade Chèvre).",
+              "Vol en claim : uniquement grade Chèvre (`PlayerRank.CHEVRE`) — pas Modérateur / Admin / Owner (sauf s'ils ont aussi le grade Chèvre).",
+              "Deux effets : (1) vol créatif `hasUnlimitedFlight` — double-tap espace dans un claim de TA faction ; (2) fouille des conteneurs `canStealInClaims` dans un claim ÉTRANGER (allié ou ennemi). Les membres de la fac propriétaire ouvrent toujours leurs coffres.",
               "Anti-AFK détaillé : article AFK & clear-lag.",
             ],
           },
@@ -507,8 +508,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "staff",
             title: "Grades staff",
             list: [
-              "Modérateur — cantale.moderator : /moderation, /vanish, /tag, /modhelp. Coffres ×3, homes 999, /ah 20, pas d'AFK, vol en claim, warmup 0.",
-              "Admin / Owner — cantale.admin (enfants : givevie, moderator, feed, anticheat…). Mêmes avantages coffres/homes/vol/AFK côté rank. LifeManager ignore la perte de vie hardcore si cantale.admin.",
+              "Modérateur — cantale.moderator : /moderation, /vanish, /tag, /modhelp. Coffres ×3, homes 999, /ah 20, pas d'AFK, warmup 0. Pas de vol en claim (ni vol créatif, ni fouille coffres étrangers).",
+              "Admin / Owner — cantale.admin (enfants : givevie, moderator, feed, anticheat…). Mêmes avantages coffres/homes/AFK côté rank ; pas de vol en claim via le grade. Bypass claim (op / cantale.admin) = outil de modération, pas un perk « vol ».",
             ],
             commands: [
               {
@@ -679,7 +680,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Promouvoir : Recrue → Membre → Vétéran → Officier (chef seul).",
               "/f sethome : bloqué pour Recrue (check hardcodé), pas via le flag FHOME.",
               "CULTURES (fermes publiques) : activé seulement si Recrue a CULTURES — ce n'est pas le cas → récolte publique off.",
-              "Alliés (diplomatie) : interactions claim comme membres (sauf pose de stockage, réservée au claim de sa propre fac).",
+              "Alliés (diplomatie) : build / portes comme membres ; conteneurs (coffres…) réservés aux membres + grade Chèvre (vol). Pose de stockage toujours réservée au claim de sa propre fac.",
             ],
           },
           {
@@ -825,7 +826,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "protection-claim",
             title: "Protection d'un claim normal",
             paragraphs: [
-              "Membres, alliés et cantale.admin/op : tout autorisé. Étrangers : règles ci-dessous (ClaimListener).",
+              "Membres et cantale.admin/op : tout autorisé. Alliés : build/interact (portes…) mais pas les conteneurs sauf Chèvre. Étrangers : règles ci-dessous (ClaimListener).",
             ],
             tables: [
               {
@@ -835,8 +836,19 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["Casser autre bloc", "Oui"],
                   ["Poser TNT, obsidienne, cristal End, ancre, lit, seau d'eau", "Oui (liste explosive-place-blocks)"],
                   ["Poser tout autre bloc", "Non"],
-                  ["Interagir (coffres, portes…)", "Non"],
+                  ["Ouvrir conteneurs lootables (coffres, fours, hoppers, shulkers…)", "Non — sauf grade Chèvre (vol)"],
+                  ["Ateliers (craft, enclume…)", "Non (étrangers) ; alliés oui"],
+                  ["Interagir portes / boutons…", "Non (étrangers) ; alliés oui"],
                   ["Explosions", "Oui (sauf blocs en claim PASDIC)"],
+                ],
+              },
+              {
+                headers: ["Accès conteneurs lootables", "Qui ?"],
+                rows: [
+                  ["Membre de la fac propriétaire", "Toujours"],
+                  ["Allié / ennemi / sans fac", "Uniquement Chèvre (`canStealInClaims`)"],
+                  ["PASDIC", "Membres seulement (pas de vol)"],
+                  ["op / cantale.admin", "Bypass modération"],
                 ],
               },
               {
@@ -901,7 +913,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             ],
             list: [
               "En jeu : /f map = grille chat 11×11 (légende, claim vs wild, highlight ta fac, diplomatie, PASDIC, secret masqué, cooldown 30 s).",
-              "Spawn serveur : affiché comme repère (coords Bukkit / Squaremap), pas inventé depuis la table warps.",
+              "Spawn serveur (−67 · −144) : injecté comme marqueur warp « Spawn » (API markers + recherche /carte), pas stocké en table warps.",
               "Ops Squaremap : world-settings.default.player-tracker.enabled: false (recommandé) pour couper la source côté serveur.",
             ],
           },

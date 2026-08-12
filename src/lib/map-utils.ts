@@ -167,6 +167,28 @@ export function chunkToBlock(chunk: number): number {
  */
 export const SERVER_SPAWN_BLOCK = { x: -67, z: -144 } as const;
 
+/** Y nominal pour le marqueur API (la carte n’utilise que X/Z). */
+export const SERVER_SPAWN_Y = 64 as const;
+
+/**
+ * Spawn exposé comme warp public pour `/api/map/markers` et la recherche
+ * `/carte` (groupe warps). Nom « Spawn » — `/spawn` matche via le slash.
+ */
+export const SERVER_SPAWN_MARKER: MapMarker = {
+  name: "Spawn",
+  world: "world",
+  x: SERVER_SPAWN_BLOCK.x,
+  y: SERVER_SPAWN_Y,
+  z: SERVER_SPAWN_BLOCK.z,
+  kind: "warp",
+};
+
+/** True si le nom désigne le spawn serveur (évite un doublon DB). */
+export function isServerSpawnMarkerName(name: string): boolean {
+  const n = name.trim().toLowerCase();
+  return n === "spawn" || n === "/spawn";
+}
+
 /** Centre caméra carte (coords chunk continues = blocs / 16). */
 export const SERVER_SPAWN_CHUNK = {
   x: SERVER_SPAWN_BLOCK.x / 16,

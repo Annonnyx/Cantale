@@ -196,8 +196,13 @@ export function MapExplorer({
       .slice(0, 8)
       .map((faction) => ({ kind: "faction", faction }));
 
+    // `/spawn` → « spawn » pour matcher le marqueur injecté « Spawn ».
+    const warpQuery = q.replace(/^\//, "");
     const warpHits: SearchHit[] = (q
-      ? worldMarkers.filter((marker) => marker.name.toLowerCase().includes(q))
+      ? worldMarkers.filter((marker) => {
+          const name = marker.name.toLowerCase();
+          return name.includes(q) || (warpQuery !== "" && name.includes(warpQuery));
+        })
       : worldMarkers
     )
       .slice(0, 8)
