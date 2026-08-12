@@ -108,18 +108,35 @@ export const env = {
       .filter((id) => /^\d{5,32}$/.test(id));
   },
   /**
-   * Rôles Discord optionnels pour la page Équipe (complément à player_permissions).
-   * Requis surtout pour les grades absents du RankManager (ex. Builder).
-   * Le listing Discord nécessite l'intent Privileged « Server Members » sur le bot.
+   * Overrides optionnels des IDs de rôles Équipe (sinon défauts `DISCORD_ROLES`).
+   * Listing Discord : intent Privileged « Server Members » sur le bot.
    */
-  get discordRoleAdmin(): string | null {
-    return readDiscordSnowflake("DISCORD_ROLE_ADMIN");
+  get discordRoleAdmin(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_ADMIN") ?? DISCORD_ROLES.admin;
   },
   get discordRoleModo(): string | null {
     return readDiscordSnowflake("DISCORD_ROLE_MODO");
   },
-  get discordRoleBuilder(): string | null {
-    return readDiscordSnowflake("DISCORD_ROLE_BUILDER");
+  get discordRoleBuilder(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_BUILDER") ?? DISCORD_ROLES.builder;
+  },
+  get discordRoleDeveloppeur(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_DEVELOPPEUR") ?? DISCORD_ROLES.developpeur;
+  },
+  get discordRoleSupport(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_SUPPORT") ?? DISCORD_ROLES.support;
+  },
+  get discordRoleMonteur(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_MONTEUR") ?? DISCORD_ROLES.monteur;
+  },
+  get discordRoleGraphiste(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_GRAPHISTE") ?? DISCORD_ROLES.graphiste;
+  },
+  get discordRolePartenaire(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_PARTENAIRE") ?? DISCORD_ROLES.partenaire;
+  },
+  get discordRoleCreator(): string {
+    return readDiscordSnowflake("DISCORD_ROLE_CREATOR") ?? DISCORD_ROLES.creator;
   },
 };
 
@@ -129,10 +146,22 @@ function readDiscordSnowflake(name: string): string | null {
   return /^\d{5,32}$/.test(value) ? value : null;
 }
 
+/**
+ * IDs de rôles Discord Cantale (guild).
+ * Défauts stables pour tickets / Équipe ; overridables via `DISCORD_ROLE_*` quand exposé.
+ */
 export const DISCORD_ROLES = {
   fondateur: "1504907451789475991",
   coFondateur: "1504907619851047003",
   directeur: "1504907542554349618",
+  developpeur: "1504907694148943893",
+  admin: "1504907761069330494",
+  support: "1504907938039599236",
+  builder: "1504908080591409172",
+  monteur: "1522198912335745075",
+  graphiste: "1504907992439455984",
+  partenaire: "1505140575760941238",
+  creator: "1522211546766512258",
   leader: "1504910381586452621",
   hasFaction: "1504907203075903650",
 } as const;

@@ -1,8 +1,8 @@
 import { PlayerLink } from "@/components/player/player-link";
 import { Stamp } from "@/components/ui/stamp";
-import type { EquipeGroup, EquipeMember } from "@/server/repo/equipe";
+import type { AllianceGroup, AllianceMember } from "@/server/repo/alliances";
 
-function MemberCard({ member }: { member: EquipeMember }) {
+function MemberCard({ member }: { member: AllianceMember }) {
   const name = (
     <span className="truncate font-display text-base font-semibold text-bone">
       {member.displayName}
@@ -45,26 +45,19 @@ function MemberCard({ member }: { member: EquipeMember }) {
             Discord · {member.discordUsername}
           </span>
         )}
-        {!member.discordUsername && member.minecraftUsername && member.uuid && (
-          <span className="truncate font-tech text-[10px] uppercase tracking-[0.18em] text-steel">
-            Minecraft
-          </span>
-        )}
       </div>
     </li>
   );
 }
 
-export function EquipeRoster({ groups }: { groups: EquipeGroup[] }) {
+export function AlliancesRoster({ groups }: { groups: AllianceGroup[] }) {
   if (groups.length === 0) {
     return (
       <div className="border border-iron-line bg-iron px-5 py-8 sm:px-6">
         <p className="max-w-xl text-sm leading-relaxed text-steel">
-          L&apos;annuaire staff n&apos;est pas encore peuplé — grades Minecraft (
-          <span className="text-bone">Owner</span>, <span className="text-bone">Admin</span>,{" "}
-          <span className="text-bone">Modo</span>) et rôles Discord staff (direction,
-          développeur, admin, support, builder, monteur, graphiste). Dès qu&apos;un membre a le
-          grade ou le rôle, il apparaît ici.
+          Aucun partenaire ni creator listé pour l&apos;instant — seuls les détenteurs réels des
+          rôles Discord <span className="text-bone">Partenaires actifs</span> et{" "}
+          <span className="text-bone">Creator</span> apparaissent ici.
         </p>
       </div>
     );

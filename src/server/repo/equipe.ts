@@ -4,17 +4,21 @@ import { query } from "../db";
 import { listStaffFromPermissions, type StaffMcRole } from "./staff";
 
 /**
- * Grades affichés sur /recrutement § Équipe.
- * Ordre = hiérarchie d'affichage (direction Discord avant grades MC).
+ * Grades affichés sur /recrutement § Équipe (staff uniquement).
+ * Partenaires / Creators → `/partenariats`.
  */
 export type EquipeGrade =
   | "fondateur"
   | "coFondateur"
   | "directeur"
   | "owner"
+  | "developpeur"
   | "admin"
+  | "support"
   | "modo"
-  | "builder";
+  | "builder"
+  | "monteur"
+  | "graphiste";
 
 export type EquipeMember = {
   /** Clé stable pour React (uuid MC ou discord:<id>). */
@@ -42,9 +46,13 @@ const GRADE_META: Record<EquipeGrade, { label: string; priority: number }> = {
   coFondateur: { label: "Co-fondateur", priority: 1 },
   directeur: { label: "Directeur", priority: 2 },
   owner: { label: "Owner", priority: 3 },
-  admin: { label: "Admin", priority: 4 },
-  modo: { label: "Modo", priority: 5 },
-  builder: { label: "Builder", priority: 6 },
+  developpeur: { label: "Développeur", priority: 4 },
+  admin: { label: "Admin", priority: 5 },
+  support: { label: "Support", priority: 6 },
+  modo: { label: "Modo", priority: 7 },
+  builder: { label: "Builder", priority: 8 },
+  monteur: { label: "Monteur", priority: 9 },
+  graphiste: { label: "Graphiste", priority: 10 },
 };
 
 const MC_TO_GRADE: Record<StaffMcRole, EquipeGrade> = {
@@ -59,11 +67,32 @@ type DiscordLinkLookup = {
   username: string | null;
 };
 
+type ResolvedStaffRoles = {
+  developpeur: string;
+  admin: string;
+  support: string;
+  modo: string | null;
+  builder: string;
+  monteur: string;
+  graphiste: string;
+};
+
+function resolveStaffRoles(): ResolvedStaffRoles {
+  return {
+    developpeur: env.discordRoleDeveloppeur,
+    admin: env.discordRoleAdmin,
+    support: env.discordRoleSupport,
+    modo: env.discordRoleModo,
+    builder: env.discordRoleBuilder,
+    monteur: env.discordRoleMonteur,
+    graphiste: env.discordRoleGraphiste,
+  };
+}
+
 async function linksByDiscordIds(ids: string[]): Promise<Map<string, DiscordLinkLookup>> {
   const map = new Map<string, DiscordLinkLookup>();
   if (ids.length === 0) return map;
 
-  // Placeholders nommés (mysql2) — liste bornée (staff Discord, pas tout le serveur).
   const params: Record<string, string> = {};
   const placeholders = ids.map((id, i) => {
     const key = `id${i}`;
@@ -116,45 +145,42 @@ function betterGrade(a: EquipeGrade, b: EquipeGrade): EquipeGrade {
   return GRADE_META[a].priority <= GRADE_META[b].priority ? a : b;
 }
 
-function directionGradeFromRoles(roles: readonly string[]): EquipeGrade | null {
+function gradeFromDiscordRoles(
+  roles: readonly string[],
+  resolved: ResolvedStaffRoles,
+): EquipeGrade | null {
   if (roles.includes(DISCORD_ROLES.fondateur)) return "fondateur";
   if (roles.includes(DISCORD_ROLES.coFondateur)) return "coFondateur";
   if (roles.includes(DISCORD_ROLES.directeur)) return "directeur";
-  return null;
-}
-
-function staffGradeFromRoles(
-  roles: readonly string[],
-  roleAdmin: string | null,
-  roleModo: string | null,
-  roleBuilder: string | null,
-): EquipeGrade | null {
-  const direction = directionGradeFromRoles(roles);
-  if (direction) return direction;
-  if (roleAdmin && roles.includes(roleAdmin)) return "admin";
-  if (roleModo && roles.includes(roleModo)) return "modo";
-  if (roleBuilder && roles.includes(roleBuilder)) return "builder";
+  if (roles.includes(resolved.developpeur)) return "developpeur";
+  if (roles.includes(resolved.admin)) return "admin";
+  if (roles.includes(resolved.support)) return "support";
+  if (resolved.modo && roles.includes(resolved.modo)) return "modo";
+  if (roles.includes(resolved.builder)) return "builder";
+  if (roles.includes(resolved.monteur)) return "monteur";
+  if (roles.includes(resolved.graphiste)) return "graphiste";
   return null;
 }
 
 /**
- * Construit le roster public Équipe.
- * SoT principal : `player_permissions` (Owner / Admin / Modo).
- * Complément Discord : rôles direction (hardcodés comme le reste du site)
- * + rôles optionnels env (Admin / Modo / Builder).
+ * Roster public Équipe (staff).
+ * SoT MC : `player_permissions` (Owner / Admin / Modo).
+ * Discord : direction + Développeur / Admin / Support / Builder / Monteur / Graphiste.
  */
 export async function getEquipeRoster(): Promise<EquipeGroup[]> {
-  const roleAdmin = env.discordRoleAdmin;
-  const roleModo = env.discordRoleModo;
-  const roleBuilder = env.discordRoleBuilder;
+  const resolved = resolveStaffRoles();
 
   const discordRoleIds = [
     DISCORD_ROLES.fondateur,
     DISCORD_ROLES.coFondateur,
     DISCORD_ROLES.directeur,
-    roleAdmin,
-    roleModo,
-    roleBuilder,
+    resolved.developpeur,
+    resolved.admin,
+    resolved.support,
+    resolved.modo,
+    resolved.builder,
+    resolved.monteur,
+    resolved.graphiste,
   ].filter((id): id is string => Boolean(id));
 
   const [mcStaff, discordStaff] = await Promise.all([
@@ -192,7 +218,7 @@ export async function getEquipeRoster(): Promise<EquipeGroup[]> {
   const links = await linksByDiscordIds(discordIds);
 
   for (const snap of discordStaff) {
-    const grade = staffGradeFromRoles(snap.roles, roleAdmin, roleModo, roleBuilder);
+    const grade = gradeFromDiscordRoles(snap.roles, resolved);
     if (!grade) continue;
 
     const link = links.get(snap.id);
@@ -234,7 +260,6 @@ export async function getEquipeRoster(): Promise<EquipeGroup[]> {
     if (member.uuid) byKey.set(`mc:${member.uuid}`, member);
   }
 
-  // Dédupliquer : une entrée par personne (clé mc: ou discord: primaire).
   const unique = new Map<string, EquipeMember>();
   for (const member of byKey.values()) {
     unique.set(member.key, member);

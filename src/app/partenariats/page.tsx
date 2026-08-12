@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { Stamp } from "@/components/ui/stamp";
+import { getAlliancesRoster } from "@/server/repo/alliances";
 import { getSessionUser } from "@/server/session";
+import { AlliancesRoster } from "./alliances-roster";
 import { PartnershipForm } from "./partnership-form";
 
 export const dynamic = "force-dynamic";
@@ -147,7 +149,10 @@ function SectionHeading({
 }
 
 export default async function PartenariatsPage() {
-  const user = await getSessionUser();
+  const [user, allianceGroups] = await Promise.all([
+    getSessionUser(),
+    getAlliancesRoster().catch(() => []),
+  ]);
   const discordName = user.discordUser
     ? (user.discordUser.globalName ?? user.discordUser.username)
     : null;
@@ -167,14 +172,45 @@ export default async function PartenariatsPage() {
           créateurs de contenu, organisateurs d&apos;événements. Pas de placement opportuniste —
           des alliances nettes, assumées, et profitables des deux côtés.
         </p>
+        <p className="font-tech text-[10px] uppercase tracking-[0.22em] text-steel">
+          <a href="#allies" className="hover:text-bone">
+            Alliés en place
+          </a>
+          <span aria-hidden="true" className="mx-2 text-iron-line">
+            ·
+          </span>
+          <a href="#types-title" className="hover:text-bone">
+            Formules
+          </a>
+          <span aria-hidden="true" className="mx-2 text-iron-line">
+            ·
+          </span>
+          <a href="#formulaire-partenariat" className="hover:text-bone">
+            Candidater
+          </a>
+        </p>
       </header>
 
       <div className="flex flex-col gap-14">
-        {/* ——— 01 · Types de partenariats ——— */}
+        {/* ——— 01 · Alliés en place ——— */}
+        <section id="allies" aria-labelledby="allies-title">
+          <SectionHeading
+            id="allies-title"
+            num="01"
+            kicker="En place"
+            title="Partenaires & creators"
+            intro="Détenteurs réels des rôles Discord Partenaires actifs et Creator. Aucun nom inventé."
+          />
+          <div className="reveal pt-8">
+            <AlliancesRoster groups={allianceGroups} />
+          </div>
+        </section>
+
+        {/* ——— 02 · Types de partenariats ——— */}
         <section aria-labelledby="types-title">
           <SectionHeading
             id="types-title"
-            num="01"
+            num="02"
             kicker="Formules"
             title="Trois types d'alliance"
             intro="Choisis la porte qui correspond à ton projet — chaque formule a son cadre, posé noir sur blanc."
@@ -212,11 +248,11 @@ export default async function PartenariatsPage() {
           </div>
         </section>
 
-        {/* ——— 02 · Conditions ——— */}
+        {/* ——— 03 · Conditions ——— */}
         <section aria-labelledby="conditions-title" className="reveal">
           <SectionHeading
             id="conditions-title"
-            num="02"
+            num="03"
             kicker="Le cadre"
             title="Conditions non négociables"
             intro="Le partenariat engage le nom de Cantale. Ces règles sont lues avant toute signature — elles ne se discutent pas."
@@ -243,11 +279,11 @@ export default async function PartenariatsPage() {
           </ul>
         </section>
 
-        {/* ——— 03 · Contreparties ——— */}
+        {/* ——— 04 · Contreparties ——— */}
         <section aria-labelledby="contreparties-title" className="reveal">
           <SectionHeading
             id="contreparties-title"
-            num="03"
+            num="04"
             kicker="Ce qu'on apporte"
             title="Les contreparties"
             intro="Un partenariat se mesure à ce que chacun pose sur la table. Voici notre mise, sans petites lignes."
@@ -265,7 +301,7 @@ export default async function PartenariatsPage() {
           </div>
         </section>
 
-        {/* ——— 04 · Contact ——— */}
+        {/* ——— 05 · Contact ——— */}
         <section aria-labelledby="contact-title" className="reveal">
           <div className="border border-ember/60 bg-iron p-6 sm:p-10">
             <Stamp tone="gold">Contact</Stamp>

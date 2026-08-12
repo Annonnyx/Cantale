@@ -120,7 +120,7 @@ export default async function RecrutementPage() {
             num="01"
             kicker="En place"
             title="L'équipe"
-            intro="Grades réels issus du serveur (et des rôles Discord de direction). Aucun nom inventé — si tu n'apparais pas ici, tu n'as pas encore le grade."
+            intro="Grades Minecraft et rôles Discord staff réels (direction, développeur, admin, support, builder, monteur, graphiste). Aucun nom inventé — partenaires et creators sont sur /partenariats."
           />
           <div className="reveal pt-8">
             <EquipeRoster groups={equipeGroups} />
