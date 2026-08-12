@@ -29,7 +29,7 @@ const SECTIONS: LegalSection[] = [
             <LegalLink href={DISCORD} external>
               Discord CANTALE
             </LegalLink>{" "}
-            (ticket Direction) — indique clairement « demande RGPD » et le compte concerné.
+            (ticket Direction) — indiquez clairement « demande RGPD » et le compte concerné.
           </li>
         </ul>
         <p>
@@ -44,16 +44,16 @@ const SECTIONS: LegalSection[] = [
     title: "Données collectées",
     body: (
       <>
-        <p>Selon ton usage du site, nous pouvons traiter :</p>
+        <p>Selon votre usage du site, nous pouvons traiter :</p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <strong className="text-bone">Compte Discord (OAuth2, scope identify)</strong> :
             identifiant Discord, nom d&apos;utilisateur, nom d&apos;affichage, avatar. Nous ne
-            demandons pas l&apos;accès à tes messages Discord ni à ton e-mail Discord.
+            demandons pas l&apos;accès à vos messages Discord ni à votre e-mail Discord.
           </li>
           <li>
             <strong className="text-bone">Liaison Minecraft</strong> : UUID et pseudo Minecraft
-            associés à ton Discord lorsque tu utilises la commande de liaison in-game / Discord.
+            associés à votre Discord lorsque vous utilisez la commande de liaison in-game / Discord.
           </li>
           <li>
             <strong className="text-bone">Données de jeu affichées sur le site</strong> : stats
@@ -117,7 +117,7 @@ const SECTIONS: LegalSection[] = [
     title: "Destinataires",
     body: (
       <>
-        <p>Tes données peuvent être traitées par :</p>
+        <p>Vos données peuvent être traitées par :</p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
             <strong className="text-bone">Staff CANTALE</strong> (Direction / modération) pour le
@@ -136,10 +136,10 @@ const SECTIONS: LegalSection[] = [
             formulaire.
           </li>
           <li>
-            Prestataire de paiement éventuel — uniquement si tu effectues un achat boutique.
+            Prestataire de paiement éventuel — uniquement si vous effectuez un achat boutique.
           </li>
         </ul>
-        <p>Nous ne vendons pas tes données personnelles.</p>
+        <p>Nous ne vendons pas vos données personnelles.</p>
       </>
     ),
   },
@@ -175,12 +175,12 @@ const SECTIONS: LegalSection[] = [
   },
   {
     id: "droits",
-    title: "Tes droits (RGPD)",
+    title: "Vos droits (RGPD)",
     body: (
       <>
-        <p>Conformément au RGPD, tu peux demander :</p>
+        <p>Conformément au RGPD, vous pouvez demander :</p>
         <ul className="list-disc space-y-1 pl-5">
-          <li>accès à tes données ;</li>
+          <li>accès à vos données ;</li>
           <li>rectification ;</li>
           <li>effacement (dans les limites du jeu : un ban ou un historique de sanction peut
             devoir être conservé) ;</li>
@@ -188,11 +188,11 @@ const SECTIONS: LegalSection[] = [
           <li>portabilité lorsque applicable.</li>
         </ul>
         <p>
-          Pour exercer ces droits : contacte la Direction via le{" "}
+          Pour exercer ces droits : contactez la Direction via le{" "}
           <LegalLink href={DISCORD} external>
             Discord
           </LegalLink>
-          . Nous répondons dans un délai raisonnable (objectif : 30 jours). Tu peux aussi
+          . Nous répondons dans un délai raisonnable (objectif : 30 jours). Vous pouvez aussi
           introduire une réclamation auprès de la{" "}
           <LegalLink href="https://www.cnil.fr" external>
             CNIL
@@ -200,8 +200,8 @@ const SECTIONS: LegalSection[] = [
           .
         </p>
         <p>
-          Pour supprimer ta session web : utilise la déconnexion sur le site. Pour supprimer la
-          liaison Discord / Minecraft : contacte le staff (ou utilise les outils in-game /
+          Pour supprimer votre session web : utilisez la déconnexion sur le site. Pour supprimer la
+          liaison Discord / Minecraft : contactez le staff (ou utilisez les outils in-game /
           Discord prévus s&apos;ils existent).
         </p>
       </>
@@ -216,8 +216,8 @@ const SECTIONS: LegalSection[] = [
           L&apos;hébergeur du site (Vercel) et Discord / Cloudflare sont des prestataires pouvant
           traiter des données aux États-Unis ou dans d&apos;autres pays. Ces transferts reposent
           sur les mécanismes prévus par ces prestataires (clauses contractuelles types,
-          certifications, etc.). En te connectant via Discord ou en utilisant le site, tu
-          acceptes ce fonctionnement inhérent aux outils utilisés.
+          certifications, etc.). En vous connectant via Discord ou en utilisant le site, vous
+          acceptez ce fonctionnement inhérent aux outils utilisés.
         </p>
       </>
     ),
@@ -230,7 +230,7 @@ const SECTIONS: LegalSection[] = [
         <p>
           Minecraft et Discord ont leurs propres règles d&apos;âge. Les parents / tuteurs sont
           responsables de l&apos;usage du service par un mineur. Pour une demande relative à un
-          compte de mineur, contacte-nous via Discord avec les éléments permettant de vérifier la
+          compte de mineur, contactez-nous via Discord avec les éléments permettant de vérifier la
           demande.
         </p>
       </>
@@ -245,7 +245,7 @@ export default function ConfidentialitePage() {
       title="Politique de confidentialité"
       intro={
         <p>
-          Comment CANTALE traite tes données personnelles sur le site et pour la liaison Discord
+          Comment CANTALE traite vos données personnelles sur le site et pour la liaison Discord
           / Minecraft. Aligné sur le RGPD, sans jargon inutile.
         </p>
       }

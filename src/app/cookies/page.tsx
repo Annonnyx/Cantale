@@ -72,7 +72,7 @@ const SECTIONS: LegalSection[] = [
                   cantale_cookie_notice
                 </td>
                 <td className="py-3 pr-4">
-                  Mémorise que tu as fermé le bandeau d&apos;information cookies (stockage local
+                  Mémorise que vous avez fermé le bandeau d&apos;information cookies (stockage local
                   navigateur, pas un cookie serveur).
                 </td>
                 <td className="py-3 pr-4">Jusqu&apos;à effacement</td>
@@ -120,9 +120,9 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          Tu peux te déconnecter sur le site pour invalider la session. Tu peux aussi supprimer
-          les cookies du domaine cantale.world (et miroirs) dans les réglages de ton navigateur.
-          Sans cookies de session, les fonctions connectées ne fonctionnent plus.
+          Vous pouvez vous déconnecter sur le site pour invalider la session. Vous pouvez aussi
+          supprimer les cookies du domaine cantale.world (et miroirs) dans les réglages de votre
+          navigateur. Sans cookies de session, les fonctions connectées ne fonctionnent plus.
         </p>
         <p>
           Plus de détails sur les données :{" "}

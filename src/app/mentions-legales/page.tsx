@@ -91,22 +91,22 @@ const SECTIONS: LegalSection[] = [
     body: (
       <>
         <p>
-          En accédant au site ou en jouant sur le serveur, tu acceptes les présentes conditions
+          En accédant au site ou en jouant sur le serveur, vous acceptez les présentes conditions
           ainsi que le{" "}
           <LegalLink href="/reglement">règlement du serveur</LegalLink>.
         </p>
         <ul className="list-disc space-y-2 pl-5">
           <li>
-            Tu dois disposer de l&apos;âge et de la capacité légale pour utiliser Discord et
+            Vous devez disposer de l&apos;âge et de la capacité légale pour utiliser Discord et
             Minecraft selon leurs propres conditions.
           </li>
           <li>
             La connexion au site via Discord (OAuth2, scope <code className="text-ember-glow">identify</code>)
-            est optionnelle : elle sert à lier ton compte Discord à ton profil Minecraft et à
+            est optionnelle : elle sert à lier votre compte Discord à votre profil Minecraft et à
             accéder aux fonctions connectées (candidatures, panneau leader, etc.).
           </li>
           <li>
-            Tu t&apos;engages à fournir des informations exactes dans les formulaires (recrutement,
+            Vous vous engagez à fournir des informations exactes dans les formulaires (recrutement,
             partenariats, candidatures de faction) et à ne pas usurper l&apos;identité d&apos;autrui.
           </li>
           <li>
@@ -114,7 +114,7 @@ const SECTIONS: LegalSection[] = [
             en cas de non-respect du règlement ou d&apos;abus technique.
           </li>
           <li>
-            Le contenu du site (textes, design, wiki) est protégé. Tu peux le consulter librement ;
+            Le contenu du site (textes, design, wiki) est protégé. Vous pouvez le consulter librement ;
             la reproduction commerciale sans accord est interdite.
           </li>
         </ul>
@@ -155,7 +155,7 @@ const SECTIONS: LegalSection[] = [
           respectent le règlement.
         </p>
         <p>
-          Tu es responsable de la sécurité de ton compte Discord et de ton compte Minecraft.
+          Vous êtes responsable de la sécurité de votre compte Discord et de votre compte Minecraft.
         </p>
       </>
     ),
