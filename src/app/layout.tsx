@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { fontVariables } from "@/lib/fonts";
 import { SiteHeader } from "@/components/layout/site-header";
 import { SiteFooter } from "@/components/layout/site-footer";
+import { CookieNotice } from "@/components/legal/cookie-notice";
 import { RevealObserver } from "@/components/ui/reveal-observer";
 import "./globals.css";
 
@@ -41,6 +42,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <SiteHeader />
         <div className="flex flex-1 flex-col">{children}</div>
         <SiteFooter />
+        <CookieNotice />
       </body>
     </html>
   );

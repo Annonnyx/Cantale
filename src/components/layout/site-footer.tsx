@@ -32,12 +32,20 @@ const FOOTER_LINKS = [
       { href: "https://discord.gg/65a9upGPHx", label: "Discord", external: true },
     ],
   },
+  {
+    title: "Légal",
+    links: [
+      { href: "/mentions-legales", label: "Mentions & CGU" },
+      { href: "/confidentialite", label: "Confidentialité" },
+      { href: "/cookies", label: "Cookies" },
+    ],
+  },
 ];
 
 export function SiteFooter() {
   return (
     <footer className="border-t border-iron-line/60 bg-ash-deep">
-      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_repeat(3,1fr)]">
+      <div className="mx-auto grid max-w-7xl gap-10 px-5 py-14 sm:px-8 md:grid-cols-[1.4fr_repeat(4,1fr)]">
         <div className="flex flex-col gap-4">
           <span className="font-hero text-2xl tracking-[0.18em] text-bone">CANTALE</span>
           <p className="max-w-xs text-sm leading-relaxed text-steel-light">
@@ -79,7 +87,18 @@ export function SiteFooter() {
       <div className="border-t border-iron-line/40">
         <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 py-5 font-tech text-[10px] uppercase tracking-[0.22em] text-steel-light sm:flex-row sm:items-center sm:justify-between sm:px-8">
           <span>CANTALE — L&apos;effort crée les forts</span>
-          <span>Non affilié à Mojang ni Microsoft</span>
+          <span className="flex flex-wrap gap-x-4 gap-y-1">
+            <Link href="/mentions-legales" className="hover:text-bone">
+              Mentions
+            </Link>
+            <Link href="/confidentialite" className="hover:text-bone">
+              RGPD
+            </Link>
+            <Link href="/cookies" className="hover:text-bone">
+              Cookies
+            </Link>
+            <span>Non affilié à Mojang ni Microsoft</span>
+          </span>
         </div>
       </div>
     </footer>
