@@ -1,4 +1,8 @@
-import { getSessionUser } from "@/server/session";
+import {
+  discordChannelNamePart,
+  formatDiscordAccountLabel,
+  getSessionDiscordUser,
+} from "@/server/session";
 import {
   createRecruitmentTicket,
   type RecruitmentTicketField,
@@ -223,15 +227,14 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await getSessionUser().catch(() => null);
-  const discordUser = session?.discordUser ?? null;
-  const applicantName =
-    discordUser?.globalName ??
-    discordUser?.username ??
-    (validated.data.minecraftPseudo || "candidat");
-  const discordAccount = discordUser
-    ? `${discordUser.globalName ?? discordUser.username} (<@${discordUser.id}>)`
-    : "Non connecté";
+  // Cookie seul — ne pas passer par getSessionUser() (MySQL / rôles) :
+  // un échec avalé via .catch laissait « Compte Discord non connecté »
+  // alors que la page affichait déjà l'utilisateur connecté.
+  const discordUser = await getSessionDiscordUser(request);
+  const applicantName = discordUser
+    ? discordChannelNamePart(discordUser)
+    : validated.data.minecraftPseudo || "candidat";
+  const discordAccount = formatDiscordAccountLabel(discordUser);
 
   const result = await createRecruitmentTicket({
     roleId: validated.data.role.id,

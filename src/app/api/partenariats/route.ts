@@ -1,4 +1,8 @@
-import { getSessionUser } from "@/server/session";
+import {
+  discordChannelNamePart,
+  formatDiscordAccountLabel,
+  getSessionDiscordUser,
+} from "@/server/session";
 import {
   createPartnershipTicket,
   type TicketField,
@@ -176,16 +180,17 @@ export async function POST(request: Request) {
     );
   }
 
-  const session = await getSessionUser().catch(() => null);
-  const discordUser = session?.discordUser ?? null;
-  const linkedDiscord = discordUser
-    ? `${discordUser.globalName ?? discordUser.username} (<@${discordUser.id}>)`
-    : "Non connecté";
+  const discordUser = await getSessionDiscordUser(request);
+  const linkedDiscord = formatDiscordAccountLabel(discordUser);
+  // Nom de salon : handle Discord si connecté, sinon le nom déclaré (comme avant).
+  const applicantName = discordUser
+    ? discordChannelNamePart(discordUser)
+    : validated.data.name;
 
   const result = await createPartnershipTicket({
     allianceTypeId: validated.data.allianceType.id,
     allianceTypeLabel: validated.data.allianceType.label,
-    applicantName: validated.data.name,
+    applicantName,
     applicantDiscordId: discordUser?.id ?? null,
     fields: buildTicketFields(validated.data, linkedDiscord),
   });

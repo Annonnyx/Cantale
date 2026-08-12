@@ -215,6 +215,7 @@ export function RecruitmentForm({
     try {
       const res = await fetch("/api/recrutement", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           role: role?.id ?? "",
@@ -532,7 +533,7 @@ export function RecruitmentForm({
                   Compte Discord
                 </dt>
                 <dd className="font-display text-base font-semibold text-bone">
-                  {discordName ?? "Non connecté"}
+                  {discordName ?? "Compte Discord non connecté"}
                 </dd>
               </div>
               {role.fields.map((field) => {

@@ -108,11 +108,58 @@ export async function clearOAuthStateCookie(): Promise<void> {
 
 export type SessionData = { user: DiscordUser };
 
+/** Extrait la valeur d'un cookie nommé depuis l'en-tête Cookie brut. */
+function readNamedCookie(header: string | null | undefined, name: string): string | null {
+  if (!header) return null;
+  const parts = header.split(";");
+  for (const part of parts) {
+    const trimmed = part.trim();
+    const eq = trimmed.indexOf("=");
+    if (eq <= 0) continue;
+    if (trimmed.slice(0, eq) !== name) continue;
+    return trimmed.slice(eq + 1);
+  }
+  return null;
+}
+
 /** Session brute (profil Discord) ou null si visiteur anonyme. */
 export async function getSession(): Promise<SessionData | null> {
   const value = (await cookies()).get(SESSION_COOKIE)?.value;
   const user = decodeSession(value);
   return user ? { user } : null;
+}
+
+/**
+ * Identité Discord depuis le cookie de session uniquement — sans MySQL ni
+ * appels bot. À utiliser pour les tickets web (recrutement / partenariats) :
+ * `getSessionUser()` peut échouer (pool DB, rôles Discord) et un `.catch`
+ * avalerait alors l'identité alors que le cookie est valide.
+ *
+ * Fallback : parse l'en-tête `Cookie` de la requête si `cookies()` Next
+ * ne renvoie rien (cas rare sur certains handlers POST).
+ */
+export async function getSessionDiscordUser(request?: Request): Promise<DiscordUser | null> {
+  try {
+    const session = await getSession();
+    if (session?.user) return session.user;
+  } catch {
+    // cookies() hors contexte → on tente le header
+  }
+  if (!request) return null;
+  const raw = readNamedCookie(request.headers.get("cookie"), SESSION_COOKIE);
+  return decodeSession(raw);
+}
+
+/** Libellé + mention pour les embeds ticket, ou message FR si anonyme. */
+export function formatDiscordAccountLabel(user: DiscordUser | null): string {
+  if (!user) return "Compte Discord non connecté";
+  const display = user.globalName ?? user.username;
+  return `${display} (<@${user.id}>)`;
+}
+
+/** Pseudo stable pour le nom de salon Discord (handle > display name). */
+export function discordChannelNamePart(user: DiscordUser): string {
+  return user.username || user.globalName || user.id;
 }
 
 export type SessionTier = "anonymous" | "discord" | "linked" | "leader";

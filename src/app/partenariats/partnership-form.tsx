@@ -146,6 +146,7 @@ export function PartnershipForm({ discordName }: { discordName: string | null })
     try {
       const res = await fetch("/api/partenariats", {
         method: "POST",
+        credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           allianceType,

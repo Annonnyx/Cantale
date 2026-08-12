@@ -104,7 +104,9 @@ function sanitizeNamePart(value: string, fallback: string): string {
   return out || fallback;
 }
 
-/** Nom de salon style ticket natif : "open-<prefix>-<slug>-<nom>" (max 100 car.). */
+/** Nom de salon style ticket natif : "open-<prefix>-<slug>-<discordOuNom>" (max 100 car.).
+ * Ex. open-recrutement-moderation-onyx · open-partenariat-communaute-onyx
+ */
 function buildTicketChannelName(
   prefix: string,
   slug: string,
