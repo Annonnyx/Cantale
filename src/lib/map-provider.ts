@@ -4,6 +4,10 @@
  * Sur un site HTTPS, une iframe vers une URL HTTP est bloquée (mixed content).
  * On expose donc un reverse-proxy same-origin `/map-provider/*` (rewrite Next)
  * et l'iframe pointe toujours vers ce chemin quand le provider est HTTP.
+ *
+ * Vie privée : `/map-provider/tiles/players.json` est détourné vers un stub
+ * vide (voir next.config + `/api/map/squaremap-players`). La carte Leaflet
+ * n'ajoute jamais de marqueurs joueurs.
  */
 
 const PROXY_BASE = "/map-provider";

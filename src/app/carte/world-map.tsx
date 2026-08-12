@@ -58,6 +58,10 @@ function parseSettings(raw: unknown): SquaremapWorldSettings {
 /**
  * Carte Leaflet : tuiles Squaremap (via proxy) + overlays Cantale
  * (claims, PASDIC, warps). Centre par défaut = /spawn (-67, -144).
+ *
+ * Jamais de couche joueurs : on ne fetch pas `tiles/players.json`, et le
+ * proxy `/map-provider` le remplace par un stub vide (voir next.config +
+ * `/api/map/squaremap-players`).
  */
 export function WorldMap({
   claims,

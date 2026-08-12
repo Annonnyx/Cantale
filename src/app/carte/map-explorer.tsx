@@ -41,6 +41,10 @@ type FactionEntry = {
   centroid: { x: number; z: number } | null;
 };
 
+type SearchHit =
+  | { kind: "faction"; faction: FactionEntry }
+  | { kind: "warp"; marker: MapMarker; key: string };
+
 /** « world » d'abord (convention Bukkit), sinon le monde le plus revendiqué. */
 function pickDefaultWorld(claims: MapClaim[], markers: MapMarker[]): string {
   const counts = new Map<string, number>();
@@ -84,7 +88,7 @@ export function MapExplorer({
   const [generatedAt, setGeneratedAt] = useState(initialGeneratedAt);
   const [world, setWorld] = useState(() => pickDefaultWorld(initialClaims, initialMarkers));
   const [layers, setLayers] = useState<MapLayers>({ claims: true, pasdic: true, warps: true });
-  const [factionQuery, setFactionQuery] = useState("");
+  const [searchQuery, setSearchQuery] = useState("");
   const [coordX, setCoordX] = useState(String(SERVER_SPAWN_BLOCK.x));
   const [coordZ, setCoordZ] = useState(String(SERVER_SPAWN_BLOCK.z));
   const [focus, setFocus] = useState<MapFocus | null>(null);
@@ -180,16 +184,33 @@ export function MapExplorer({
       .sort((a, b) => b.claimCount - a.claimCount || a.name.localeCompare(b.name));
   }, [worldClaims]);
 
-  const factionResults = useMemo(() => {
-    const q = factionQuery.trim().toLowerCase();
-    if (!q) return factions.slice(0, 12);
-    return factions
-      .filter(
-        (faction) =>
-          faction.name.toLowerCase().includes(q) || faction.tag.toLowerCase().includes(q),
-      )
-      .slice(0, 12);
-  }, [factions, factionQuery]);
+  const searchHits = useMemo<SearchHit[]>(() => {
+    const q = searchQuery.trim().toLowerCase();
+    const factionHits: SearchHit[] = (q
+      ? factions.filter(
+          (faction) =>
+            faction.name.toLowerCase().includes(q) || faction.tag.toLowerCase().includes(q),
+        )
+      : factions
+    )
+      .slice(0, 8)
+      .map((faction) => ({ kind: "faction", faction }));
+
+    const warpHits: SearchHit[] = (q
+      ? worldMarkers.filter((marker) => marker.name.toLowerCase().includes(q))
+      : worldMarkers
+    )
+      .slice(0, 8)
+      .map((marker) => ({
+        kind: "warp",
+        marker,
+        key: `${marker.kind}:${marker.world}:${marker.name}:${marker.x}:${marker.z}`,
+      }));
+
+    // Sans requête : factions d'abord (liste utile), puis warps.
+    // Avec requête : mélanger en gardant factions puis warps, plafond 12.
+    return [...factionHits, ...warpHits].slice(0, 12);
+  }, [factions, worldMarkers, searchQuery]);
 
   /** Focus en blocs (Leaflet) ; canvas reçoit des chunks. */
   const centerOnBlocks = (x: number, z: number) => {
@@ -219,7 +240,17 @@ export function MapExplorer({
       setCoordX(String(Math.round(blockX)));
       setCoordZ(String(Math.round(blockZ)));
     }
-    setFactionQuery("");
+    setSearchQuery("");
+  };
+
+  const selectWarp = (marker: MapMarker) => {
+    setHighlightId(null);
+    const x = Math.round(marker.x);
+    const z = Math.round(marker.z);
+    centerOnBlocks(x, z);
+    setCoordX(String(x));
+    setCoordZ(String(z));
+    setSearchQuery("");
   };
 
   const goToCoords = () => {
@@ -272,7 +303,7 @@ export function MapExplorer({
                 setWorld(name);
                 setHighlightId(null);
                 setFocus(null);
-                setFactionQuery("");
+                setSearchQuery("");
                 setCoordX(String(SERVER_SPAWN_BLOCK.x));
                 setCoordZ(String(SERVER_SPAWN_BLOCK.z));
               }}
@@ -375,45 +406,68 @@ export function MapExplorer({
         >
           <div className="flex flex-col gap-2">
             <label
-              htmlFor="map-faction-search"
+              htmlFor="map-place-search"
               className="font-tech text-[10px] uppercase tracking-[0.24em] text-steel"
             >
-              Faction
+              Rechercher
             </label>
             <input
-              id="map-faction-search"
+              id="map-place-search"
               type="text"
-              value={factionQuery}
-              onChange={(event) => setFactionQuery(event.target.value)}
-              placeholder="Nom ou tag"
+              value={searchQuery}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Faction, tag ou warp"
               autoComplete="off"
               className="border border-iron-line bg-ash-deep px-3 py-2 text-sm text-bone placeholder:text-steel/60 focus:border-ember focus:outline-none"
             />
-            {factionResults.length > 0 && (
-              <ul className="flex max-h-40 flex-col overflow-y-auto border border-iron-line bg-ash-deep">
-                {factionResults.map((faction) => (
-                  <li key={faction.id}>
-                    <button
-                      type="button"
-                      onClick={() => selectFaction(faction)}
-                      className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-bone transition-colors hover:bg-iron-light"
-                    >
-                      <span
-                        className="h-2.5 w-2.5 shrink-0"
-                        style={{ backgroundColor: factionStroke(faction.id) }}
-                        aria-hidden="true"
-                      />
-                      <span className="truncate">{faction.name}</span>
-                      <span className="ml-auto font-tech text-[10px] uppercase tracking-[0.18em] text-steel">
-                        [{faction.tag}]
-                      </span>
-                    </button>
-                  </li>
-                ))}
+            {searchHits.length > 0 && (
+              <ul className="flex max-h-48 flex-col overflow-y-auto border border-iron-line bg-ash-deep">
+                {searchHits.map((hit) =>
+                  hit.kind === "faction" ? (
+                    <li key={`f-${hit.faction.id}`}>
+                      <button
+                        type="button"
+                        onClick={() => selectFaction(hit.faction)}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-bone transition-colors hover:bg-iron-light"
+                      >
+                        <span
+                          className="h-2.5 w-2.5 shrink-0"
+                          style={{ backgroundColor: factionStroke(hit.faction.id) }}
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{hit.faction.name}</span>
+                        <span className="ml-auto font-tech text-[10px] uppercase tracking-[0.18em] text-steel">
+                          [{hit.faction.tag}]
+                        </span>
+                      </button>
+                    </li>
+                  ) : (
+                    <li key={hit.key}>
+                      <button
+                        type="button"
+                        onClick={() => selectWarp(hit.marker)}
+                        className="flex w-full items-center gap-2 px-3 py-2 text-left text-sm text-bone transition-colors hover:bg-iron-light"
+                      >
+                        <span
+                          className={`h-2.5 w-2.5 shrink-0 rotate-45 ${
+                            hit.marker.kind === "event" ? "bg-ember-glow" : "bg-gold"
+                          }`}
+                          aria-hidden="true"
+                        />
+                        <span className="truncate">{hit.marker.name}</span>
+                        <span className="ml-auto font-tech text-[10px] uppercase tracking-[0.18em] text-steel">
+                          {hit.marker.kind === "event" ? "Event" : "Warp"}
+                        </span>
+                      </button>
+                    </li>
+                  ),
+                )}
               </ul>
             )}
-            {factionQuery.trim() !== "" && factionResults.length === 0 && (
-              <p className="text-xs text-steel">Aucune faction ne répond à ce nom.</p>
+            {searchQuery.trim() !== "" && searchHits.length === 0 && (
+              <p className="text-xs text-steel">
+                Aucune faction ni warp ne répond à ce nom.
+              </p>
             )}
           </div>
 
@@ -559,7 +613,7 @@ export function MapExplorer({
           <div className="mt-auto flex flex-col gap-2 border-t border-iron-line/60 pt-4">
             <p className="text-xs leading-relaxed text-steel">
               {useTerrain
-                ? "Tuiles Squaremap + territoires Cantale. Glisser pour déplacer, molette pour zoomer. Spawn par défaut : "
+                ? "Tuiles Squaremap + territoires Cantale (sans joueurs live). Glisser pour déplacer, molette pour zoomer. Spawn par défaut : "
                 : "Carte schématique (provider indisponible). Glisser pour déplacer, molette pour zoomer. Spawn par défaut : "}
               {SERVER_SPAWN_BLOCK.x} · {SERVER_SPAWN_BLOCK.z}.
             </p>

@@ -499,7 +499,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             list: [
               "Vies mensuelles : items Vie à la connexion, une fois par mois calendaire (RankManager).",
               "/daily (MC ou Discord lié) : 1 000 + dailyCantox. Staff (Modo/Admin/Owner) : bonus grade 0 → 1 000 seulement.",
-              "Vol en claim : grades hasUnlimitedFlight (Chèvre, Modérateur, Admin, Owner) — double-tap espace dans un claim de ta faction.",
+              "Vol en claim : uniquement grade Chèvre (`PlayerRank.CHEVRE` / `hasUnlimitedFlight`) — double-tap espace dans un claim de ta faction. Modérateur, Admin et Owner n'y ont pas droit (sauf s'ils ont le grade Chèvre).",
               "Anti-AFK détaillé : article AFK & clear-lag.",
             ],
           },
@@ -600,10 +600,10 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 caption: "Territoire & mobilité",
                 headers: ["Commande", "Effet", "Qui / notes"],
                 rows: [
-                  ["/f claim", "Claim chunk actuel", "ADD_CLAIMS (Membre+) · quota · distance 2"],
+                  ["/f claim", "Claim chunk actuel", "ADD_CLAIMS (Membre+) · quota · contigu · distance 2"],
                   ["/f unclaim", "Unclaim si claim de ta fac", "REMOVE_CLAIMS (Officier+)"],
                   ["/f autoclaim on|off", "Claim auto en wilderness", "ADD_CLAIMS"],
-                  ["/f map", "Carte 11×11 chunks", "Cooldown 30 s"],
+                  ["/f map", "Carte 11×11 : + toi (couleur du claim), # ta fac, @ allié, X ennemi, = autre, P PASDIC, - wild ; secret caché ; liste autour", "Cooldown 30 s"],
                   ["/f secret", "Cache claims/spawn 1 h", "SECRET (Officier+) · CD 24 h"],
                   ["/f spawn", "TP f-spawn", "Cooldown 20 s"],
                   ["/f go", "TP f-spawn sans cooldown spawn", "Membre"],
@@ -744,7 +744,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "claims-territoire",
         title: "Claims & territoire",
         summary:
-          "Quota claims, distance minimale, wilderness, PASDIC, PvP (safe chez soi), casse/pose (stockage & explosifs) et mode secret.",
+          "Quota claims, contiguïté, distance minimale, wilderness, PASDIC, PvP (safe chez soi), casse/pose (stockage & explosifs) et mode secret.",
         related: ["creer-gerer-faction", "vie-de-faction", "trois-vies", "items-forges"],
         sections: [
           {
@@ -755,6 +755,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 headers: ["Règle", "Valeur"],
                 rows: [
                   ["Quota", "max(5, pouvoir / 10)"],
+                  ["Contiguïté", "Doit toucher un claim existant (N/S/E/O) — sauf 1er claim du monde"],
                   ["Distance min autres facs", "2 chunks (Chebyshev) — voisins diagonaux inclus"],
                   ["Zones protégées", "SpawnProtection.canClaim = false → claim refusé"],
                   ["Perte de pouvoir", "Claims en trop retirés (plus récents d'abord)"],
@@ -779,7 +780,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               },
               {
                 syntax: "/f map",
-                description: "Carte 11×11 : toi (bleu), ta fac (vert), autre (jaune), wilderness (gris).",
+                description:
+                  "Carte chat 11×11 (N en haut) : + = toi (couleur du claim sous tes pieds), # ta fac, @ allié, X ennemi, = autre, P PASDIC, - wilderness. Légende dynamique + ligne « Ici » + tags autour. Claims en /f secret masqués aux non-membres.",
                 note: "Cooldown 30 s",
               },
             ],
@@ -805,7 +807,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 headers: ["Situation", "PvP"],
                 rows: [
                   ["Wilderness (pas de claim)", "Libre"],
-                  ["Claim PASDIC (spawn/warp)", "Annulé — pas de PvP"],
+                  ["Claim PASDIC (spawn/warp)", "Annulé — pas de PvP (impossible d'initier)"],
                   ["Victime dans le claim de SA propre faction", "Annulé — message « protégé dans le claim de sa faction »"],
                   ["Victime dans un claim ennemi / sans fac / intrus chez toi", "Autorisé"],
                   ["Attaquant op ou cantale.admin", "Pas de restriction claim"],
@@ -816,6 +818,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Être chez soi = safe (même un ennemi ne peut pas te tuer dans ton claim).",
               "Un intrus dans ton claim n'est pas safe : tu peux le tuer.",
               "Friendly fire entre membres hors de leur claim : non géré ici (wilderness = libre).",
+              "Tag combat (15 s) : impossible d'entrer en zone no-PvP (PASDIC / ton claim) tant que tu es tagué — voir Combat & Vies.",
             ],
           },
           {
@@ -858,9 +861,10 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             list: [
               "Flag par claim (admin : /pasdic set true|false).",
               "Non-membres : aucune casse, aucune pose (TNT incluse), aucune interaction.",
-              "Pas de PvP (voir section PvP).",
+              "Pas de PvP (voir section PvP) — impossible d'initier un combat.",
               "Entrée en Survival → Adventure forcé (sauf membres de la fac propriétaire, op, cantale.admin, créatif/spectateur).",
               "Sortie → Survival rétabli si Adventure imposé par PASDIC.",
+              "Tag combat actif : entrée refusée (mouvement / pearl / portail) ; sortie libre.",
               "Explosions : blocs PASDIC retirés de la liste de destruction.",
               "Visible sur la carte site (layer PASDIC).",
             ],
@@ -892,12 +896,13 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "carte-site",
             title: "Carte site (/carte)",
             paragraphs: [
-              "Sur cantale.world/carte : une seule vue — tuiles Squaremap (relief live) + overlays Cantale (claims, PASDIC, warps). Rafraîchissement silencieux toutes les 30 s. Les factions en /f secret sont exclues en SQL (secret_until).",
-              "Si MAP_PROVIDER_URL est en HTTP, les tuiles passent par le proxy same-origin /map-provider/* (évite le mixed content). Plein écran, lien externe Squaremap, recherche faction et champs X/Z (blocs). Centre par défaut : spawn /spawn (−67 · −144).",
+              "Sur cantale.world/carte : une seule vue — tuiles Squaremap (relief live) + overlays Cantale (claims, PASDIC, warps). Aucun joueur live n'est affiché (Leaflet n'ajoute pas la couche players ; le proxy /map-provider remplace tiles/players.json par un JSON vide). Rafraîchissement silencieux toutes les 30 s. Les factions en /f secret sont exclues en SQL (secret_until).",
+              "Si MAP_PROVIDER_URL est en HTTP, les tuiles passent par le proxy same-origin /map-provider/* (évite le mixed content). Plein écran, lien externe Squaremap, recherche faction/tag/warp et champs X/Z (blocs). Centre par défaut : spawn /spawn (−67 · −144).",
             ],
             list: [
-              "En jeu : /f map = grille 11×11 autour de toi (cooldown 30 s).",
+              "En jeu : /f map = grille chat 11×11 (légende, claim vs wild, highlight ta fac, diplomatie, PASDIC, secret masqué, cooldown 30 s).",
               "Spawn serveur : affiché comme repère (coords Bukkit / Squaremap), pas inventé depuis la table warps.",
+              "Ops Squaremap : world-settings.default.player-tracker.enabled: false (recommandé) pour couper la source côté serveur.",
             ],
           },
         ],
@@ -1415,13 +1420,17 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["Déco pendant le tag", "−1 vie toujours (y compris cantale.admin / OP)"],
                   ["À 0 après déco", "Même ban PROFILE + IP"],
                   ["Téléport commandes", "Bloquées pendant le tag"],
-                  ["Exceptions TP", "Ender pearl, portail Nether, portail End autorisés"],
+                  ["Exceptions TP", "Ender pearl, portail Nether, portail End autorisés — sauf destination no-PvP"],
+                  ["Entrée zone no-PvP", "Bloquée pendant le tag (PASDIC / claim de ta fac)"],
                 ],
               },
             ],
             list: [
               "Broadcast serveur à la déco combat (pseudo + perte d'1 vie).",
               "Créatif / spectateur : pas de tag combat.",
+              "Impossible d'initier du PvP en PASDIC ou dans le claim de la victime (ClaimListener) — le tag ne s'applique que si le coup n'est pas annulé.",
+              "Pendant le tag : tu ne peux pas entrer en zone no-PvP (PASDIC spawn/warp, ou claim de ta propre faction). Sortie libre.",
+              "Cas limite : si tu es déjà dans une zone no-PvP pendant un tag (pearl admin, claim devenu PASDIC, etc.) — le tag continue ; les coups restent bloqués ; la sortie est libre ; la ré-entrée est refusée tant que le tag est actif.",
             ],
           },
           {
@@ -2578,6 +2587,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Avertissements dans le chat à 30 s, puis 10, 5, 3, 2 et 1 seconde avant le clear.",
               "À l'instant T : annonce du nombre d'items supprimés.",
               "Seuls les items posés au sol sont concernés (pas les mobs, pas l'inventaire).",
+              "L'optimiseur serveur limite aussi les entités par chunk, mais exclut les animaux passifs et les bêtes apprivoisées (hostiles / décoratifs peuvent être réduits).",
             ],
           },
         ],
