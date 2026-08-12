@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import { Stamp } from "@/components/ui/stamp";
+import { getEquipeRoster } from "@/server/repo/equipe";
 import { getSessionUser } from "@/server/session";
+import { EquipeRoster } from "./equipe-roster";
 import { RecruitmentForm } from "./recruitment-form";
 import { RECRUITMENT_ROLES } from "./roles";
 
@@ -9,7 +11,7 @@ export const dynamic = "force-dynamic";
 export const metadata: Metadata = {
   title: "Recrutement",
   description:
-    "Rejoins l'équipe CANTALE : modération, réseaux sociaux, graphisme, build/3D, développement, animation. Candidature en ligne — un ticket privé est ouvert avec la direction.",
+    "Équipe CANTALE (staff en jeu) et candidatures : modération, réseaux, graphisme, build/3D, développement, animation. Ticket privé avec la direction.",
 };
 
 const PROCESS_STEPS = [
@@ -68,7 +70,10 @@ function SectionHeading({
 }
 
 export default async function RecrutementPage() {
-  const user = await getSessionUser();
+  const [user, equipeGroups] = await Promise.all([
+    getSessionUser(),
+    getEquipeRoster().catch(() => []),
+  ]);
   const discordName = user.discordUser
     ? (user.discordUser.globalName ?? user.discordUser.username)
     : null;
@@ -88,14 +93,45 @@ export default async function RecrutementPage() {
           CV pompeux ni de formulaire à l&apos;ancienne : une candidature claire, lue par
           la direction, qui débouche sur un vrai échange.
         </p>
+        <p className="font-tech text-[10px] uppercase tracking-[0.22em] text-steel">
+          <a href="#equipe" className="text-ember-glow hover:text-bone">
+            Voir l&apos;équipe
+          </a>
+          <span aria-hidden="true" className="mx-2 text-iron-line">
+            ·
+          </span>
+          <a href="#postes" className="hover:text-bone">
+            Postes ouverts
+          </a>
+          <span aria-hidden="true" className="mx-2 text-iron-line">
+            ·
+          </span>
+          <a href="#candidature" className="hover:text-bone">
+            Candidater
+          </a>
+        </p>
       </header>
 
       <div className="flex flex-col gap-14">
-        {/* ——— 01 · Postes ouverts ——— */}
-        <section aria-labelledby="postes-title">
+        {/* ——— 01 · Équipe ——— */}
+        <section id="equipe" aria-labelledby="equipe-title">
+          <SectionHeading
+            id="equipe-title"
+            num="01"
+            kicker="En place"
+            title="L'équipe"
+            intro="Grades réels issus du serveur (et des rôles Discord de direction). Aucun nom inventé — si tu n'apparais pas ici, tu n'as pas encore le grade."
+          />
+          <div className="reveal pt-8">
+            <EquipeRoster groups={equipeGroups} />
+          </div>
+        </section>
+
+        {/* ——— 02 · Postes ouverts ——— */}
+        <section id="postes" aria-labelledby="postes-title">
           <SectionHeading
             id="postes-title"
-            num="01"
+            num="02"
             kicker="Les postes"
             title="Six portes d'entrée"
             intro="Chaque poste compte. Choisis celui où tu seras réellement utile — une candidature précise vaut dix candidatures larges."
@@ -125,11 +161,11 @@ export default async function RecrutementPage() {
           </div>
         </section>
 
-        {/* ——— 02 · Déroulé ——— */}
+        {/* ——— 03 · Déroulé ——— */}
         <section aria-labelledby="deroule-title">
           <SectionHeading
             id="deroule-title"
-            num="02"
+            num="03"
             kicker="Le déroulé"
             title="Ce qui se passe après l'envoi"
             intro="Pas de boîte noire : ta candidature atterrit dans un ticket privé, et tu sais exactement qui la lit."
@@ -153,11 +189,11 @@ export default async function RecrutementPage() {
           </ol>
         </section>
 
-        {/* ——— 03 · Candidature ——— */}
-        <section aria-labelledby="candidature-title" className="reveal">
+        {/* ——— 04 · Candidature ——— */}
+        <section id="candidature" aria-labelledby="candidature-title" className="reveal">
           <SectionHeading
             id="candidature-title"
-            num="03"
+            num="04"
             kicker="À toi"
             title="Déposer ta candidature"
             intro={

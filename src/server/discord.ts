@@ -106,3 +106,92 @@ export function mapDiscordCapabilities(roles: readonly string[]): DiscordCapabil
     hasFaction: has(DISCORD_ROLES.hasFaction),
   };
 }
+
+export type GuildMemberSnapshot = {
+  id: string;
+  username: string;
+  globalName: string | null;
+  avatar: string | null;
+  roles: string[];
+};
+
+type GuildMemberApi = {
+  user?: DiscordApiUser;
+  nick?: string | null;
+  roles?: string[];
+};
+
+type GuildMembersCache = { members: GuildMemberSnapshot[]; expiresAt: number };
+
+let guildMembersCache: GuildMembersCache | null = null;
+const GUILD_MEMBERS_TTL_MS = 5 * 60_000;
+const GUILD_MEMBERS_PAGE = 1000;
+const GUILD_MEMBERS_MAX_PAGES = 10;
+
+/**
+ * Liste paginée des membres de la guilde (intent Privileged Server Members requis).
+ * Cache 5 min ; échec / intent manquant → [] sans throw.
+ */
+export async function listGuildMembers(): Promise<GuildMemberSnapshot[]> {
+  if (guildMembersCache && guildMembersCache.expiresAt > Date.now()) {
+    return guildMembersCache.members;
+  }
+
+  const token = env.discordBotToken;
+  const guildId = env.discordGuildId;
+  if (!token || !guildId) return [];
+
+  const members: GuildMemberSnapshot[] = [];
+  let after: string | null = null;
+
+  try {
+    for (let page = 0; page < GUILD_MEMBERS_MAX_PAGES; page++) {
+      const url = new URL(`https://discord.com/api/v10/guilds/${guildId}/members`);
+      url.searchParams.set("limit", String(GUILD_MEMBERS_PAGE));
+      if (after) url.searchParams.set("after", after);
+
+      const res = await fetch(url, {
+        headers: { Authorization: `Bot ${token}` },
+        cache: "no-store",
+      });
+      if (!res.ok) {
+        guildMembersCache = { members: [], expiresAt: Date.now() + GUILD_MEMBERS_TTL_MS };
+        return [];
+      }
+
+      const batch = (await res.json()) as GuildMemberApi[];
+      if (!Array.isArray(batch) || batch.length === 0) break;
+
+      for (const entry of batch) {
+        const user = entry.user;
+        if (!user?.id || !user.username) continue;
+        members.push({
+          id: user.id,
+          username: user.username,
+          globalName: entry.nick ?? user.global_name ?? null,
+          avatar: user.avatar ?? null,
+          roles: Array.isArray(entry.roles) ? entry.roles : [],
+        });
+        after = user.id;
+      }
+
+      if (batch.length < GUILD_MEMBERS_PAGE) break;
+    }
+  } catch {
+    guildMembersCache = { members: [], expiresAt: Date.now() + GUILD_MEMBERS_TTL_MS };
+    return [];
+  }
+
+  guildMembersCache = { members, expiresAt: Date.now() + GUILD_MEMBERS_TTL_MS };
+  return members;
+}
+
+/** Membres portant au moins un des rôles demandés. */
+export async function listGuildMembersWithAnyRole(
+  roleIds: readonly string[],
+): Promise<GuildMemberSnapshot[]> {
+  const wanted = new Set(roleIds.filter((id) => /^\d{5,32}$/.test(id)));
+  if (wanted.size === 0) return [];
+  const members = await listGuildMembers();
+  return members.filter((member) => member.roles.some((role) => wanted.has(role)));
+}

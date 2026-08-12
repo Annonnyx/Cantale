@@ -107,7 +107,27 @@ export const env = {
       .map((id) => id.trim())
       .filter((id) => /^\d{5,32}$/.test(id));
   },
+  /**
+   * Rôles Discord optionnels pour la page Équipe (complément à player_permissions).
+   * Requis surtout pour les grades absents du RankManager (ex. Builder).
+   * Le listing Discord nécessite l'intent Privileged « Server Members » sur le bot.
+   */
+  get discordRoleAdmin(): string | null {
+    return readDiscordSnowflake("DISCORD_ROLE_ADMIN");
+  },
+  get discordRoleModo(): string | null {
+    return readDiscordSnowflake("DISCORD_ROLE_MODO");
+  },
+  get discordRoleBuilder(): string | null {
+    return readDiscordSnowflake("DISCORD_ROLE_BUILDER");
+  },
 };
+
+function readDiscordSnowflake(name: string): string | null {
+  const value = readEnv(name);
+  if (!value) return null;
+  return /^\d{5,32}$/.test(value) ? value : null;
+}
 
 export const DISCORD_ROLES = {
   fondateur: "1504907451789475991",
