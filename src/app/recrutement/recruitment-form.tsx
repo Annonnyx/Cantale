@@ -47,7 +47,7 @@ const STEPS = [
 ] as const;
 
 const LINK_FIELDS = [
-  { id: "discord", label: "Pseudo Discord", placeholder: "Ex. noe ou noe.1234" },
+  { id: "discord", label: "Pseudo Discord", placeholder: "Ex. onyx ou onyx.1234" },
   { id: "instagram", label: "Instagram", placeholder: "@compte ou lien" },
   { id: "tiktok", label: "TikTok", placeholder: "@compte ou lien" },
   { id: "email", label: "E-mail", placeholder: "toi@exemple.fr" },

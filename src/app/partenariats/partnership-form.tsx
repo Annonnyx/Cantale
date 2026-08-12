@@ -243,7 +243,7 @@ export function PartnershipForm({ discordName }: { discordName: string | null })
             type="text"
             value={name}
             onChange={(event) => setName(event.target.value)}
-            placeholder="Ex. Noé, FactionNord…"
+            placeholder="Ex. Onyx, FactionNord…"
             maxLength={NAME_MAX_LENGTH}
             className={inputClasses}
             autoComplete="nickname"
@@ -256,7 +256,7 @@ export function PartnershipForm({ discordName }: { discordName: string | null })
             type="text"
             value={discord}
             onChange={(event) => setDiscord(event.target.value)}
-            placeholder="Ex. noe ou 123456789012345678"
+            placeholder="Ex. onyx ou 123456789012345678"
             maxLength={DISCORD_MAX_LENGTH}
             className={inputClasses}
             autoComplete="off"
