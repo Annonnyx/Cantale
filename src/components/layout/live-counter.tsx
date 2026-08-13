@@ -6,7 +6,7 @@ type Status = { online: number; max: number | null };
 
 async function fetchStatus(): Promise<Status | null> {
   try {
-    const res = await fetch("/api/server/status", { cache: "no-store" });
+    const res = await fetch("/api/server/status", { signal: AbortSignal.timeout(4_000) });
     if (!res.ok) return null;
     const data = (await res.json()) as Partial<Status>;
     return typeof data.online === "number" ? { online: data.online, max: data.max ?? null } : null;

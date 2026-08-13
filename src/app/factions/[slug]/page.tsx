@@ -19,7 +19,7 @@ import {
 } from "@/server/repo/faction-settings";
 import { minecraftAvatarUrl } from "@/lib/minecraft-skin";
 import { listPendingByFaction } from "@/server/repo/faction-actions";
-import { getSessionUser } from "@/server/session";
+import { getSessionIdentity } from "@/server/session";
 import { LifeNotches } from "@/components/ui/life-notches";
 import { Stamp } from "@/components/ui/stamp";
 import { PlayerLink } from "@/components/player/player-link";
@@ -158,10 +158,10 @@ export default async function FactionPage({ params }: FactionPageProps) {
 
   if (!faction) notFound();
 
-  const [roster, settings, session] = await Promise.all([
+  const [roster, settings, identity] = await Promise.all([
     getFactionRoster(faction.id).catch(() => [] as FactionMember[]),
     getFactionSettings(faction.id).catch(() => defaultFactionSettings(faction.id)),
-    getSessionUser().catch(() => null),
+    getSessionIdentity().catch(() => null),
   ]);
 
   const livesMap = await getLivesByUuids(roster.map((member) => member.uuid)).catch(
@@ -170,20 +170,17 @@ export default async function FactionPage({ params }: FactionPageProps) {
 
   // Vérification DB fraîche de l'appartenance (le rôle Discord seul ne suffit pas).
   // "error" → on masque le bouton par prudence.
-  const membership = session?.mc
-    ? ((await getFactionByMemberUuid(session.mc.uuid).catch(() => "error" as const)) ??
+  const membership = identity?.mc
+    ? ((await getFactionByMemberUuid(identity.mc.uuid).catch(() => "error" as const)) ??
       null)
     : null;
 
   const canApply = Boolean(
-    session?.mc &&
-      !session.capabilities.hasFaction &&
-      membership === null &&
-      settings.recruitmentOpen,
+    identity?.mc && membership === null && settings.recruitmentOpen,
   );
 
   // La vraie propriété en DB : l'uuid du leader, pas un rôle Discord.
-  const isLeader = session?.mc?.uuid === faction.leaderUuid;
+  const isLeader = identity?.mc?.uuid === faction.leaderUuid;
 
   const applications = isLeader
     ? await listPendingByFaction(faction.id).catch(() => [])

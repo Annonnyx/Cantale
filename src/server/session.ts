@@ -178,6 +178,33 @@ const NO_CAPABILITIES: DiscordCapabilities = {
   hasFaction: false,
 };
 
+export type SessionIdentity = {
+  discordUser: DiscordUser | null;
+  mc: { uuid: string; username: string | null } | null;
+};
+
+/**
+ * Cookie + liaison Minecraft — sans appel API Discord.
+ * Pour les pages publiques (classements, profil, header) où les rôles guild
+ * ne servent pas : un GET Discord de 2–8 s ne doit pas bloquer le HTML.
+ */
+export async function getSessionIdentity(): Promise<SessionIdentity> {
+  const session = await getSession();
+  if (!session) return { discordUser: null, mc: null };
+  const link = await getMinecraftLinkByDiscordId(session.user.id).catch(() => null);
+  return {
+    discordUser: session.user,
+    mc: link ? { uuid: link.uuid, username: link.username } : null,
+  };
+}
+
+/** True si le Discord ID est dans ADMIN_DISCORD_ID (Direction / Anox26 / etc.). */
+export function isSiteAdminDiscordId(discordId: string | null | undefined): boolean {
+  if (!discordId) return false;
+  const allowed = env.adminDiscordIds;
+  return allowed.length > 0 && allowed.includes(discordId);
+}
+
 /**
  * Utilisateur courant avec son palier d'accès :
  * anonymous → discord (connecté) → linked (compte MC lié) → leader (rôle leader).
@@ -246,7 +273,5 @@ export async function requireSiteAdmin(): Promise<AuthCheck> {
 
 /** True si le Discord ID est dans ADMIN_DISCORD_ID (Direction / Anox26 / etc.). */
 export function isSiteAdmin(user: SessionUser | null | undefined): boolean {
-  if (!user?.discordUser) return false;
-  const allowed = env.adminDiscordIds;
-  return allowed.length > 0 && allowed.includes(user.discordUser.id);
+  return isSiteAdminDiscordId(user?.discordUser?.id);
 }

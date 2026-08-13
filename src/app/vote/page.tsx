@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { getSessionUser } from "@/server/session";
+import { getSessionIdentity } from "@/server/session";
 import { getLastVotesBySite, getVoteStats, type VoteStats } from "@/server/repo/votes";
 import { VOTE_SITES, matchVoteSite, nowUnixSeconds } from "./vote-sites";
 import { VoteSiteCard } from "./vote-site-card";
@@ -126,8 +126,8 @@ function GlobalRewards() {
 }
 
 export default async function VotePage() {
-  const user = await getSessionUser();
-  const mc = user.mc;
+  const identity = await getSessionIdentity();
+  const mc = identity.mc;
   const linked = mc !== null;
 
   /* Base injoignable : on retombe sur des cartes simples, sans erreur. */

@@ -1,3 +1,4 @@
+import { cachedQuery } from "../cache";
 import { query } from "../db";
 import {
   SERVER_SPAWN_MARKER,
@@ -34,24 +35,26 @@ type ClaimRow = {
  */
 export async function getMapClaims(): Promise<MapClaim[] | null> {
   try {
-    const rows = await query<ClaimRow>(
-      `SELECT c.chunk_x, c.chunk_z, c.world, c.pasdic,
-              f.id AS faction_id, f.name, f.tag
-       FROM claims c
-       INNER JOIN factions f ON f.id = c.faction_id AND ${NOT_SECRET}
-       ORDER BY c.world ASC, c.chunk_x ASC, c.chunk_z ASC`,
-    );
-    return rows.map((row) => ({
-      x: Number(row.chunk_x),
-      z: Number(row.chunk_z),
-      world: row.world,
-      pasdic: Number(row.pasdic) === 1,
-      faction: {
-        id: Number(row.faction_id),
-        name: row.name,
-        tag: row.tag,
-      },
-    }));
+    return await cachedQuery(["map-claims"], 30, async () => {
+      const rows = await query<ClaimRow>(
+        `SELECT c.chunk_x, c.chunk_z, c.world, c.pasdic,
+                f.id AS faction_id, f.name, f.tag
+         FROM claims c
+         INNER JOIN factions f ON f.id = c.faction_id AND ${NOT_SECRET}
+         ORDER BY c.world ASC, c.chunk_x ASC, c.chunk_z ASC`,
+      );
+      return rows.map((row) => ({
+        x: Number(row.chunk_x),
+        z: Number(row.chunk_z),
+        world: row.world,
+        pasdic: Number(row.pasdic) === 1,
+        faction: {
+          id: Number(row.faction_id),
+          name: row.name,
+          tag: row.tag,
+        },
+      }));
+    });
   } catch (error) {
     console.error("[repo/map] getMapClaims — base injoignable :", error);
     return null;
@@ -81,26 +84,27 @@ type WarpRow = {
  */
 export async function getMapWarps(): Promise<MapMarker[] | null> {
   try {
-    const rows = await query<WarpRow>(
-      `SELECT name, world, x, y, z, is_event
-       FROM warps
-       WHERE is_event = 0 OR is_active = 1
-       ORDER BY is_event ASC, name ASC`,
-    );
-    const fromDb = rows
-      .map((row) => ({
-        name: row.name,
-        world: row.world,
-        x: Number(row.x),
-        y: Number(row.y),
-        z: Number(row.z),
-        kind: (Number(row.is_event) === 1 ? "event" : "warp") as MapMarker["kind"],
-      }))
-      .filter((marker) => !isServerSpawnMarkerName(marker.name));
-    return [SERVER_SPAWN_MARKER, ...fromDb];
+    return await cachedQuery(["map-warps"], 30, async () => {
+      const rows = await query<WarpRow>(
+        `SELECT name, world, x, y, z, is_event
+         FROM warps
+         WHERE is_event = 0 OR is_active = 1
+         ORDER BY is_event ASC, name ASC`,
+      );
+      const fromDb = rows
+        .map((row) => ({
+          name: row.name,
+          world: row.world,
+          x: Number(row.x),
+          y: Number(row.y),
+          z: Number(row.z),
+          kind: (Number(row.is_event) === 1 ? "event" : "warp") as MapMarker["kind"],
+        }))
+        .filter((marker) => !isServerSpawnMarkerName(marker.name));
+      return [SERVER_SPAWN_MARKER, ...fromDb];
+    });
   } catch (error) {
     console.error("[repo/map] getMapWarps — base injoignable :", error);
-    // Spawn reste disponible même si la table warps est muette.
     return [SERVER_SPAWN_MARKER];
   }
 }

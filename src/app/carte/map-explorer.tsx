@@ -87,6 +87,7 @@ export function MapExplorer({
   const [markers, setMarkers] = useState(initialMarkers);
   const [generatedAt, setGeneratedAt] = useState(initialGeneratedAt);
   const [world, setWorld] = useState(() => pickDefaultWorld(initialClaims, initialMarkers));
+  const [claimsReady, setClaimsReady] = useState(initialClaims.length > 0);
   const [layers, setLayers] = useState<MapLayers>({ claims: true, pasdic: true, warps: true });
   const [searchQuery, setSearchQuery] = useState("");
   const [coordX, setCoordX] = useState(String(SERVER_SPAWN_BLOCK.x));
@@ -105,8 +106,8 @@ export function MapExplorer({
     const tick = async () => {
       try {
         const [claimsRes, markersRes] = await Promise.all([
-          fetch("/api/map/claims"),
-          fetch("/api/map/markers"),
+          fetch("/api/map/claims", { signal: AbortSignal.timeout(8_000) }),
+          fetch("/api/map/markers", { signal: AbortSignal.timeout(8_000) }),
         ]);
         if (cancelled) return;
         if (claimsRes.ok) {
@@ -120,8 +121,11 @@ export function MapExplorer({
         }
       } catch {
         // Silence volontaire : le dernier relevé reste affiché.
+      } finally {
+        if (!cancelled) setClaimsReady(true);
       }
     };
+    void tick();
     const id = setInterval(tick, REFRESH_MS);
     return () => {
       cancelled = true;
@@ -328,13 +332,18 @@ export function MapExplorer({
             : "grid gap-4 lg:grid-cols-[minmax(0,1fr)_20rem]"
         }
       >
-        <div
-          className={`relative border border-iron-line bg-ash-deep ${
-            fullscreen
-              ? "min-h-0 min-w-0 flex-1 border-0"
-              : "h-[62vh] min-h-[420px]"
-          }`}
-        >
+          <div
+            className={`relative border border-iron-line bg-ash-deep ${
+              fullscreen
+                ? "min-h-0 min-w-0 flex-1 border-0"
+                : "h-[62vh] min-h-[420px]"
+            }`}
+          >
+            {!claimsReady && (
+              <p className="pointer-events-none absolute left-3 top-3 z-[1000] font-tech text-[10px] uppercase tracking-[0.22em] text-steel">
+                Territoires en cours de lecture…
+              </p>
+            )}
           <div className="absolute right-3 top-3 z-[1000] flex flex-wrap justify-end gap-2">
             <button
               type="button"

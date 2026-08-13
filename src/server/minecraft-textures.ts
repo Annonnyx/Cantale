@@ -1,23 +1,30 @@
 /**
  * Résolution serveur des textures Minecraft (approche NameMC) :
- * 1) Mojang session → textures.minecraft.net
- * 2) crafthead.net
- * 3) mc-heads.net
+ * 1) crafthead + mc-heads en parallèle (PNG déjà rendus)
+ * 2) Mojang session → textures.minecraft.net (skins seulement, repli)
  *
  * Évite CORS navigateur et les CDN flaky (ex. crafatar 521) en servant
  * les PNG depuis notre origine via /api/minecraft/*.
+ *
+ * Les candidats partent en parallèle (Promise.any) avec un timeout court :
+ * un listing de 50 avatars ne doit pas attendre 8 s × N sources en série.
  */
 
 const UA = "CantaleWorld/1.0 (+https://www.cantale.world)";
-const FETCH_TIMEOUT_MS = 8_000;
+const FETCH_TIMEOUT_MS = 2_500;
 const CACHE_TTL_MS = 6 * 60 * 60 * 1000; // 6 h
+const NEGATIVE_TTL_MS = 2 * 60 * 1000; // 2 min — évite de re-tenter un 404 en boucle
+const REVALIDATE_SEC = 21_600;
 
 const NAME_RE = /^[a-zA-Z0-9_]{1,16}$/;
 
 type CacheEntry = { body: ArrayBuffer; contentType: string; expires: number };
+type NegativeEntry = { expires: number };
 
 const skinCache = new Map<string, CacheEntry>();
 const avatarCache = new Map<string, CacheEntry>();
+const negativeSkin = new Map<string, NegativeEntry>();
+const negativeAvatar = new Map<string, NegativeEntry>();
 
 function normalizeId(raw: string): string {
   return decodeURIComponent(raw).trim();
@@ -36,15 +43,12 @@ function looksLikeUuid(id: string): boolean {
 }
 
 async function fetchBytes(url: string): Promise<{ body: ArrayBuffer; contentType: string } | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(url, {
-      signal: controller.signal,
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
       headers: { "User-Agent": UA, Accept: "image/png,*/*" },
       redirect: "follow",
-      // Mojang / CDN : pas de cache Next agressif, on gère TTL maison.
-      cache: "no-store",
+      next: { revalidate: REVALIDATE_SEC },
     });
     if (!res.ok) return null;
     const contentType = res.headers.get("content-type") ?? "";
@@ -56,8 +60,23 @@ async function fetchBytes(url: string): Promise<{ body: ArrayBuffer; contentType
     return { body, contentType: contentType.includes("png") ? "image/png" : contentType };
   } catch {
     return null;
-  } finally {
-    clearTimeout(timer);
+  }
+}
+
+/** Premier PNG valide parmi les URLs — les fetches partent ensemble. */
+async function firstPng(urls: string[]): Promise<{ body: ArrayBuffer; contentType: string } | null> {
+  const unique = [...new Set(urls.filter(Boolean))];
+  if (unique.length === 0) return null;
+  try {
+    return await Promise.any(
+      unique.map(async (url) => {
+        const got = await fetchBytes(url);
+        if (!got) throw new Error("miss");
+        return got;
+      }),
+    );
+  } catch {
+    return null;
   }
 }
 
@@ -72,30 +91,32 @@ type TexturePayload = {
 };
 
 async function resolveUuidFromName(name: string): Promise<string | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `https://api.mojang.com/users/profiles/minecraft/${encodeURIComponent(name)}`,
-      { signal: controller.signal, headers: { "User-Agent": UA }, cache: "no-store" },
+      {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        headers: { "User-Agent": UA },
+        next: { revalidate: REVALIDATE_SEC },
+      },
     );
     if (!res.ok) return null;
     const data = (await res.json()) as MojangProfile;
     return data.id ? data.id.toLowerCase() : null;
   } catch {
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
 async function skinUrlFromMojang(uuidNodash: string): Promise<string | null> {
-  const controller = new AbortController();
-  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
   try {
     const res = await fetch(
       `https://sessionserver.mojang.com/session/minecraft/profile/${uuidNodash}`,
-      { signal: controller.signal, headers: { "User-Agent": UA }, cache: "no-store" },
+      {
+        signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+        headers: { "User-Agent": UA },
+        next: { revalidate: REVALIDATE_SEC },
+      },
     );
     if (!res.ok) return null;
     const data = (await res.json()) as SessionProfile;
@@ -109,8 +130,6 @@ async function skinUrlFromMojang(uuidNodash: string): Promise<string | null> {
     return url.replace(/^http:\/\//i, "https://");
   } catch {
     return null;
-  } finally {
-    clearTimeout(timer);
   }
 }
 
@@ -135,12 +154,26 @@ function fromCache(map: Map<string, CacheEntry>, key: string): CacheEntry | null
   return hit;
 }
 
+function isNegative(map: Map<string, NegativeEntry>, key: string): boolean {
+  const hit = map.get(key);
+  if (!hit) return false;
+  if (hit.expires < Date.now()) {
+    map.delete(key);
+    return false;
+  }
+  return true;
+}
+
 function putCache(map: Map<string, CacheEntry>, key: string, entry: Omit<CacheEntry, "expires">) {
   map.set(key, { ...entry, expires: Date.now() + CACHE_TTL_MS });
 }
 
+function putNegative(map: Map<string, NegativeEntry>, key: string) {
+  map.set(key, { expires: Date.now() + NEGATIVE_TTL_MS });
+}
+
 /**
- * PNG skin 64×64. Préfère Mojang → crafthead → mc-heads.
+ * PNG skin 64×64. Crafthead + mc-heads en parallèle ; Mojang seulement en repli.
  */
 export async function fetchMinecraftSkinPng(
   rawId: string,
@@ -151,13 +184,12 @@ export async function fetchMinecraftSkinPng(
   const cacheKey = id.toLowerCase();
   const cached = fromCache(skinCache, cacheKey);
   if (cached) return { body: cached.body, contentType: cached.contentType };
+  if (isNegative(negativeSkin, cacheKey)) return null;
 
   const { uuid, nameHint } = await resolveUuid(id);
   const candidates: string[] = [];
 
   if (uuid) {
-    const mojangUrl = await skinUrlFromMojang(uuid);
-    if (mojangUrl) candidates.push(mojangUrl);
     candidates.push(`https://crafthead.net/skin/${uuid}`);
     candidates.push(`https://mc-heads.net/skin/${uuid}`);
   }
@@ -167,18 +199,23 @@ export async function fetchMinecraftSkinPng(
     candidates.push(`https://mc-heads.net/skin/${encodeURIComponent(name)}`);
   }
 
-  for (const url of candidates) {
-    const got = await fetchBytes(url);
-    if (got) {
-      putCache(skinCache, cacheKey, got);
-      return got;
-    }
+  let got = await firstPng(candidates);
+  if (!got && uuid) {
+    const mojangUrl = await skinUrlFromMojang(uuid);
+    if (mojangUrl) got = await fetchBytes(mojangUrl);
   }
+
+  if (got) {
+    putCache(skinCache, cacheKey, got);
+    return got;
+  }
+  putNegative(negativeSkin, cacheKey);
   return null;
 }
 
 /**
- * Avatar tête 2D (rendu CDN). crafthead puis mc-heads — toujours côté serveur.
+ * Avatar tête 2D (rendu CDN). Crafthead et mc-heads en parallèle —
+ * pas d'appel Mojang (inutile pour une tête 2D).
  */
 export async function fetchMinecraftAvatarPng(
   rawId: string,
@@ -191,30 +228,32 @@ export async function fetchMinecraftAvatarPng(
   const cacheKey = `${id.toLowerCase()}:${safeSize}`;
   const cached = fromCache(avatarCache, cacheKey);
   if (cached) return { body: cached.body, contentType: cached.contentType };
+  if (isNegative(negativeAvatar, cacheKey)) return null;
 
   const { uuid, nameHint } = await resolveUuid(id);
   const key = uuid || nameHint || id;
-  if (!key) return null;
+  if (!key) {
+    putNegative(negativeAvatar, cacheKey);
+    return null;
+  }
 
   const encoded = encodeURIComponent(key);
   const candidates = [
     `https://crafthead.net/avatar/${encoded}/${safeSize}`,
     `https://mc-heads.net/avatar/${encoded}/${safeSize}`,
   ];
-  // Repli sans taille (crafthead défaut ~180px) si les URLs dimensionnées échouent.
   if (uuid) {
     candidates.push(`https://crafthead.net/avatar/${uuid}`);
   } else {
     candidates.push(`https://crafthead.net/avatar/${encoded}`);
   }
 
-  for (const url of candidates) {
-    const got = await fetchBytes(url);
-    if (got) {
-      putCache(avatarCache, cacheKey, got);
-      return got;
-    }
+  const got = await firstPng(candidates);
+  if (got) {
+    putCache(avatarCache, cacheKey, got);
+    return got;
   }
+  putNegative(negativeAvatar, cacheKey);
   return null;
 }
 
@@ -228,8 +267,19 @@ export function pngResponse(
     headers: {
       "Content-Type": contentType || "image/png",
       "Cache-Control": `public, max-age=${maxAgeSec}, s-maxage=${maxAgeSec}, stale-while-revalidate=86400`,
+      "CDN-Cache-Control": `public, s-maxage=${maxAgeSec}, stale-while-revalidate=86400`,
       "Access-Control-Allow-Origin": "*",
       "X-Content-Type-Options": "nosniff",
+    },
+  });
+}
+
+export function missingTextureResponse(kind: "avatar" | "skin"): Response {
+  return new Response(kind === "avatar" ? "Avatar introuvable" : "Skin introuvable", {
+    status: 404,
+    headers: {
+      "Cache-Control": "public, max-age=120, s-maxage=120",
+      "CDN-Cache-Control": "public, s-maxage=120",
     },
   });
 }

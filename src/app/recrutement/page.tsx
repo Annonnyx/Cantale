@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Stamp } from "@/components/ui/stamp";
 import { getEquipeRoster } from "@/server/repo/equipe";
-import { getSessionUser } from "@/server/session";
+import { getSessionIdentity } from "@/server/session";
 import { EquipeRoster } from "./equipe-roster";
 import { RecruitmentForm } from "./recruitment-form";
 import { RECRUITMENT_ROLES } from "./roles";
@@ -70,12 +70,12 @@ function SectionHeading({
 }
 
 export default async function RecrutementPage() {
-  const [user, equipeGroups] = await Promise.all([
-    getSessionUser(),
+  const [identity, equipeGroups] = await Promise.all([
+    getSessionIdentity(),
     getEquipeRoster().catch(() => []),
   ]);
-  const discordName = user.discordUser
-    ? (user.discordUser.globalName ?? user.discordUser.username)
+  const discordName = identity.discordUser
+    ? (identity.discordUser.globalName ?? identity.discordUser.username)
     : null;
 
   return (
@@ -205,7 +205,7 @@ export default async function RecrutementPage() {
           <div className="pt-8">
             <RecruitmentForm
               discordName={discordName}
-              linkedMinecraftPseudo={user.mc?.username ?? null}
+              linkedMinecraftPseudo={identity.mc?.username ?? null}
             />
           </div>
         </section>

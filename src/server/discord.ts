@@ -73,7 +73,11 @@ export async function getGuildMemberRoles(discordUserId: string): Promise<string
   try {
     const res = await fetch(
       `https://discord.com/api/v10/guilds/${guildId}/members/${discordUserId}`,
-      { headers: { Authorization: `Bot ${token}` }, cache: "no-store" },
+      {
+        headers: { Authorization: `Bot ${token}` },
+        cache: "no-store",
+        signal: AbortSignal.timeout(3_000),
+      },
     );
     if (res.ok) {
       const data = (await res.json()) as { roles?: string[] };
@@ -153,6 +157,7 @@ export async function listGuildMembers(): Promise<GuildMemberSnapshot[]> {
       const res = await fetch(url, {
         headers: { Authorization: `Bot ${token}` },
         cache: "no-store",
+        signal: AbortSignal.timeout(4_000),
       });
       if (!res.ok) {
         guildMembersCache = { members: [], expiresAt: Date.now() + GUILD_MEMBERS_TTL_MS };

@@ -1,3 +1,4 @@
+import { cachedQuery, reactCache } from "../cache";
 import { query } from "../db";
 import { publicRankingExcludeSql } from "../public-ranking-exclusions";
 
@@ -90,37 +91,52 @@ function clampLimit(limit: number, fallback = 10, max = 100): number {
   return Math.max(1, Math.min(max, Math.floor(limit)));
 }
 
-/** La collation MySQL par défaut rend la comparaison insensible à la casse. */
-export async function getPlayerByName(username: string): Promise<Player | null> {
-  const rows = await query<PlayerRow>(
-    `SELECT ${PLAYER_SELECT} FROM players WHERE username = :username LIMIT 1`,
-    { username },
-  );
-  const row = rows[0];
-  return row ? toPlayer(row) : null;
-}
+const PLAYER_CACHE_TTL = 20;
+const DEAD_PLAYERS_MAX = 400;
 
-export async function getPlayerByUuid(uuid: string): Promise<Player | null> {
-  const rows = await query<PlayerRow>(
-    `SELECT ${PLAYER_SELECT} FROM players WHERE uuid = :uuid LIMIT 1`,
-    { uuid },
-  );
-  const row = rows[0];
-  return row ? toPlayer(row) : null;
-}
+/** La collation MySQL par défaut rend la comparaison insensible à la casse. */
+export const getPlayerByName = reactCache(async (username: string): Promise<Player | null> => {
+  const key = username.trim();
+  if (!key) return null;
+  return cachedQuery(["player-by-name", key.toLowerCase()], PLAYER_CACHE_TTL, async () => {
+    const rows = await query<PlayerRow>(
+      `SELECT ${PLAYER_SELECT} FROM players WHERE username = :username LIMIT 1`,
+      { username: key },
+    );
+    const row = rows[0];
+    return row ? toPlayer(row) : null;
+  });
+});
+
+export const getPlayerByUuid = reactCache(async (uuid: string): Promise<Player | null> => {
+  const key = uuid.trim();
+  if (!key) return null;
+  return cachedQuery(["player-by-uuid", key.toLowerCase()], PLAYER_CACHE_TTL, async () => {
+    const rows = await query<PlayerRow>(
+      `SELECT ${PLAYER_SELECT} FROM players WHERE uuid = :uuid LIMIT 1`,
+      { uuid: key },
+    );
+    const row = rows[0];
+    return row ? toPlayer(row) : null;
+  });
+});
 
 /**
  * Joueurs tombés à 0 vie — « La Liste », le mémorial des bannis.
  * Mêmes critères que PlayerDAO.getPermanentlyDeadPlayers côté plugin :
- * les plus récemment tombés d'abord.
+ * les plus récemment tombés d'abord. Plafond SQL : la recherche client
+ * n'a pas besoin de tout l'historique.
  */
 export async function getDeadPlayers(): Promise<Player[]> {
-  const rows = await query<PlayerRow>(
-    `SELECT ${PLAYER_SELECT} FROM players
-     WHERE lives <= 0 AND last_death > 0
-     ORDER BY last_death DESC`,
-  );
-  return rows.map(toPlayer);
+  return cachedQuery(["dead-players"], 45, async () => {
+    const rows = await query<PlayerRow>(
+      `SELECT ${PLAYER_SELECT} FROM players
+       WHERE lives <= 0 AND last_death > 0
+       ORDER BY last_death DESC
+       LIMIT ${DEAD_PLAYERS_MAX}`,
+    );
+    return rows.map(toPlayer);
+  });
 }
 
 /**
@@ -130,10 +146,12 @@ export async function getDeadPlayers(): Promise<Player[]> {
 export async function getTopPlayers(metric: PlayerMetric, limit = 10): Promise<Player[]> {
   const column = SORTABLE_COLUMNS[metric];
   const safeLimit = clampLimit(limit);
-  const rows = await query<PlayerRow>(
-    `SELECT ${PLAYER_SELECT} FROM players
-     WHERE ${publicRankingExcludeSql("username", "uuid")}
-     ORDER BY ${column} DESC, username ASC LIMIT ${safeLimit}`,
-  );
-  return rows.map(toPlayer);
+  return cachedQuery(["top-players", metric, String(safeLimit)], 30, async () => {
+    const rows = await query<PlayerRow>(
+      `SELECT ${PLAYER_SELECT} FROM players
+       WHERE ${publicRankingExcludeSql("username", "uuid")}
+       ORDER BY ${column} DESC, username ASC LIMIT ${safeLimit}`,
+    );
+    return rows.map(toPlayer);
+  });
 }

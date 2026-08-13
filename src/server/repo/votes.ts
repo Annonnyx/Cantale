@@ -1,3 +1,4 @@
+import { cachedQuery } from "../cache";
 import { query } from "../db";
 import { publicRankingExcludeSql } from "../public-ranking-exclusions";
 
@@ -117,6 +118,8 @@ export async function getTopVoters(limit = 10): Promise<VoteStats[]> {
 
 /** Nombre total de votes enregistrés, toutes périodes confondues. */
 export async function getTotalVotes(): Promise<number> {
-  const rows = await query<{ total: number }>("SELECT COUNT(*) AS total FROM votes");
-  return Number(rows[0]?.total ?? 0);
+  return cachedQuery(["total-votes"], 30, async () => {
+    const rows = await query<{ total: number }>("SELECT COUNT(*) AS total FROM votes");
+    return Number(rows[0]?.total ?? 0);
+  });
 }

@@ -1,3 +1,4 @@
+import { cachedQuery, reactCache } from "../cache";
 import { query } from "../db";
 import { publicRankingExcludeFactionSql } from "../public-ranking-exclusions";
 
@@ -66,7 +67,11 @@ const FACTION_SELECT =
   "f.id, f.name, f.tag, f.description, f.leader_uuid, f.balance, f.power, f.type, f.created_at";
 
 const FACTION_COUNTS = `COUNT(DISTINCT fm.player_uuid) AS member_count,
-       (SELECT COUNT(*) FROM claims c WHERE c.faction_id = f.id) AS claim_count`;
+       COALESCE(MAX(cc.claim_count), 0) AS claim_count`;
+
+const CLAIMS_COUNT_JOIN = `LEFT JOIN (
+       SELECT faction_id, COUNT(*) AS claim_count FROM claims GROUP BY faction_id
+     ) cc ON cc.faction_id = f.id`;
 
 /**
  * Whitelist stricte des tris — jamais d'interpolation libre.
@@ -123,64 +128,72 @@ function clampLimit(limit: number, fallback = 50, max = 200): number {
 export async function listFactions(sort: FactionSort = "power", limit = 50): Promise<FactionSummary[]> {
   const orderBy = FACTION_SORTS[sort];
   const safeLimit = clampLimit(limit);
-  const rows = await query<FactionRow>(
-    `SELECT ${FACTION_SELECT}, ${FACTION_COUNTS}
-     FROM factions f
-     LEFT JOIN faction_members fm ON fm.faction_id = f.id
-     WHERE ${NOT_SECRET}
-       AND ${NOT_RANKING_EXCLUDED}
-     GROUP BY f.id
-     ORDER BY ${orderBy}, f.name ASC
-     LIMIT ${safeLimit}`,
-  );
-  return rows.map(toFactionSummary);
+  return cachedQuery(["factions-list", sort, String(safeLimit)], 30, async () => {
+    const rows = await query<FactionRow>(
+      `SELECT ${FACTION_SELECT}, ${FACTION_COUNTS}
+       FROM factions f
+       LEFT JOIN faction_members fm ON fm.faction_id = f.id
+       ${CLAIMS_COUNT_JOIN}
+       WHERE ${NOT_SECRET}
+         AND ${NOT_RANKING_EXCLUDED}
+       GROUP BY f.id
+       ORDER BY ${orderBy}, f.name ASC
+       LIMIT ${safeLimit}`,
+    );
+    return rows.map(toFactionSummary);
+  });
 }
 
 /**
  * Recherche par tag ou nom normalisé (slug : minuscules, espaces → tirets).
  * Une faction secrète renvoie null — comme si elle n'existait pas.
  */
-export async function getFactionBySlug(slug: string): Promise<FactionSummary | null> {
+export const getFactionBySlug = reactCache(async (slug: string): Promise<FactionSummary | null> => {
   const normalized = slug.trim().toLowerCase();
   if (!normalized) return null;
-  const rows = await query<FactionRow>(
-    `SELECT ${FACTION_SELECT}, ${FACTION_COUNTS}
-     FROM factions f
-     LEFT JOIN faction_members fm ON fm.faction_id = f.id
-     WHERE ${NOT_SECRET}
-       AND (
-         LOWER(f.tag) = :slug
-         OR LOWER(f.name) = :slug
-         OR LOWER(REPLACE(f.name, ' ', '-')) = :slug
-       )
-     GROUP BY f.id
-     LIMIT 1`,
-    { slug: normalized },
-  );
-  const row = rows[0];
-  return row ? toFactionSummary(row) : null;
-}
+  return cachedQuery(["faction-slug", normalized], 20, async () => {
+    const rows = await query<FactionRow>(
+      `SELECT ${FACTION_SELECT}, ${FACTION_COUNTS}
+       FROM factions f
+       LEFT JOIN faction_members fm ON fm.faction_id = f.id
+       ${CLAIMS_COUNT_JOIN}
+       WHERE ${NOT_SECRET}
+         AND (
+           LOWER(f.tag) = :slug
+           OR LOWER(f.name) = :slug
+           OR LOWER(REPLACE(f.name, ' ', '-')) = :slug
+         )
+       GROUP BY f.id
+       LIMIT 1`,
+      { slug: normalized },
+    );
+    const row = rows[0];
+    return row ? toFactionSummary(row) : null;
+  });
+});
 
 /**
  * Roster d'une faction (membres + rang + pseudo via jointure players).
  * Faction secrète → roster vide, sans exception.
  */
 export async function getFactionRoster(factionId: number): Promise<FactionMember[]> {
-  const rows = await query<MemberRow>(
-    `SELECT fm.player_uuid, p.username, fm.rank, fm.joined_at
-     FROM faction_members fm
-     INNER JOIN factions f ON f.id = fm.faction_id AND ${NOT_SECRET}
-     LEFT JOIN players p ON p.uuid = fm.player_uuid
-     WHERE fm.faction_id = :factionId
-     ORDER BY ${RANK_ORDER}, p.username ASC`,
-    { factionId },
-  );
-  return rows.map((row) => ({
-    uuid: row.player_uuid,
-    username: row.username,
-    rank: normalizeRank(row.rank),
-    joinedAt: Number(row.joined_at),
-  }));
+  return cachedQuery(["faction-roster", String(factionId)], 20, async () => {
+    const rows = await query<MemberRow>(
+      `SELECT fm.player_uuid, p.username, fm.rank, fm.joined_at
+       FROM faction_members fm
+       INNER JOIN factions f ON f.id = fm.faction_id AND ${NOT_SECRET}
+       LEFT JOIN players p ON p.uuid = fm.player_uuid
+       WHERE fm.faction_id = :factionId
+       ORDER BY ${RANK_ORDER}, p.username ASC`,
+      { factionId },
+    );
+    return rows.map((row) => ({
+      uuid: row.player_uuid,
+      username: row.username,
+      rank: normalizeRank(row.rank),
+      joinedAt: Number(row.joined_at),
+    }));
+  });
 }
 
 type MemberRow = {
@@ -197,18 +210,22 @@ type MemberRow = {
 export async function getFactionByMemberUuid(
   uuid: string,
 ): Promise<(FactionSummary & { memberRank: FactionRank }) | null> {
-  const rows = await query<FactionRow & { member_rank: string | null }>(
-    `SELECT ${FACTION_SELECT},
-       (SELECT COUNT(*) FROM faction_members c WHERE c.faction_id = f.id) AS member_count,
-       (SELECT COUNT(*) FROM claims c WHERE c.faction_id = f.id) AS claim_count,
-       fm.rank AS member_rank
-     FROM faction_members fm
-     INNER JOIN factions f ON f.id = fm.faction_id AND ${NOT_SECRET}
-     WHERE fm.player_uuid = :uuid
-     LIMIT 1`,
-    { uuid },
-  );
-  const row = rows[0];
-  if (!row) return null;
-  return { ...toFactionSummary(row), memberRank: normalizeRank(row.member_rank) };
+  const key = uuid.trim();
+  if (!key) return null;
+  return cachedQuery(["faction-by-member", key.toLowerCase()], 20, async () => {
+    const rows = await query<FactionRow & { member_rank: string | null }>(
+      `SELECT ${FACTION_SELECT},
+         (SELECT COUNT(*) FROM faction_members c WHERE c.faction_id = f.id) AS member_count,
+         (SELECT COUNT(*) FROM claims c WHERE c.faction_id = f.id) AS claim_count,
+         fm.rank AS member_rank
+       FROM faction_members fm
+       INNER JOIN factions f ON f.id = fm.faction_id AND ${NOT_SECRET}
+       WHERE fm.player_uuid = :uuid
+       LIMIT 1`,
+      { uuid: key },
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return { ...toFactionSummary(row), memberRank: normalizeRank(row.member_rank) };
+  });
 }

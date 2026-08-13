@@ -1,5 +1,6 @@
 import { discordAvatarUrl, listGuildMembersWithAnyRole, type GuildMemberSnapshot } from "../discord";
 import { DISCORD_ROLES, env } from "../env";
+import { cachedQuery } from "../cache";
 import { query } from "../db";
 import { listStaffFromPermissions, type StaffMcRole } from "./staff";
 
@@ -168,6 +169,10 @@ function gradeFromDiscordRoles(
  * Discord : direction + Développeur / Admin / Support / Builder / Monteur / Graphiste.
  */
 export async function getEquipeRoster(): Promise<EquipeGroup[]> {
+  return cachedQuery(["equipe-roster"], 60, loadEquipeRoster);
+}
+
+async function loadEquipeRoster(): Promise<EquipeGroup[]> {
   const resolved = resolveStaffRoles();
 
   const discordRoleIds = [

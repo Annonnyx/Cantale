@@ -1,3 +1,4 @@
+import { cachedQuery } from "../cache";
 import { query } from "../db";
 
 /**
@@ -29,20 +30,22 @@ type WantedRow = {
 
 /** Primes actives, les plus grosses d'abord. */
 export async function getActiveBounties(): Promise<WantedBounty[]> {
-  const rows = await query<WantedRow>(
-    `SELECT id, target_uuid, target_name, issuer_uuid, issuer_name, reward, reason, issued_at
-     FROM wanted
-     WHERE active = 1
-     ORDER BY reward DESC, issued_at DESC`,
-  );
-  return rows.map((row) => ({
-    id: Number(row.id),
-    targetUuid: row.target_uuid,
-    targetName: row.target_name,
-    issuerUuid: row.issuer_uuid,
-    issuerName: row.issuer_name,
-    reward: Number(row.reward),
-    reason: row.reason,
-    issuedAt: Number(row.issued_at),
-  }));
+  return cachedQuery(["active-bounties"], 30, async () => {
+    const rows = await query<WantedRow>(
+      `SELECT id, target_uuid, target_name, issuer_uuid, issuer_name, reward, reason, issued_at
+       FROM wanted
+       WHERE active = 1
+       ORDER BY reward DESC, issued_at DESC`,
+    );
+    return rows.map((row) => ({
+      id: Number(row.id),
+      targetUuid: row.target_uuid,
+      targetName: row.target_name,
+      issuerUuid: row.issuer_uuid,
+      issuerName: row.issuer_name,
+      reward: Number(row.reward),
+      reason: row.reason,
+      issuedAt: Number(row.issued_at),
+    }));
+  });
 }

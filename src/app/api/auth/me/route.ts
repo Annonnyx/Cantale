@@ -1,16 +1,16 @@
-import { getSessionUser } from "@/server/session";
+import { getSessionIdentity } from "@/server/session";
 
 export const dynamic = "force-dynamic";
 
 /**
  * Résumé public de la session, consommé par le header côté client.
- * Ne renvoie que le nom d'affichage Discord et l'état de liaison du compte
- * Minecraft — jamais d'identifiant ni d'uuid.
+ * Cookie + liaison MC uniquement — pas d'appel Discord (rôles) : le header
+ * de chaque page ne doit pas attendre l'API guild.
  */
 export async function GET() {
-  const { tier, discordUser } = await getSessionUser();
+  const { discordUser, mc } = await getSessionIdentity();
 
-  if (tier === "anonymous" || !discordUser) {
+  if (!discordUser) {
     return Response.json(
       { connected: false },
       { headers: { "Cache-Control": "no-store" } },
@@ -21,7 +21,7 @@ export async function GET() {
     {
       connected: true,
       username: discordUser.globalName ?? discordUser.username,
-      linked: tier === "linked" || tier === "leader",
+      linked: Boolean(mc),
     },
     { headers: { "Cache-Control": "no-store" } },
   );

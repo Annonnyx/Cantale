@@ -1,3 +1,4 @@
+import { cachedQuery } from "../cache";
 import { query } from "../db";
 import { publicRankingExcludeSql } from "../public-ranking-exclusions";
 import {
@@ -116,6 +117,9 @@ function toNumber(value: number | string | null | undefined): number {
  * Classement d'une métrique sur une période.
  * `viewerUuid` (optionnel) renvoie la position du joueur même hors du top.
  * Remonte les erreurs SQL : à l'appelant (page/route) de dégrader gracieusement.
+ *
+ * Le tableau (sans visiteur) est mis en cache 30 s — partagé entre tous les
+ * visiteurs. La position hors top est cachée à part, par UUID.
  */
 export async function getLeaderboard(options: {
   metric: LeaderboardMetric;
@@ -124,29 +128,58 @@ export async function getLeaderboard(options: {
   viewerUuid?: string | null;
 }): Promise<LeaderboardResult> {
   const { metric, period } = options;
-  const def = LEADERBOARD_METRICS[metric];
   const safeLimit = clampLeaderboardLimit(options.limit ?? LEADERBOARD_DEFAULT_LIMIT);
   const viewerUuid = options.viewerUuid ?? null;
 
-  // Résolution des snapshots de référence pour les périodes calculées.
-  let startSnapshot: string | null = null;
-  let previousSnapshot: string | null = null;
-  let fallback = period !== "total";
+  const core = await cachedQuery(
+    ["leaderboard-core", metric, period, String(safeLimit)],
+    30,
+    () => fetchLeaderboardCore(metric, period, safeLimit),
+  );
 
-  if (period !== "total" && def.snapshotColumn !== null) {
-    const bounds = getPeriodBounds(period);
-    startSnapshot = await findClosestSnapshotDate(bounds.startDate, bounds.toleranceDays);
-    if (startSnapshot) {
-      previousSnapshot = await findClosestSnapshotDate(
-        bounds.previousStartDate,
-        bounds.toleranceDays,
-        startSnapshot,
+  let viewer: ViewerPosition | null = null;
+  if (viewerUuid) {
+    const inTop = core.entries.find(
+      (entry) => entry.uuid.toLowerCase() === viewerUuid.toLowerCase(),
+    );
+    if (inTop) {
+      viewer = { rank: inTop.rank, value: inTop.value, evolution: inTop.evolution };
+    } else {
+      viewer = await cachedQuery(
+        ["leaderboard-viewer", metric, period, viewerUuid.toLowerCase()],
+        30,
+        () => fetchViewerPosition(metric, period, viewerUuid),
       );
-      fallback = false;
     }
   }
 
-  // Joints toujours présents : vote_stats (métrique votes) et snapshots (période).
+  return { ...core, viewer };
+}
+
+type LeaderboardCore = Omit<LeaderboardResult, "viewer">;
+
+async function resolveSnapshots(
+  metric: LeaderboardMetric,
+  period: LeaderboardPeriod,
+): Promise<{ startSnapshot: string | null; previousSnapshot: string | null; fallback: boolean }> {
+  const def = LEADERBOARD_METRICS[metric];
+  if (period === "total" || def.snapshotColumn === null) {
+    return { startSnapshot: null, previousSnapshot: null, fallback: period !== "total" };
+  }
+  const bounds = getPeriodBounds(period);
+  const [startSnapshot, previousSnapshot] = await Promise.all([
+    findClosestSnapshotDate(bounds.startDate, bounds.toleranceDays),
+    findClosestSnapshotDate(bounds.previousStartDate, bounds.toleranceDays, bounds.startDate),
+  ]);
+  return {
+    startSnapshot,
+    previousSnapshot: startSnapshot ? previousSnapshot : null,
+    fallback: !startSnapshot,
+  };
+}
+
+function leaderboardSql(metric: LeaderboardMetric, startSnapshot: string | null, previousSnapshot: string | null) {
+  const def = LEADERBOARD_METRICS[metric];
   const votesJoin =
     def.source === "vote_stats" ? "LEFT JOIN vote_stats v ON v.player_uuid = p.uuid" : "";
   const snapshotJoins = startSnapshot
@@ -160,19 +193,11 @@ export async function getLeaderboard(options: {
        }`
     : "";
   const joins = `${votesJoin} ${snapshotJoins}`;
-
   const currentTotal =
     def.source === "vote_stats" ? "COALESCE(v.total_votes, 0)" : `p.${def.column}`;
-
-  // Valeur : cumul direct, ou progression depuis le snapshot de début de période.
-  // Un joueur sans relevé à cette date est présumé arrivé depuis : son cumul
-  // entier compte pour la période (COALESCE → 0 en base).
   const valueExpr = startSnapshot
     ? `${currentTotal} - COALESCE(s0.${def.snapshotColumn}, 0)`
     : currentTotal;
-
-  // Progression de la période précédente : entre les deux snapshots de référence.
-  // Null dès qu'un des deux relevés manque pour ce joueur.
   const prevExpr =
     startSnapshot && previousSnapshot
       ? `CASE
@@ -181,23 +206,32 @@ export async function getLeaderboard(options: {
            ELSE NULL
          END`
       : "NULL";
-
-  const params: Record<string, string> = {};
+  const params: Record<string, string | number> = {};
   if (startSnapshot) params.s0Date = startSnapshot;
   if (previousSnapshot) params.s1Date = previousSnapshot;
-
   const excludeSql = publicRankingExcludeSql("p.username", "p.uuid");
   const selectSql = `SELECT p.uuid, p.username, ${valueExpr} AS value, ${prevExpr} AS prev_value
      FROM players p ${joins}
      WHERE ${excludeSql}`;
+  return { valueExpr, joins, params, excludeSql, selectSql };
+}
+
+function toEvolution(value: number, prev: number | string | null): number | null {
+  return prev === null ? null : value - toNumber(prev);
+}
+
+async function fetchLeaderboardCore(
+  metric: LeaderboardMetric,
+  period: LeaderboardPeriod,
+  safeLimit: number,
+): Promise<LeaderboardCore> {
+  const { startSnapshot, previousSnapshot, fallback } = await resolveSnapshots(metric, period);
+  const { selectSql, params } = leaderboardSql(metric, startSnapshot, previousSnapshot);
 
   const rows = await query<LeaderboardRow>(
     `${selectSql} ORDER BY value DESC, p.username ASC LIMIT ${safeLimit}`,
     params,
   );
-
-  const toEvolution = (value: number, prev: number | string | null): number | null =>
-    prev === null ? null : value - toNumber(prev);
 
   const entries: LeaderboardEntry[] = rows.map((row, index) => {
     const value = toNumber(row.value);
@@ -210,34 +244,42 @@ export async function getLeaderboard(options: {
     };
   });
 
-  // Position du visiteur, même hors du top affiché.
-  let viewer: ViewerPosition | null = null;
-  if (viewerUuid) {
-    const viewerRows = await query<ViewerRow>(
-      `${selectSql} AND p.uuid = :viewerUuid LIMIT 1`,
-      { ...params, viewerUuid },
-    );
-    const viewerRow = viewerRows[0];
-    if (viewerRow) {
-      const viewerValue = toNumber(viewerRow.value);
-      // Rang « compétition » : nombre de joueurs strictement devant + 1.
-      const rankRows = await query<RankRow>(
-        `SELECT COUNT(*) + 1 AS rank FROM (
-           SELECT ${valueExpr} AS value FROM players p ${joins}
-           WHERE ${excludeSql}
-         ) ranked
-         WHERE ranked.value > :viewerValue`,
-        { ...params, viewerValue },
-      );
-      viewer = {
-        rank: toNumber(rankRows[0]?.rank),
-        value: viewerValue,
-        evolution: toEvolution(viewerValue, viewerRow.prev_value),
-      };
-    }
-  }
+  return { metric, period, fallback, entries };
+}
 
-  return { metric, period, fallback, entries, viewer };
+async function fetchViewerPosition(
+  metric: LeaderboardMetric,
+  period: LeaderboardPeriod,
+  viewerUuid: string,
+): Promise<ViewerPosition | null> {
+  const { startSnapshot, previousSnapshot } = await resolveSnapshots(metric, period);
+  const { selectSql, valueExpr, joins, params, excludeSql } = leaderboardSql(
+    metric,
+    startSnapshot,
+    previousSnapshot,
+  );
+
+  const viewerRows = await query<ViewerRow>(`${selectSql} AND p.uuid = :viewerUuid LIMIT 1`, {
+    ...params,
+    viewerUuid,
+  });
+  const viewerRow = viewerRows[0];
+  if (!viewerRow) return null;
+
+  const viewerValue = toNumber(viewerRow.value);
+  const rankRows = await query<RankRow>(
+    `SELECT COUNT(*) + 1 AS rank FROM (
+       SELECT ${valueExpr} AS value FROM players p ${joins}
+       WHERE ${excludeSql}
+     ) ranked
+     WHERE ranked.value > :viewerValue`,
+    { ...params, viewerValue },
+  );
+  return {
+    rank: toNumber(rankRows[0]?.rank),
+    value: viewerValue,
+    evolution: toEvolution(viewerValue, viewerRow.prev_value),
+  };
 }
 
 // ——— Agrégats globaux (page /stats) ———————————————————————————————————
@@ -252,23 +294,25 @@ export type GlobalCounters = {
 };
 
 export async function getGlobalCounters(): Promise<GlobalCounters> {
-  const rows = await query<{
-    cantox: number | string | null;
-    lives: number | string | null;
-    deaths: number | string | null;
-  }>(
-    `SELECT COALESCE(SUM(balance), 0) AS cantox,
-            COALESCE(SUM(GREATEST(lives, 0)), 0) AS lives,
-            COALESCE(SUM(deaths), 0) AS deaths
-     FROM players
-     WHERE ${publicRankingExcludeSql("username", "uuid")}`,
-  );
-  const row = rows[0];
-  return {
-    cantoxInCirculation: toNumber(row?.cantox),
-    livesInCirculation: toNumber(row?.lives),
-    totalDeaths: toNumber(row?.deaths),
-  };
+  return cachedQuery(["global-counters"], 30, async () => {
+    const rows = await query<{
+      cantox: number | string | null;
+      lives: number | string | null;
+      deaths: number | string | null;
+    }>(
+      `SELECT COALESCE(SUM(balance), 0) AS cantox,
+              COALESCE(SUM(GREATEST(lives, 0)), 0) AS lives,
+              COALESCE(SUM(deaths), 0) AS deaths
+       FROM players
+       WHERE ${publicRankingExcludeSql("username", "uuid")}`,
+    );
+    const row = rows[0];
+    return {
+      cantoxInCirculation: toNumber(row?.cantox),
+      livesInCirculation: toNumber(row?.lives),
+      totalDeaths: toNumber(row?.deaths),
+    };
+  });
 }
 
 export type LivesDistribution = {
@@ -280,26 +324,28 @@ export type LivesDistribution = {
 };
 
 export async function getLivesDistribution(): Promise<LivesDistribution> {
-  const rows = await query<{
-    three: number | string | null;
-    two: number | string | null;
-    one: number | string | null;
-    zero: number | string | null;
-  }>(
-    `SELECT COALESCE(SUM(CASE WHEN lives >= 3 THEN 1 ELSE 0 END), 0) AS three,
-            COALESCE(SUM(CASE WHEN lives = 2 THEN 1 ELSE 0 END), 0) AS two,
-            COALESCE(SUM(CASE WHEN lives = 1 THEN 1 ELSE 0 END), 0) AS one,
-            COALESCE(SUM(CASE WHEN lives <= 0 THEN 1 ELSE 0 END), 0) AS zero
-     FROM players
-     WHERE ${publicRankingExcludeSql("username", "uuid")}`,
-  );
-  const row = rows[0];
-  return {
-    three: toNumber(row?.three),
-    two: toNumber(row?.two),
-    one: toNumber(row?.one),
-    zero: toNumber(row?.zero),
-  };
+  return cachedQuery(["lives-distribution"], 30, async () => {
+    const rows = await query<{
+      three: number | string | null;
+      two: number | string | null;
+      one: number | string | null;
+      zero: number | string | null;
+    }>(
+      `SELECT COALESCE(SUM(CASE WHEN lives >= 3 THEN 1 ELSE 0 END), 0) AS three,
+              COALESCE(SUM(CASE WHEN lives = 2 THEN 1 ELSE 0 END), 0) AS two,
+              COALESCE(SUM(CASE WHEN lives = 1 THEN 1 ELSE 0 END), 0) AS one,
+              COALESCE(SUM(CASE WHEN lives <= 0 THEN 1 ELSE 0 END), 0) AS zero
+       FROM players
+       WHERE ${publicRankingExcludeSql("username", "uuid")}`,
+    );
+    const row = rows[0];
+    return {
+      three: toNumber(row?.three),
+      two: toNumber(row?.two),
+      one: toNumber(row?.one),
+      zero: toNumber(row?.zero),
+    };
+  });
 }
 
 export type RecordHolder = {
@@ -310,26 +356,30 @@ export type RecordHolder = {
 
 /** Record absolu de série de kills, et son détenteur. */
 export async function getKillStreakRecord(): Promise<RecordHolder> {
-  const rows = await query<{ uuid: string; username: string; value: number | string }>(
-    `SELECT uuid, username, kill_streak AS value FROM players
-     WHERE ${publicRankingExcludeSql("username", "uuid")}
-     ORDER BY kill_streak DESC, username ASC LIMIT 1`,
-  );
-  const row = rows[0];
-  return row
-    ? { uuid: row.uuid, username: row.username, value: toNumber(row.value) }
-    : null;
+  return cachedQuery(["kill-streak-record"], 30, async () => {
+    const rows = await query<{ uuid: string; username: string; value: number | string }>(
+      `SELECT uuid, username, kill_streak AS value FROM players
+       WHERE ${publicRankingExcludeSql("username", "uuid")}
+       ORDER BY kill_streak DESC, username ASC LIMIT 1`,
+    );
+    const row = rows[0];
+    return row
+      ? { uuid: row.uuid, username: row.username, value: toNumber(row.value) }
+      : null;
+  });
 }
 
 /** Plus grand nombre de morts, et son détenteur. */
 export async function getDeathsRecord(): Promise<RecordHolder> {
-  const rows = await query<{ uuid: string; username: string; value: number | string }>(
-    `SELECT uuid, username, deaths AS value FROM players
-     WHERE ${publicRankingExcludeSql("username", "uuid")}
-     ORDER BY deaths DESC, username ASC LIMIT 1`,
-  );
-  const row = rows[0];
-  return row
-    ? { uuid: row.uuid, username: row.username, value: toNumber(row.value) }
-    : null;
+  return cachedQuery(["deaths-record"], 30, async () => {
+    const rows = await query<{ uuid: string; username: string; value: number | string }>(
+      `SELECT uuid, username, deaths AS value FROM players
+       WHERE ${publicRankingExcludeSql("username", "uuid")}
+       ORDER BY deaths DESC, username ASC LIMIT 1`,
+    );
+    const row = rows[0];
+    return row
+      ? { uuid: row.uuid, username: row.username, value: toNumber(row.value) }
+      : null;
+  });
 }

@@ -17,7 +17,7 @@ export function AuthEntry() {
 
   useEffect(() => {
     let cancelled = false;
-    fetch("/api/auth/me", { cache: "no-store" })
+    fetch("/api/auth/me", { cache: "no-store", signal: AbortSignal.timeout(4_000) })
       .then((res) => (res.ok ? (res.json() as Promise<AuthSummary>) : null))
       .then((data) => {
         if (!cancelled) setAuth(data ?? { connected: false });

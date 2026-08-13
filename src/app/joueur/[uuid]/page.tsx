@@ -8,7 +8,7 @@ import { Stamp } from "@/components/ui/stamp";
 import { getFactionByMemberUuid } from "@/server/repo/factions";
 import { getPlayerByName, getPlayerByUuid, type Player } from "@/server/repo/players";
 import { getOnlinePlayersFromStatus, lookupPlayer } from "@/server/repo/admin";
-import { getSessionUser, isSiteAdmin } from "@/server/session";
+import { getSessionIdentity, isSiteAdminDiscordId } from "@/server/session";
 import { playerProfilePath } from "@/lib/player-profile";
 
 export const dynamic = "force-dynamic";
@@ -83,13 +83,13 @@ export default async function JoueurProfilePage({ params }: { params: Params }) 
     redirect(playerProfilePath(player.uuid));
   }
 
-  const [faction, session, status] = await Promise.all([
+  const [faction, identity, status] = await Promise.all([
     getFactionByMemberUuid(player.uuid).catch(() => null),
-    getSessionUser().catch(() => null),
+    getSessionIdentity().catch(() => null),
     getOnlinePlayersFromStatus().catch(() => null),
   ]);
 
-  const admin = isSiteAdmin(session);
+  const admin = isSiteAdminDiscordId(identity?.discordUser?.id);
   const adminRow = admin
     ? await lookupPlayer(player.uuid).catch(() => null)
     : null;

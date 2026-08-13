@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { getSessionUser } from "@/server/session";
+import { getSessionIdentity } from "@/server/session";
 import {
   getLeaderboard,
   isLeaderboardMetric,
@@ -38,8 +38,8 @@ export default async function ClassementsPage({ searchParams }: { searchParams: 
   // Session (pour « ta position ») — facultative : une panne Discord ne bloque pas la page.
   let viewerUuid: string | null = null;
   try {
-    const session = await getSessionUser();
-    viewerUuid = session.mc?.uuid ?? null;
+    const identity = await getSessionIdentity();
+    viewerUuid = identity.mc?.uuid ?? null;
   } catch {
     viewerUuid = null;
   }

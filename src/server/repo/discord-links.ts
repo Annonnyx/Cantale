@@ -1,3 +1,4 @@
+import { cachedQuery } from "../cache";
 import { query } from "../db";
 
 /**
@@ -23,20 +24,24 @@ type LinkRow = {
 
 /** Liaison Discord → compte Minecraft, si elle existe. */
 export async function getMinecraftLinkByDiscordId(discordId: string): Promise<MinecraftLink | null> {
-  const rows = await query<LinkRow>(
-    `SELECT dl.discord_id, dl.uuid, p.username, dl.linked_at
-     FROM discord_links dl
-     LEFT JOIN players p ON p.uuid = dl.uuid
-     WHERE dl.discord_id = :discordId
-     LIMIT 1`,
-    { discordId },
-  );
-  const row = rows[0];
-  if (!row) return null;
-  return {
-    discordId: row.discord_id,
-    uuid: row.uuid,
-    username: row.username,
-    linkedAt: Number(row.linked_at),
-  };
+  const id = discordId.trim();
+  if (!id) return null;
+  return cachedQuery(["mc-link", id], 30, async () => {
+    const rows = await query<LinkRow>(
+      `SELECT dl.discord_id, dl.uuid, p.username, dl.linked_at
+       FROM discord_links dl
+       LEFT JOIN players p ON p.uuid = dl.uuid
+       WHERE dl.discord_id = :discordId
+       LIMIT 1`,
+      { discordId: id },
+    );
+    const row = rows[0];
+    if (!row) return null;
+    return {
+      discordId: row.discord_id,
+      uuid: row.uuid,
+      username: row.username,
+      linkedAt: Number(row.linked_at),
+    };
+  });
 }

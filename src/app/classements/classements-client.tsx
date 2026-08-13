@@ -240,6 +240,7 @@ export function ClassementsClient({ metric, period, result, viewerUuid }: Props)
                             width={32}
                             height={32}
                             loading="lazy"
+                            decoding="async"
                             className="h-8 w-8 shrink-0 border border-iron-line bg-ash-deep"
                           />
                           <PlayerLink

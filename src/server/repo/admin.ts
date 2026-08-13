@@ -1,4 +1,5 @@
 import type { ResultSetHeader } from "mysql2/promise";
+import { cachedQuery } from "../cache";
 import { query, type SqlValue } from "../db";
 import { env, DISCORD_TICKET_CATEGORY } from "../env";
 
@@ -25,6 +26,15 @@ export type AdminTicket = {
 };
 
 export async function getOnlinePlayersFromStatus(): Promise<{
+  online: number;
+  max: number | null;
+  updatedAt: string | null;
+  players: OnlinePlayer[];
+}> {
+  return cachedQuery(["online-players-status"], 15, loadOnlinePlayersFromStatus);
+}
+
+async function loadOnlinePlayersFromStatus(): Promise<{
   online: number;
   max: number | null;
   updatedAt: string | null;
