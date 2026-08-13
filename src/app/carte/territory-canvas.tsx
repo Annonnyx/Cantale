@@ -7,6 +7,7 @@ import {
   SERVER_SPAWN_BLOCK,
   SERVER_SPAWN_CHUNK,
   chunkToBlock,
+  claimKeyOf,
   factionFill,
   factionStroke,
   type MapClaim,
@@ -69,12 +70,18 @@ export function TerritoryCanvas({
   layers,
   focus,
   highlightFactionId,
+  adminSelect = false,
+  selectedKeys,
+  onClaimClick,
 }: {
   claims: MapClaim[];
   markers: MapMarker[];
   layers: MapLayers;
   focus: MapFocus | null;
   highlightFactionId: number | null;
+  adminSelect?: boolean;
+  selectedKeys?: ReadonlySet<string>;
+  onClaimClick?: (claim: MapClaim) => void;
 }) {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
@@ -86,7 +93,14 @@ export function TerritoryCanvas({
   const sizeRef = useRef({ w: 0, h: 0, dpr: 1 });
   const rafRef = useRef(0);
   const animRef = useRef(0);
-  const dragRef = useRef<{ id: number; x: number; y: number } | null>(null);
+  const dragRef = useRef<{
+    id: number;
+    x: number;
+    y: number;
+    startX: number;
+    startY: number;
+    moved: boolean;
+  } | null>(null);
   const pinchRef = useRef<{ d: number; cx: number; cy: number } | null>(null);
   const pointersRef = useRef(new Map<number, { x: number; y: number }>());
   const hoverRef = useRef<HoverTarget | null>(null);
@@ -112,9 +126,23 @@ export function TerritoryCanvas({
   }, [claims]);
 
   // Valeurs fraîches pour les écouteurs natifs montés une seule fois.
-  const latestRef = useRef({ markers, layers, claimIndex });
+  const latestRef = useRef({
+    markers,
+    layers,
+    claimIndex,
+    adminSelect,
+    selectedKeys: selectedKeys ?? new Set<string>(),
+    onClaimClick,
+  });
   useEffect(() => {
-    latestRef.current = { markers, layers, claimIndex };
+    latestRef.current = {
+      markers,
+      layers,
+      claimIndex,
+      adminSelect,
+      selectedKeys: selectedKeys ?? new Set<string>(),
+      onClaimClick,
+    };
   });
 
   const drawRef = useRef<() => void>(() => {});
@@ -251,6 +279,18 @@ export function TerritoryCanvas({
         }
       }
 
+      const selected = latestRef.current.selectedKeys;
+      if (selected.size > 0 && layers.claims && latestRef.current.adminSelect) {
+        ctx.strokeStyle = MAP_COLORS.emberGlow;
+        ctx.lineWidth = 2.5;
+        ctx.beginPath();
+        for (const claim of claims) {
+          if (!selected.has(claimKeyOf(claim)) || !inView(claim.x, claim.z)) continue;
+          ctx.rect(sx(claim.x) - 1.5, sz(claim.z) - 1.5, scale + 3, scale + 3);
+        }
+        ctx.stroke();
+      }
+
       // Zones PASDIC : hachures diagonales et bordure or, couche distincte.
       if (layers.pasdic) {
         for (const claim of pasdicClaims) {
@@ -355,7 +395,7 @@ export function TerritoryCanvas({
       }
     };
     scheduleDraw();
-  }, [grouped, pasdicClaims, markers, layers, highlightFactionId, focus, scheduleDraw]);
+  }, [grouped, pasdicClaims, claims, markers, layers, highlightFactionId, focus, selectedKeys, scheduleDraw]);
 
   /* ——— Interactions souris / tactile (écouteurs natifs, montés une fois) ——— */
   const zoomRef = useRef<(clientX: number, clientY: number, factor: number) => void>(() => {});
@@ -446,7 +486,14 @@ export function TerritoryCanvas({
       hoverRef.current = null;
       setHover(null);
       if (pointersRef.current.size === 1) {
-        dragRef.current = { id: event.pointerId, x: event.clientX, y: event.clientY };
+        dragRef.current = {
+          id: event.pointerId,
+          x: event.clientX,
+          y: event.clientY,
+          startX: event.clientX,
+          startY: event.clientY,
+          moved: false,
+        };
         canvas.style.cursor = "grabbing";
       } else if (pointersRef.current.size === 2) {
         dragRef.current = null;
@@ -488,20 +535,48 @@ export function TerritoryCanvas({
         cam.z -= (event.clientY - drag.y) / cam.scale;
         drag.x = event.clientX;
         drag.y = event.clientY;
+        if (Math.hypot(event.clientX - drag.startX, event.clientY - drag.startY) > 6) {
+          drag.moved = true;
+        }
         scheduleDraw();
       }
     };
 
     const endPointer = (event: PointerEvent) => {
+      const drag = dragRef.current;
+      const wasClick =
+        drag?.id === event.pointerId && !drag.moved && pointersRef.current.size <= 1;
+      const clickX = event.clientX;
+      const clickY = event.clientY;
       pointersRef.current.delete(event.pointerId);
       if (pinchRef.current && pointersRef.current.size < 2) pinchRef.current = null;
       if (dragRef.current?.id === event.pointerId) dragRef.current = null;
       if (pointersRef.current.size === 1) {
         const [[id, pos]] = [...pointersRef.current.entries()];
-        dragRef.current = { id, x: pos.x, y: pos.y };
+        dragRef.current = {
+          id,
+          x: pos.x,
+          y: pos.y,
+          startX: pos.x,
+          startY: pos.y,
+          moved: false,
+        };
       }
       if (pointersRef.current.size === 0) canvas.style.cursor = "grab";
       if (canvas.hasPointerCapture(event.pointerId)) canvas.releasePointerCapture(event.pointerId);
+
+      if (wasClick && latestRef.current.adminSelect) {
+        const current = latestRef.current;
+        const rect = canvas.getBoundingClientRect();
+        const px = clickX - rect.left;
+        const py = clickY - rect.top;
+        const cam = camRef.current;
+        const cx = Math.floor((px - rect.width / 2) / cam.scale + cam.x);
+        const cz = Math.floor((py - rect.height / 2) / cam.scale + cam.z);
+        const claim = current.claimIndex.get(`${cx},${cz}`);
+        if (claim) current.onClaimClick?.(claim);
+      }
+    };
     };
 
     const onPointerLeave = () => {

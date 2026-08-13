@@ -106,6 +106,12 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 note: "Tous les joueurs",
               },
               {
+                syntax: "/parrain <joueur>",
+                description:
+                  "Remercie le joueur qui t'a invité. Une seule fois ; le parrain gagne +1 vie.",
+                note: "Tous les joueurs · cible online ou offline si connue en BDD",
+              },
+              {
                 syntax: "/lastdeath [joueur]",
                 description: "Date, total de morts et coords (monde + X/Y/Z) de la dernière mort.",
                 note: "Tous les joueurs · cible online ou offline si connue en BDD",
@@ -477,9 +483,9 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 ],
                 rows: [
                   ["Joueur", "+0 (base 1 000)", "0", "3", "3", "/pc 27", "10 min"],
-                  ["Aventurier", "+2 500", "1", "5", "5", "/pc 54", "30 min"],
-                  ["VIP", "+10 000", "2", "10", "12", "/pc + /pc2 (54)", "1 h"],
-                  ["Chèvre", "+100 000", "3", "999", "20", "/pc+/pc2+/pc3", "Illimité"],
+                  ["Aventurier", "+2 500", "1", "5", "5", "/pc 54", "15 min"],
+                  ["VIP", "+10 000", "2", "10", "12", "/pc + /pc2 (54)", "30 min"],
+                  ["Chèvre", "+100 000", "3", "999", "20", "/pc+/pc2+/pc3", "60 min"],
                 ],
               },
               {
@@ -508,8 +514,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             id: "staff",
             title: "Grades staff",
             list: [
-              "Modérateur — cantale.moderator : /moderation, /vanish, /tag, /modhelp, /adminhome, /adminec, /adminpc. Coffres ×3, homes 999, /ah 20, pas d'AFK, warmup 0. Pas de vol en claim (ni vol créatif, ni fouille coffres étrangers).",
-              "Admin / Owner — cantale.admin (enfants : givevie, moderator, feed, anticheat…). Mêmes avantages coffres/homes/AFK côté rank ; pas de vol en claim via le grade. Bypass claim (op / cantale.admin) = outil de modération, pas un perk « vol ».",
+              "Modérateur — cantale.moderator : /moderation, /vanish, /tag, /modhelp, /adminhome, /adminec, /adminpc. Coffres ×3, homes 999, /ah 20, AFK 60 min, warmup 0. Pas de vol en claim (ni vol créatif, ni fouille coffres étrangers).",
+              "Admin / Owner — cantale.admin (enfants : givevie, moderator, feed, anticheat…). Mêmes avantages coffres/homes ; jamais kick AFK. Pas de vol en claim via le grade. Bypass claim (op / cantale.admin) = outil de modération, pas un perk « vol ».",
             ],
             commands: [
               {
@@ -882,7 +888,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Être chez soi = safe (même un ennemi ne peut pas te tuer dans ton claim).",
               "Un intrus dans ton claim n'est pas safe : tu peux le tuer.",
               "Friendly fire entre membres hors de leur claim : non géré ici (wilderness = libre).",
-              "Tag combat (15 s) : impossible d'entrer en zone no-PvP (PASDIC / ton claim) tant que tu es tagué — voir Combat & Vies.",
+              "Tag combat (20 s) : impossible d'entrer en zone no-PvP (PASDIC / ton claim) tant que tu es tagué — voir Combat & Vies.",
             ],
           },
           {
@@ -929,6 +935,44 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Pose de stockage : refusée en wilderness, claim ennemi et claim allié — uniquement claim de ta fac (sauf op/admin).",
               "Exception wilderness : CRAFTING_TABLE, FURNACE, BLAST_FURNACE, SMOKER posables hors claim (restent protégés à la casse dans les claims via storage-blocks). Autres ateliers (smithing, loom, etc.) et conteneurs (coffres, shulkers, hoppers…) : toujours réservés au claim de ta fac.",
               "Hoppers (anti-lag) : craft vanilla interdit (hopper + wagonnet à hopper). Achat au /shop uniquement (150 000 Cantox, cap 4/j, pas de revente). Pose limitée par le pouvoir de fac : max(0, pouvoir / 20) hoppers dans les claims de la fac (comptage des hoppers déjà posés). Place-only : unclaim / dépassement ne retire pas les hoppers existants.",
+              "Spawners Cantale : pose uniquement dans tes claims, interdits en PASDIC. Empilement palier 1–8 (clic droit, même mob ; refuse si total > 8). Touché de soie (toute pioche, bois inclus) = 1 item du palier ; sans soie = rien. Vendables à l'/ah, pas au /shop.",
+            ],
+          },
+          {
+            id: "spawners",
+            title: "Spawners Cantale",
+            paragraphs: [
+              "Items custom (PDC : type, palier 1–8, rareté). Nom FR du type « Spawner à Cochon x3 ». Hologramme au-dessus du bloc. Cadence linéaire : N mobs toutes les (8/N) s. T1 : 1/8 s ≈ 7,5/min. T8 cheat : 8 mobs / 1 s (480/min). Golem de fer : intervalle ×2. Spawn ignore lumière / biome / cap vanilla ; uniquement dans le chunk claimé d'origine. Pas de bosses.",
+            ],
+            tables: [
+              {
+                caption: "Mobs",
+                headers: ["Rareté", "Mobs"],
+                rows: [
+                  ["Rare", "Vache, cochon, mouton, poulet, zombie, squelette, araignée, creeper"],
+                  ["Épique", "Enderman, blaze, sorcière, slime"],
+                  ["Mythique", "Ghast, cube de magma, golem de fer"],
+                ],
+              },
+              {
+                caption: "Cadence linéaire (intervalle = 8 s / palier)",
+                headers: ["Palier", "Mobs / cycle", "Intervalle", "Débit"],
+                rows: [
+                  ["1", "1", "8 s", "7,5/min"],
+                  ["2", "2", "4 s", "30/min"],
+                  ["3", "3", "≈2,67 s", "67,5/min"],
+                  ["4", "4", "2 s", "120/min"],
+                  ["5", "5", "1,6 s", "187,5/min"],
+                  ["6", "6", "≈1,33 s", "270/min"],
+                  ["7", "7", "≈1,14 s", "367,5/min"],
+                  ["8", "8", "1 s", "480/min (8/s)"],
+                ],
+              },
+            ],
+            list: [
+              "Clic droit même mob : additionne les paliers, refuse si total > 8.",
+              "Caisses : Rare 5 %, Épique 3 %, Mythique/Légendaire 1,5 % (pas Vote).",
+              "Staff : /spawner give <joueur> <mob> [tier].",
             ],
           },
           {
@@ -943,11 +987,13 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Tag combat actif : entrée refusée (mouvement / pearl / portail) ; sortie libre.",
               "Explosions : blocs PASDIC retirés de la liste de destruction.",
               "Visible sur la carte site (layer PASDIC).",
+              "Impossible d'activer un PASDIC sur un claim qui contient des spawners ou du stockage (coffres, barrels, shulkers, hoppers, fours et autres tile entities à inventaire) — erreur, rien n'est détruit. Les autres chunks propres d'une sélection peuvent passer.",
+              "Admins site (session ADMIN_DISCORD_ID) : sur /carte, bouton Mode admin → cliquer les claims (multi-sélection) → Définir PASDIC. Feedback : N ok, M refusés avec coords chunk. Le plugin charge le chunk, scanne, puis écrit claims.pasdic comme /pasdic.",
             ],
             commands: [
               {
                 syntax: "/pasdic set <true|false>",
-                description: "Marque le claim sous le joueur comme PASDIC.",
+                description: "Marque le claim sous le joueur comme PASDIC. Refusé si spawners ou stockage.",
                 note: "Admin",
               },
             ],
@@ -977,6 +1023,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             ],
             list: [
               "En jeu : /f map = carte inventaire 9×5 (claim/unclaim au clic) ; /f map chat = grille ASCII 11×11 (cooldown 30 s). Secret masqué aux non-membres.",
+              "Admins : bouton Mode admin pour sélectionner des claims et les passer PASDIC (refus stockage / spawners, le reste passe).",
               "Spawn serveur (−67 · −144) : injecté comme marqueur warp « Spawn » (API markers + recherche /carte), pas stocké en table warps.",
               "Ops Squaremap : world-settings.default.player-tracker.enabled: false (recommandé) pour couper la source côté serveur.",
             ],
@@ -1230,7 +1277,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               {
                 syntax: "/ah sell <quantité|all> <prix>",
                 description:
-                  "Met en vente l'item en main (prix = Cantox par unité).",
+                  "Met en vente l'item en main (prix = Cantox par unité). Les spawners Cantale sont autorisés.",
               },
               {
                 syntax: "/ah buy <id> [quantité]",
@@ -1319,7 +1366,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             list: [
               "Achat toujours > revente shop.",
               "Ventes farm / drops basiques souvent à 1 Cantox.",
-              "Item absent du catalogue = non négociable. Blacklist code (bedrock, barrier, spawners…).",
+              "Item absent du catalogue = non négociable. Blacklist code (bedrock, barrier, spawners…). Les spawners Cantale ne sont pas au /shop (uniquement /ah et caisses).",
               "Hopper : craft bloqué ; /shop 150 000 Cantox, sell off, daily-buy-cap 4 (entre cristal End et coquille shulker). Pose plafonnée par pouvoir de fac.",
             ],
           },
@@ -1450,7 +1497,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
         slug: "trois-vies",
         title: "Le système des trois vies",
         summary:
-          "Départ à 3 vies, −1 à chaque mort, ban PROFILE+IP à 0, item Vie, grades mensuels, déco combat 15 s.",
+          "Départ à 3 vies, −1 à chaque mort, ban PROFILE+IP à 0, item Vie, grades mensuels, déco combat 20 s.",
         featured: true,
         related: ["primes-wanted", "claims-territoire", "grades-permissions", "caisses-cles"],
         sections: [
@@ -1476,6 +1523,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Après respawn : invulnérabilité 10 s (noDamageTicks) + Saturation amp 0 pendant lives.respawn-saturation-seconds (défaut 150). Durée rafraîchie à chaque respawn.",
               "Kill PvP : +5 pouvoir à la fac du tueur, −5 à celle de la victime (si fac).",
               "Items Vie custom dans l'inventaire à la mort : détruits (ne droppent pas).",
+              "Dernière vie hors combat : ban immédiat, pas de drop d'inventaire (le kick coupe le spawn vanilla).",
+              "Dernière vie en tag combat : inventaire (stockage + armure + offhand) droppé au sol avant le ban.",
               "Totem vanilla : bloqué. L'item Vie custom n'est pas un totem de résurrection.",
             ],
           },
@@ -1489,6 +1538,8 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Ban PROFILE (UUID) en priorité — résiste au changement de pseudo ; fallback BanList NAME si l'API profil échoue.",
               "Ban IP (adresse du joueur) + enregistrement last_ip en BDD.",
               "Kick avec le message config : « Vous n'avez plus de vies ! Achetez-en une ou attendez qu'un ami vous en donne une. »",
+              "Hors tag combat : inventaire non droppé (kick avant spawn vanilla) — voulu.",
+              "En tag combat : stockage + armure + offhand droppés au lieu de mort avant le ban (pas de double drop).",
               "Gate AsyncPlayerPreLoginEvent : si lives ≤ 0 et ban-on-zero, connexion refusée (même message) — empêche le bypass NAME via nouveau pseudo.",
               "Apparition sur La Liste (/listemorts) : joueurs avec lives ≤ 0 et last_death > 0.",
               "Restauration : /addlife (ou /givevie console/admin) lève NAME + PROFILE + IP via pardonLifeBan (IP online ou last_ip).",
@@ -1501,7 +1552,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               {
                 headers: ["Règle", "Valeur"],
                 rows: [
-                  ["Durée du tag", "15 s (rafraîchi à chaque coup joueur↔joueur)"],
+                  ["Durée du tag", "20 s (config combat-tag-seconds, rafraîchi à chaque coup joueur↔joueur)"],
                   ["Déco pendant le tag", "−1 vie toujours (y compris cantale.admin / OP)"],
                   ["À 0 après déco", "Même ban PROFILE + IP"],
                   ["Téléport commandes", "Bloquées pendant le tag"],
@@ -1533,6 +1584,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                   ["Grades mensuels", "Items Vie à la connexion (1×/mois calendaire) — voir tableau grades"],
                   ["Caisses", "Loot tables Vote / Rare / Épique / Mythique peuvent donner 1–2 items Vie"],
                   ["Boutique site", "Packs catalogue : 1 / 5 / 10 / 30 / 50 / 100 (EUR). Checkout si SHOP_ENABLED"],
+                  ["/parrain <joueur>", "Invité remercie son parrain (1×) → parrain +1 vie (DB)"],
                   ["/addlife (admin/console)", "+N vies ; pardonne le ban vies si besoin"],
                 ],
               },
@@ -1568,6 +1620,12 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
                 description:
                   "Joueur→joueur : transfert 1 vie (min. 2). Console / admin sans assez de vies : grant +1 sans coût + pardon ban.",
                 note: "Permission : cantale.givevie · cible online",
+              },
+              {
+                syntax: "/parrain <joueur>",
+                description:
+                  "Remercie ton parrain (une seule fois). Il gagne +1 vie ; pardon ban vies si il était à 0.",
+                note: "Permission cantale.parrain (défaut true) · cible online/offline BDD",
               },
               {
                 syntax: "/addlife <joueur> <nombre>",
@@ -2566,6 +2624,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             list: [
               "* Cantalame caisses : createCustomItem (voir article Cantalame).",
               "Armure du Garde et Rune : absentes de ces tables.",
+              "Spawners (en plus des tables, sans les remplacer) : Rare ~5 % (mobs rares) ; Épique ~3 % (surtout épiques) ; Mythique / Légendaire ~1,5 % (surtout mythiques). Palier 1. Vote : pas de spawner.",
             ],
           },
           {
@@ -2670,9 +2729,11 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
             ],
             list: [
               "Joueur — 10 minutes.",
-              "Aventurier — 30 minutes.",
-              "VIP — 60 minutes.",
-              "Chèvre / Modérateur / Admin / Owner — pas de kick AFK.",
+              "Aventurier — 15 minutes.",
+              "VIP — 30 minutes.",
+              "Chèvre — 60 minutes.",
+              "Modérateur — 60 minutes (vanish : pas de kick).",
+              "Admin / Owner / permission cantale.admin — pas de kick AFK.",
             ],
           },
           {
@@ -2686,7 +2747,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "À l'instant T : annonce du nombre d'items supprimés (items récents / loot de mort protégés quelques minutes).",
               "Le clear annoncé concerne les items au sol — pas l'inventaire.",
               "Au même moment (et aussi ~toutes les 60 s via l'optimiseur) : plafond de 15 entités par chunk pour hostiles, armor stands, bateaux, etc. — pas les animaux passifs (voir empilement).",
-              "Toujours protégés du plafond : joueurs, villageois, items, Animals, mobs nommés (hors stacks Cantale), bêtes apprivoisées (Tameable), NPCs Cantale.",
+              "Toujours protégés du plafond : joueurs, villageois, items, Animals, mobs nommés (hors stacks Cantale), bêtes apprivoisées (Tameable), NPCs Cantale, mobs issus d'un spawner Cantale (flag PDC) et hologrammes de spawners.",
             ],
           },
           {
@@ -2696,7 +2757,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Les animaux de ferme d'un même type (et même variante) proches sont empilés en une seule entité simulée, avec un libellé au-dessus du type « Mouton ×12 ». Cela remplace le cull des Animals : les fermes denses ne sont plus réduites à 15 têtes par chunk.",
             ],
             list: [
-              "Types empilés : mouton, vache, poulet, cochon, lapin, champimeuh, chèvre.",
+              "Types empilés : mouton, vache, poulet, cochon, lapin, champimeuh, chèvre — plus les mobs issus d'un spawner Cantale (passifs et hostiles, flag PDC, libellé du type « Zombie ×12 »).",
               "Moutons : même couleur et même état tondu/laine (un stack « tondu » reste séparé d'un stack « laine »).",
               "Non empilés (défaut) : bébés, mobs nommés par un joueur, Tameable apprivoisés, entités en laisse ou avec passager.",
               "Kill / dégâts létaux : le stack diminue de 1, loot + XP d'une mort vanilla ; l'entité reste jusqu'au dernier. Le dernier kill retire vraiment le mob.",

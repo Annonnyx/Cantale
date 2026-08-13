@@ -19,7 +19,51 @@ const ALLOWED = new Set([
   "clear_shulker",
   "give_effect",
   "clear_effect",
+  "set_pasdic",
 ]);
+
+const NO_TARGET = new Set(["discord_dm", "set_pasdic"]);
+const MAX_PASDIC_CHUNKS = 250;
+
+type PasdicChunk = { w: string; x: number; z: number };
+
+function parsePasdicPayload(raw: string | null): { ok: true; payload: string } | { ok: false; error: string } {
+  if (!raw) return { ok: false, error: "Liste de claims requise." };
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw) as unknown;
+  } catch {
+    return { ok: false, error: "JSON claims invalide." };
+  }
+  const list = Array.isArray(parsed)
+    ? parsed
+    : parsed && typeof parsed === "object" && Array.isArray((parsed as { chunks?: unknown }).chunks)
+      ? (parsed as { chunks: unknown[] }).chunks
+      : null;
+  if (!list) return { ok: false, error: "JSON { chunks: [...] } requis." };
+  if (list.length === 0) return { ok: false, error: "Aucun claim sélectionné." };
+  if (list.length > MAX_PASDIC_CHUNKS) {
+    return { ok: false, error: `Trop de claims (max ${MAX_PASDIC_CHUNKS}).` };
+  }
+  const seen = new Set<string>();
+  const chunks: PasdicChunk[] = [];
+  for (const item of list) {
+    if (!item || typeof item !== "object") continue;
+    const row = item as Record<string, unknown>;
+    const world = String(row.w ?? row.world ?? "").trim();
+    const x = Number(row.x);
+    const z = Number(row.z);
+    if (!world || !Number.isFinite(x) || !Number.isFinite(z)) continue;
+    const cx = Math.trunc(x);
+    const cz = Math.trunc(z);
+    const key = `${world}:${cx}:${cz}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    chunks.push({ w: world, x: cx, z: cz });
+  }
+  if (chunks.length === 0) return { ok: false, error: "Aucun claim valide." };
+  return { ok: true, payload: JSON.stringify({ chunks }) };
+}
 
 export async function POST(request: Request) {
   const check = await requireSiteAdmin();
@@ -39,7 +83,15 @@ export async function POST(request: Request) {
   }
 
   const target = String(obj.target ?? "").trim();
-  const payload = obj.payload == null ? null : String(obj.payload);
+  let payload = obj.payload == null ? null : String(obj.payload);
+
+  if (type === "set_pasdic") {
+    const parsed = parsePasdicPayload(payload);
+    if (!parsed.ok) {
+      return Response.json({ error: parsed.error }, { status: 400 });
+    }
+    payload = parsed.payload;
+  }
 
   let targetUuid: string | null = null;
   let targetName: string | null = null;
@@ -53,10 +105,7 @@ export async function POST(request: Request) {
     }
   }
 
-  if (!targetUuid && !targetName && type !== "discord_dm") {
-    // most actions need a target
-  }
-  if (!target && type !== "discord_dm") {
+  if (!target && !NO_TARGET.has(type)) {
     return Response.json({ error: "Cible (pseudo ou UUID) requise." }, { status: 400 });
   }
 

@@ -5,6 +5,8 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   SERVER_SPAWN_BLOCK,
   claimsCentroid,
+  claimKey,
+  claimKeyOf,
   factionStroke,
   worldLabel,
   type MapClaim,
@@ -45,6 +47,23 @@ type SearchHit =
   | { kind: "faction"; faction: FactionEntry }
   | { kind: "warp"; marker: MapMarker; key: string };
 
+type PasdicRefused = { w: string; x: number; z: number; reason: string };
+
+type PasdicFeedback = {
+  ok: number;
+  refused: PasdicRefused[];
+  error?: string;
+};
+
+const PASDIC_REASON_LABEL: Record<string, string> = {
+  spawners: "spawners",
+  stockage: "stockage",
+  "stockage+spawners": "stockage + spawners",
+  wilderness: "pas un claim",
+  monde: "monde hors-ligne",
+  chargement: "chunk illisible — inspecte en jeu",
+};
+
 /** « world » d'abord (convention Bukkit), sinon le monde le plus revendiqué. */
 function pickDefaultWorld(claims: MapClaim[], markers: MapMarker[]): string {
   const counts = new Map<string, number>();
@@ -75,6 +94,7 @@ export function MapExplorer({
   generatedAt: initialGeneratedAt,
   providerUrl,
   tileBase,
+  isAdmin = false,
 }: {
   initialClaims: MapClaim[];
   initialMarkers: MapMarker[];
@@ -82,6 +102,7 @@ export function MapExplorer({
   providerUrl: string | null;
   /** Base tuiles Squaremap (`/map-provider` ou HTTPS). Null → canvas seul. */
   tileBase: string | null;
+  isAdmin?: boolean;
 }) {
   const [claims, setClaims] = useState(initialClaims);
   const [markers, setMarkers] = useState(initialMarkers);
@@ -96,6 +117,10 @@ export function MapExplorer({
   const [highlightId, setHighlightId] = useState<number | null>(null);
   const [cursorBlock, setCursorBlock] = useState<{ x: number; z: number } | null>(null);
   const [fullscreen, setFullscreen] = useState(false);
+  const [adminMode, setAdminMode] = useState(false);
+  const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set());
+  const [pasdicBusy, setPasdicBusy] = useState(false);
+  const [pasdicFeedback, setPasdicFeedback] = useState<PasdicFeedback | null>(null);
 
   const mapShellRef = useRef<HTMLDivElement | null>(null);
   const useTerrain = Boolean(tileBase);
@@ -294,6 +319,143 @@ export function MapExplorer({
     }
   };
 
+  const selecting = isAdmin && adminMode;
+
+  const toggleClaimSelect = (claim: MapClaim) => {
+    if (!selecting) return;
+    const key = claimKeyOf(claim);
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+    setPasdicFeedback(null);
+  };
+
+  const selectHighlightedFaction = () => {
+    if (highlightId == null) return;
+    setSelectedKeys((prev) => {
+      const next = new Set(prev);
+      for (const claim of worldClaims) {
+        if (claim.faction.id === highlightId) next.add(claimKeyOf(claim));
+      }
+      return next;
+    });
+    setPasdicFeedback(null);
+  };
+
+  const clearSelection = () => {
+    setSelectedKeys(new Set());
+    setPasdicFeedback(null);
+  };
+
+  const applyPasdic = async () => {
+    if (!selecting || selectedKeys.size === 0 || pasdicBusy) return;
+    const chunks = claims
+      .filter((claim) => selectedKeys.has(claimKeyOf(claim)))
+      .map((claim) => ({ w: claim.world, x: claim.x, z: claim.z }));
+    if (chunks.length === 0) {
+      setPasdicFeedback({ ok: 0, refused: [], error: "Aucun claim sélectionné dans ce monde." });
+      return;
+    }
+    setPasdicBusy(true);
+    setPasdicFeedback(null);
+    try {
+      const res = await fetch("/api/admin/action", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({
+          type: "set_pasdic",
+          payload: JSON.stringify({ chunks }),
+        }),
+      });
+      const data = (await res.json()) as { id?: number; error?: string };
+      if (!res.ok || !data.id) {
+        setPasdicFeedback({
+          ok: 0,
+          refused: [],
+          error: data.error ?? "File admin indisponible (JAR à déployer ?).",
+        });
+        return;
+      }
+      let body: { status?: string; result?: string | null } | null = null;
+      for (let i = 0; i < 90; i++) {
+        await new Promise((r) => setTimeout(r, 2000));
+        const st = await fetch(`/api/admin/action?id=${data.id}`, {
+          cache: "no-store",
+          credentials: "include",
+        });
+        body = (await st.json()) as { status?: string; result?: string | null };
+        if (body.status && body.status !== "pending" && body.status !== "processing") break;
+      }
+      if (!body?.status || body.status === "pending" || body.status === "processing") {
+        setPasdicFeedback({
+          ok: 0,
+          refused: [],
+          error: "Le serveur n'a pas répondu à temps. Le JAR est-il déployé ?",
+        });
+        return;
+      }
+      if (body.status !== "done" || !body.result) {
+        setPasdicFeedback({
+          ok: 0,
+          refused: [],
+          error: body.result ?? "Échec PASDIC.",
+        });
+        return;
+      }
+      let parsed: {
+        ok?: number;
+        refused?: PasdicRefused[];
+        error?: string;
+      };
+      try {
+        parsed = JSON.parse(body.result) as {
+          ok?: number;
+          refused?: PasdicRefused[];
+          error?: string;
+        };
+      } catch {
+        setPasdicFeedback({ ok: 0, refused: [], error: body.result });
+        return;
+      }
+      const refused = Array.isArray(parsed.refused) ? parsed.refused : [];
+      const okCount = Number(parsed.ok) || 0;
+      setPasdicFeedback({
+        ok: okCount,
+        refused,
+        error: parsed.error,
+      });
+      if (okCount > 0) {
+        const refusedKeys = new Set(refused.map((row) => claimKey(row.w, row.x, row.z)));
+        setClaims((prev) =>
+          prev.map((claim) =>
+            selectedKeys.has(claimKeyOf(claim)) && !refusedKeys.has(claimKeyOf(claim))
+              ? { ...claim, pasdic: true }
+              : claim,
+          ),
+        );
+        setSelectedKeys((prev) => {
+          const next = new Set(prev);
+          for (const key of next) {
+            if (!refusedKeys.has(key)) next.delete(key);
+          }
+          return next;
+        });
+      }
+    } catch {
+      setPasdicFeedback({
+        ok: 0,
+        refused: [],
+        error: "Réseau indisponible.",
+      });
+    } finally {
+      setPasdicBusy(false);
+    }
+  };
+
   const pasdicTotal = useMemo(() => worldClaims.filter((c) => c.pasdic).length, [worldClaims]);
 
   return (
@@ -361,6 +523,23 @@ export function MapExplorer({
             >
               {fullscreen ? "Quitter" : "Plein écran"}
             </button>
+            {isAdmin && (
+              <button
+                type="button"
+                onClick={() => {
+                  setAdminMode((prev) => !prev);
+                  setPasdicFeedback(null);
+                }}
+                aria-pressed={adminMode}
+                className={
+                  adminMode
+                    ? "chip border border-ember bg-iron/90 px-3 py-1.5 font-tech text-[10px] uppercase tracking-[0.18em] text-ember-glow"
+                    : "chip border border-iron-line bg-iron/90 px-3 py-1.5 font-tech text-[10px] uppercase tracking-[0.18em] text-steel hover:border-ember hover:text-bone"
+                }
+              >
+                {adminMode ? "Admin PASDIC" : "Mode admin"}
+              </button>
+            )}
             {providerUrl && (
               <a
                 href={providerUrl}
@@ -384,6 +563,9 @@ export function MapExplorer({
               squaremapWorld={squaremapWorld}
               tileBase={tileBase}
               onCursorBlock={setCursorBlock}
+              adminSelect={selecting}
+              selectedKeys={selectedKeys}
+              onClaimClick={toggleClaimSelect}
             />
           ) : (
             <TerritoryCanvas
@@ -393,6 +575,9 @@ export function MapExplorer({
               layers={layers}
               focus={canvasFocus}
               highlightFactionId={highlightId}
+              adminSelect={selecting}
+              selectedKeys={selectedKeys}
+              onClaimClick={toggleClaimSelect}
             />
           )}
 
@@ -529,6 +714,73 @@ export function MapExplorer({
               Aller
             </button>
           </div>
+
+          {isAdmin && adminMode && (
+            <div className="flex flex-col gap-2 border border-ember/60 bg-ash-deep p-3">
+              <span className="font-tech text-[10px] uppercase tracking-[0.24em] text-ember-glow">
+                PASDIC admin
+              </span>
+              <p className="text-xs leading-relaxed text-steel">
+                Clique les claims à marquer. Les chunks avec coffres / conteneurs
+                ou spawners sont refusés — inspecte-les en jeu.
+              </p>
+              <p className="font-tech text-[10px] uppercase tracking-[0.18em] text-bone">
+                {selectedKeys.size} claim{selectedKeys.size > 1 ? "s" : ""}{" "}
+                sélectionné{selectedKeys.size > 1 ? "s" : ""}
+              </p>
+              <div className="flex flex-col gap-2">
+                <button
+                  type="button"
+                  onClick={selectHighlightedFaction}
+                  disabled={highlightId == null}
+                  className="pressable border border-iron-line px-3 py-2 font-tech text-[10px] uppercase tracking-[0.18em] text-steel hover:border-ember hover:text-bone disabled:opacity-40"
+                >
+                  Sélectionner la faction
+                </button>
+                <button
+                  type="button"
+                  onClick={clearSelection}
+                  disabled={selectedKeys.size === 0}
+                  className="pressable border border-iron-line px-3 py-2 font-tech text-[10px] uppercase tracking-[0.18em] text-steel hover:border-ember hover:text-bone disabled:opacity-40"
+                >
+                  Vider la sélection
+                </button>
+                <button
+                  type="button"
+                  onClick={() => void applyPasdic()}
+                  disabled={selectedKeys.size === 0 || pasdicBusy}
+                  className="pressable border border-ember bg-iron px-3 py-2 font-tech text-[10px] uppercase tracking-[0.22em] text-ember-glow hover:text-bone disabled:opacity-40"
+                >
+                  {pasdicBusy ? "Application…" : "Définir PASDIC"}
+                </button>
+              </div>
+              {pasdicFeedback && (
+                <div className="flex flex-col gap-1.5 text-xs text-steel">
+                  {pasdicFeedback.error && (
+                    <p className="text-ember-glow">{pasdicFeedback.error}</p>
+                  )}
+                  <p className="text-bone">
+                    {pasdicFeedback.ok} ok
+                    {pasdicFeedback.refused.length > 0
+                      ? ` · ${pasdicFeedback.refused.length} refusé${
+                          pasdicFeedback.refused.length > 1 ? "s" : ""
+                        } (stockage / spawners)`
+                      : ""}
+                  </p>
+                  {pasdicFeedback.refused.length > 0 && (
+                    <ul className="max-h-36 overflow-y-auto border border-iron-line bg-iron px-2 py-1.5 font-tech text-[10px] uppercase tracking-[0.12em] text-steel">
+                      {pasdicFeedback.refused.map((row) => (
+                        <li key={`${row.w}:${row.x}:${row.z}`}>
+                          {row.w} {row.x},{row.z} —{" "}
+                          {PASDIC_REASON_LABEL[row.reason] ?? row.reason}
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </div>
+              )}
+            </div>
+          )}
 
           <fieldset className="flex flex-col gap-2">
             <legend className="mb-2 font-tech text-[10px] uppercase tracking-[0.24em] text-steel">

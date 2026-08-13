@@ -44,6 +44,15 @@ export type MapMarker = {
 export type MapClaimsPayload = { claims: MapClaim[]; generatedAt: string };
 export type MapMarkersPayload = { markers: MapMarker[]; generatedAt: string };
 
+/** Clé unique d'un claim (monde + coords chunk). */
+export function claimKey(world: string, x: number, z: number): string {
+  return `${world}:${x}:${z}`;
+}
+
+export function claimKeyOf(claim: Pick<MapClaim, "world" | "x" | "z">): string {
+  return claimKey(claim.world, claim.x, claim.z);
+}
+
 /* ——— Palette canvas (miroir des tokens de globals.css) ——— */
 export const MAP_COLORS = {
   bg: "#0e0c09", // ash-deep

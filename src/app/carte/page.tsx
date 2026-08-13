@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { mapProviderPublicUrl, mapProviderTileBase } from "@/lib/map-provider";
 import { getMapWarps } from "@/server/repo/map";
+import { getSession, isSiteAdminDiscordId } from "@/server/session";
 import { MapExplorer } from "./map-explorer";
 
 export const dynamic = "force-dynamic";
@@ -16,6 +17,8 @@ export default async function CartePage() {
   const providerUrl = mapProviderPublicUrl();
   const tileBase = mapProviderTileBase();
   const generatedAt = new Date().toISOString();
+  const session = await getSession();
+  const isAdmin = isSiteAdminDiscordId(session?.user.id);
 
   return (
     <main className="mx-auto w-full max-w-7xl px-5 pb-24 pt-28 sm:px-8 sm:pt-32">
@@ -40,6 +43,7 @@ export default async function CartePage() {
         generatedAt={generatedAt}
         providerUrl={providerUrl}
         tileBase={tileBase}
+        isAdmin={isAdmin}
       />
     </main>
   );

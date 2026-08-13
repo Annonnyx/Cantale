@@ -6,6 +6,7 @@ import {
   MAP_COLORS,
   SERVER_SPAWN_BLOCK,
   chunkToBlock,
+  claimKeyOf,
   factionFill,
   factionStroke,
   type MapClaim,
@@ -33,6 +34,10 @@ type Props = {
   tileBase: string;
   /** Coords bloc affichées sous le curseur. */
   onCursorBlock?: (block: { x: number; z: number } | null) => void;
+  /** Mode admin : clic sur un claim pour (dé)sélectionner. */
+  adminSelect?: boolean;
+  selectedKeys?: ReadonlySet<string>;
+  onClaimClick?: (claim: MapClaim) => void;
   className?: string;
 };
 
@@ -72,6 +77,9 @@ export function WorldMap({
   squaremapWorld,
   tileBase,
   onCursorBlock,
+  adminSelect = false,
+  selectedKeys,
+  onClaimClick,
   className,
 }: Props) {
   const containerRef = useRef<HTMLDivElement | null>(null);
@@ -88,9 +96,13 @@ export function WorldMap({
     },
   });
   const onCursorRef = useRef(onCursorBlock);
+  const onClaimClickRef = useRef(onClaimClick);
   useEffect(() => {
     onCursorRef.current = onCursorBlock;
   }, [onCursorBlock]);
+  useEffect(() => {
+    onClaimClickRef.current = onClaimClick;
+  }, [onClaimClick]);
 
   // Montage carte (une fois) — centre spawn hardcodé, jamais 0,0.
   useEffect(() => {
@@ -244,21 +256,33 @@ export function WorldMap({
         blockToLatLng(x1, z1, maxZoom),
       );
       const highlighted = highlightFactionId === claim.faction.id;
+      const selected = Boolean(adminSelect && selectedKeys?.has(claimKeyOf(claim)));
 
       if (showClaim) {
-        L.rectangle(bounds, {
+        const rect = L.rectangle(bounds, {
           renderer,
-          color: highlighted ? MAP_COLORS.bone : factionStroke(claim.faction.id),
-          weight: highlighted ? 2.5 : 1,
-          fillColor: factionFill(claim.faction.id, highlighted ? 0.72 : 0.45),
+          color: selected
+            ? MAP_COLORS.emberGlow
+            : highlighted
+              ? MAP_COLORS.bone
+              : factionStroke(claim.faction.id),
+          weight: selected ? 3 : highlighted ? 2.5 : 1,
+          fillColor: factionFill(claim.faction.id, selected ? 0.82 : highlighted ? 0.72 : 0.45),
           fillOpacity: 1,
           interactive: true,
-        })
-          .bindTooltip(
-            `${claim.faction.name} [${claim.faction.tag}]${claim.pasdic ? " · PASDIC" : ""}`,
-            { sticky: true, direction: "top", opacity: 0.95 },
-          )
-          .addTo(group);
+        }).bindTooltip(
+          `${claim.faction.name} [${claim.faction.tag}]${claim.pasdic ? " · PASDIC" : ""}${
+            selected ? " · sélectionné" : ""
+          }`,
+          { sticky: true, direction: "top", opacity: 0.95 },
+        );
+        if (adminSelect) {
+          rect.on("click", (event: L.LeafletMouseEvent) => {
+            L.DomEvent.stopPropagation(event);
+            onClaimClickRef.current?.(claim);
+          });
+        }
+        rect.addTo(group);
       }
 
       if (showPasdic) {
@@ -311,7 +335,7 @@ export function WorldMap({
           .addTo(group);
       }
     }
-  }, [claims, markers, layers, highlightFactionId]);
+  }, [claims, markers, layers, highlightFactionId, adminSelect, selectedKeys]);
 
   // Focus externe (faction / coords) — coords = blocs.
   useEffect(() => {
