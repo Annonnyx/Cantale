@@ -577,7 +577,6 @@ export function TerritoryCanvas({
         if (claim) current.onClaimClick?.(claim);
       }
     };
-    };
 
     const onPointerLeave = () => {
       hoverRef.current = null;
