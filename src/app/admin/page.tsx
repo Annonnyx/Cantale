@@ -1,7 +1,6 @@
 import type { Metadata } from "next";
 import { redirect } from "next/navigation";
-import { env } from "@/server/env";
-import { getSessionUser } from "@/server/session";
+import { canAccessSiteAdmin, getSessionUser } from "@/server/session";
 import { AdminPanel } from "./admin-panel";
 
 export const dynamic = "force-dynamic";
@@ -13,12 +12,11 @@ export const metadata: Metadata = {
 
 export default async function AdminPage() {
   const session = await getSessionUser();
-  const allowed = env.adminDiscordIds;
 
   if (!session.discordUser) {
     redirect("/connexion");
   }
-  if (allowed.length === 0 || !allowed.includes(session.discordUser.id)) {
+  if (!(await canAccessSiteAdmin(session))) {
     redirect("/");
   }
 

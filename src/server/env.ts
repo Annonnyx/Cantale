@@ -96,16 +96,28 @@ export const env = {
     return readEnv("DISCORD_PARTNERSHIPS_CATEGORY_ID");
   },
   /**
-   * ID Discord autorisé pour /admin (séparé par virgules si plusieurs).
-   * Jamais hardcodé côté client — uniquement variables d'environnement.
+   * Discord IDs autorisés pour /admin et PASDIC carte.
+   * Fusionne ADMIN_DISCORD_ID(S), OWNER_DISCORD_ID(S) et DIRECTION_DISCORD_ID(S)
+   * (virgules, points-virgules ou espaces). Jamais hardcodé côté client.
    */
   get adminDiscordIds(): string[] {
-    const raw = readEnv("ADMIN_DISCORD_ID") ?? readEnv("ADMIN_DISCORD_IDS");
-    if (!raw) return [];
-    return raw
-      .split(",")
-      .map((id) => id.trim())
-      .filter((id) => /^\d{5,32}$/.test(id));
+    const seen = new Set<string>();
+    const out: string[] = [];
+    for (const name of [
+      "ADMIN_DISCORD_ID",
+      "ADMIN_DISCORD_IDS",
+      "OWNER_DISCORD_ID",
+      "OWNER_DISCORD_IDS",
+      "DIRECTION_DISCORD_ID",
+      "DIRECTION_DISCORD_IDS",
+    ]) {
+      for (const id of parseDiscordIdList(readEnv(name))) {
+        if (seen.has(id)) continue;
+        seen.add(id);
+        out.push(id);
+      }
+    }
+    return out;
   },
   /**
    * Overrides optionnels des IDs de rôles Équipe (sinon défauts `DISCORD_ROLES`).
@@ -144,6 +156,14 @@ function readDiscordSnowflake(name: string): string | null {
   const value = readEnv(name);
   if (!value) return null;
   return /^\d{5,32}$/.test(value) ? value : null;
+}
+
+function parseDiscordIdList(raw: string | null): string[] {
+  if (!raw) return [];
+  return raw
+    .split(/[,;\s]+/)
+    .map((id) => id.trim())
+    .filter((id) => /^\d{5,32}$/.test(id));
 }
 
 /**

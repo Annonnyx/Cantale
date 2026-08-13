@@ -56,6 +56,42 @@ type RolesCacheEntry = { roles: string[]; expiresAt: number };
 const rolesCache = new Map<string, RolesCacheEntry>();
 const ROLES_CACHE_TTL_MS = 60_000;
 
+type GuildOwnerCache = { id: string | null; expiresAt: number };
+let guildOwnerCache: GuildOwnerCache | null = null;
+const GUILD_OWNER_TTL_MS = 5 * 60 * 1000;
+
+/**
+ * Owner Discord de la guilde CANTALE (`owner_id`), cache 5 min.
+ * Échec API → dernière valeur connue, sinon null.
+ */
+export async function getGuildOwnerId(): Promise<string | null> {
+  if (guildOwnerCache && guildOwnerCache.expiresAt > Date.now()) {
+    return guildOwnerCache.id;
+  }
+
+  const token = env.discordBotToken;
+  const guildId = env.discordGuildId;
+  if (!token || !guildId) return guildOwnerCache?.id ?? null;
+
+  try {
+    const res = await fetch(`https://discord.com/api/v10/guilds/${guildId}`, {
+      headers: { Authorization: `Bot ${token}` },
+      cache: "no-store",
+      signal: AbortSignal.timeout(3_000),
+    });
+    if (!res.ok) return guildOwnerCache?.id ?? null;
+    const data = (await res.json()) as { owner_id?: string };
+    const id =
+      typeof data.owner_id === "string" && /^\d{5,32}$/.test(data.owner_id)
+        ? data.owner_id
+        : null;
+    guildOwnerCache = { id, expiresAt: Date.now() + GUILD_OWNER_TTL_MS };
+    return id;
+  } catch {
+    return guildOwnerCache?.id ?? null;
+  }
+}
+
 /**
  * Rôles du membre sur la guilde CANTALE, via le token bot.
  * Cache mémoire 60 s par utilisateur ; en cas d'échec (API down, membre
@@ -92,8 +128,10 @@ export async function getGuildMemberRoles(discordUserId: string): Promise<string
 }
 
 export type DiscordCapabilities = {
-  /** Fondateur, co-fondateur ou directeur. */
+  /** Fondateur, co-fondateur, directeur, ou owner Discord de la guilde. */
   isDirection: boolean;
+  /** Rôle Discord Admin (pas modo / support / builder). */
+  isDiscordAdmin: boolean;
   /** Rôle leader de faction. */
   isLeader: boolean;
   /** Rôle « a une faction ». */
@@ -106,6 +144,7 @@ export function mapDiscordCapabilities(roles: readonly string[]): DiscordCapabil
   return {
     isDirection:
       has(DISCORD_ROLES.fondateur) || has(DISCORD_ROLES.coFondateur) || has(DISCORD_ROLES.directeur),
+    isDiscordAdmin: has(env.discordRoleAdmin),
     isLeader: has(DISCORD_ROLES.leader),
     hasFaction: has(DISCORD_ROLES.hasFaction),
   };

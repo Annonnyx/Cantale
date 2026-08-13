@@ -988,7 +988,7 @@ export const WIKI_CATEGORIES: WikiCategory[] = [
               "Explosions : blocs PASDIC retirés de la liste de destruction.",
               "Visible sur la carte site (layer PASDIC).",
               "Impossible d'activer un PASDIC sur un claim qui contient des spawners ou du stockage (coffres, barrels, shulkers, hoppers, fours et autres tile entities à inventaire) — erreur, rien n'est détruit. Les autres chunks propres d'une sélection peuvent passer.",
-              "Admins site (session ADMIN_DISCORD_ID) : sur /carte, bouton Mode admin → cliquer les claims (multi-sélection) → Définir PASDIC. Feedback : N ok, M refusés avec coords chunk. Le plugin charge le chunk, scanne, puis écrit claims.pasdic comme /pasdic.",
+              "Direction / owner / admin site (allowlist Discord + rôles Direction/Admin + grade Minecraft OWNER/ADMIN) : sur /carte, bouton Mode admin → cliquer les claims (multi-sélection) → Définir PASDIC. Feedback : N ok, M refusés avec coords chunk. Le plugin charge le chunk, scanne, puis écrit claims.pasdic comme /pasdic. Pas les modos ni le reste du staff.",
             ],
             commands: [
               {

@@ -34,6 +34,29 @@ function toStaffRole(raw: string): StaffMcRole | null {
   return null;
 }
 
+export function isMcOwnerOrAdmin(role: StaffMcRole | null | undefined): boolean {
+  return role === "OWNER" || role === "ADMIN";
+}
+
+/** Grade `player_permissions` d'un UUID Minecraft, ou null. */
+export async function getStaffMcRoleByUuid(uuid: string): Promise<StaffMcRole | null> {
+  const id = uuid.trim();
+  if (!id) return null;
+  try {
+    const rows = await query<{ role: string }>(
+      `SELECT UPPER(pp.role) AS role
+       FROM player_permissions pp
+       WHERE pp.uuid = :uuid
+       LIMIT 1`,
+      { uuid: id },
+    );
+    const raw = rows[0]?.role;
+    return raw ? toStaffRole(raw) : null;
+  } catch {
+    return null;
+  }
+}
+
 /**
  * Roster staff depuis la même source que `/rank` (player_permissions).
  * Jointure `players` + `discord_links` pour pseudo MC et identité Discord.
