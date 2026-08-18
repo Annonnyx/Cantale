@@ -8,8 +8,8 @@
  * Sources des avantages :
  * - plugin : src/main/java/fr/cantale/plugin/rank/PlayerRank.java (Cantox
  *   quotidien, vies mensuelles, Statio-Lytra, homes, /ah),
- *   listeners/AfkListener.java (anti-AFK : 10 min base, 30 min Aventurier,
- *   1 h VIP, illimité Chèvre), commands/FeedCommand.java (/feed VIP+ :
+ *   listeners/AfkListener.java (anti-AFK : 10 min base, 15 min Aventurier,
+ *   30 min VIP, 60 min Chèvre), commands/FeedCommand.java (/feed VIP+ :
  *   3 min, 1 min Chèvre), privatechest/PrivateChestService.java (coffres :
  *   /pc 27→54 slots, /pc2 dès VIP, /pc3 Chèvre ; ender chest 54 slots Chèvre).
  * - noms RP des clés : crate/CrateType.java (Cadeau du Roi, Trésor Public,
@@ -79,7 +79,7 @@ export const SHOP_RANKS: readonly ShopRank[] = [
     perks: [
       { label: "Vies mensuelles", value: "1 item Vie — clic-droit, +1 vie hardcore" },
       { label: "Bonus quotidien", value: "2 500 Cantox à la première connexion du jour" },
-      { label: "Anti-AFK", value: "30 minutes avant expulsion (au lieu de 10)" },
+      { label: "Anti-AFK", value: "15 minutes avant expulsion (au lieu de 10)" },
       { label: "Coffre privé", value: "/pc élargi à 54 slots (au lieu de 27)" },
       { label: "Homes", value: "5 (au lieu de 3)" },
       { label: "Hôtel des ventes", value: "5 ventes simultanées au /ah (au lieu de 3)" },
@@ -98,7 +98,7 @@ export const SHOP_RANKS: readonly ShopRank[] = [
       { label: "Vies mensuelles", value: "2 items Vie" },
       { label: "Bonus quotidien", value: "10 000 Cantox à la première connexion du jour" },
       { label: "Statio-Lytra", value: "1 par mois — vol créatif dans les claims de ta faction" },
-      { label: "Anti-AFK", value: "1 heure avant expulsion" },
+      { label: "Anti-AFK", value: "30 minutes avant expulsion" },
       { label: "Commande /feed", value: "faim et saturation restaurées — cooldown 3 min" },
       { label: "Coffres privés", value: "/pc + /pc2 — 108 slots au total" },
       { label: "Homes", value: "10" },
@@ -119,7 +119,7 @@ export const SHOP_RANKS: readonly ShopRank[] = [
       { label: "Vies mensuelles", value: "3 items Vie" },
       { label: "Bonus quotidien", value: "100 000 Cantox à la première connexion du jour" },
       { label: "Vol créatif", value: "illimité dans les claims — sans Statio-Lytra" },
-      { label: "Anti-AFK", value: "illimité — jamais expulsé pour inactivité" },
+      { label: "Anti-AFK", value: "60 minutes avant expulsion" },
       { label: "Commande /feed", value: "cooldown réduit à 1 min" },
       { label: "Coffres privés", value: "/pc + /pc2 + /pc3 — 162 slots au total" },
       { label: "Ender chest", value: "élargi à 54 slots (au lieu de 27)" },
@@ -138,7 +138,7 @@ export const RANK_COMPARISON: readonly { label: string; values: [string, string,
   { label: "Bonus Cantox quotidien", values: ["2 500", "10 000", "100 000"] },
   { label: "Statio-Lytra par mois", values: ["—", "1", "1"] },
   { label: "Vol créatif dans les claims", values: ["—", "—", "Illimité"] },
-  { label: "Anti-AFK avant expulsion", values: ["30 min", "1 h", "Illimité"] },
+  { label: "Anti-AFK avant expulsion", values: ["15 min", "30 min", "60 min"] },
   { label: "Commande /feed", values: ["—", "Cooldown 3 min", "Cooldown 1 min"] },
   {
     label: "Coffres privés",

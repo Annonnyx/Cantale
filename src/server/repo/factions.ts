@@ -5,15 +5,16 @@ import { publicRankingExcludeFactionSql } from "../public-ranking-exclusions";
 /**
  * Tables `factions`, `faction_members`, `claims` du plugin CANTALE — lecture seule.
  *
- * RÈGLE ABSOLUE : toute requête exclut au niveau SQL les factions en mode
- * /f secret (`secret_until > UNIX_TIMESTAMP()`, unix secondes — voir
- * Faction.isSecret() côté plugin). Aucune fuite vers le client.
+ * RÈGLE /f secret (alignée sur le jeu : /f list et /f info montrent toutes les
+ * factions) : une faction secrète (`secret_until > UNIX_TIMESTAMP()`, unix
+ * secondes — voir Faction.isSecret() côté plugin) RESTE visible ici — nom, page,
+ * membres, stats. SEULE sa position est protégée : ses claims sont exclus de la
+ * carte web dans repo/map.ts (le site n'affiche ni f spawn ni warps de faction).
  *
  * Classements / annuaire trié : factions listées dans
- * PUBLIC_RANKING_EXCLUDED_FACTION_NAMES (ex. Ø) sont aussi exclues ici.
+ * PUBLIC_RANKING_EXCLUDED_FACTION_NAMES (ex. Ø) sont exclues des listings.
  * getFactionBySlug reste accessible si l'URL est connue.
  */
-const NOT_SECRET = "COALESCE(f.secret_until, 0) <= UNIX_TIMESTAMP()";
 const NOT_RANKING_EXCLUDED = publicRankingExcludeFactionSql("f.name", "f.tag");
 
 /** Rangs de faction, miroir de FactionRank.java (colonne VARCHAR libre). */
@@ -119,13 +120,13 @@ function normalizeRank(rank: string | null): FactionRank {
 }
 
 /** Entier borné, sûr à inliner dans un LIMIT (jamais d'entrée brute). */
-function clampLimit(limit: number, fallback = 50, max = 200): number {
+function clampLimit(limit: number, fallback = 500, max = 1000): number {
   if (!Number.isFinite(limit)) return fallback;
   return Math.max(1, Math.min(max, Math.floor(limit)));
 }
 
-/** Annuaire public des factions — secrètes + exclus des classements filtrés en SQL. */
-export async function listFactions(sort: FactionSort = "power", limit = 50): Promise<FactionSummary[]> {
+/** Annuaire public des factions — toutes, y compris secrètes (exclusions de classement filtrées en SQL). */
+export async function listFactions(sort: FactionSort = "power", limit = 500): Promise<FactionSummary[]> {
   const orderBy = FACTION_SORTS[sort];
   const safeLimit = clampLimit(limit);
   return cachedQuery(["factions-list", sort, String(safeLimit)], 30, async () => {
@@ -134,8 +135,7 @@ export async function listFactions(sort: FactionSort = "power", limit = 50): Pro
        FROM factions f
        LEFT JOIN faction_members fm ON fm.faction_id = f.id
        ${CLAIMS_COUNT_JOIN}
-       WHERE ${NOT_SECRET}
-         AND ${NOT_RANKING_EXCLUDED}
+       WHERE ${NOT_RANKING_EXCLUDED}
        GROUP BY f.id
        ORDER BY ${orderBy}, f.name ASC
        LIMIT ${safeLimit}`,
@@ -146,7 +146,7 @@ export async function listFactions(sort: FactionSort = "power", limit = 50): Pro
 
 /**
  * Recherche par tag ou nom normalisé (slug : minuscules, espaces → tirets).
- * Une faction secrète renvoie null — comme si elle n'existait pas.
+ * Faction secrète incluse : sa page reste publique (voir l'en-tête du fichier).
  */
 export const getFactionBySlug = reactCache(async (slug: string): Promise<FactionSummary | null> => {
   const normalized = slug.trim().toLowerCase();
@@ -157,8 +157,7 @@ export const getFactionBySlug = reactCache(async (slug: string): Promise<Faction
        FROM factions f
        LEFT JOIN faction_members fm ON fm.faction_id = f.id
        ${CLAIMS_COUNT_JOIN}
-       WHERE ${NOT_SECRET}
-         AND (
+       WHERE (
            LOWER(f.tag) = :slug
            OR LOWER(f.name) = :slug
            OR LOWER(REPLACE(f.name, ' ', '-')) = :slug
@@ -174,14 +173,14 @@ export const getFactionBySlug = reactCache(async (slug: string): Promise<Faction
 
 /**
  * Roster d'une faction (membres + rang + pseudo via jointure players).
- * Faction secrète → roster vide, sans exception.
+ * Faction secrète incluse : les membres restent publics (comme /f info en jeu).
  */
 export async function getFactionRoster(factionId: number): Promise<FactionMember[]> {
   return cachedQuery(["faction-roster", String(factionId)], 20, async () => {
     const rows = await query<MemberRow>(
       `SELECT fm.player_uuid, p.username, fm.rank, fm.joined_at
        FROM faction_members fm
-       INNER JOIN factions f ON f.id = fm.faction_id AND ${NOT_SECRET}
+       INNER JOIN factions f ON f.id = fm.faction_id
        LEFT JOIN players p ON p.uuid = fm.player_uuid
        WHERE fm.faction_id = :factionId
        ORDER BY ${RANK_ORDER}, p.username ASC`,
@@ -205,7 +204,7 @@ type MemberRow = {
 
 /**
  * Faction d'un joueur donné, avec son rang — pour les pages de profil.
- * Une faction secrète renvoie null, comme partout ailleurs.
+ * Faction secrète incluse : l'appartenance reste publique (comme /f info en jeu).
  */
 export async function getFactionByMemberUuid(
   uuid: string,
@@ -219,7 +218,7 @@ export async function getFactionByMemberUuid(
          (SELECT COUNT(*) FROM claims c WHERE c.faction_id = f.id) AS claim_count,
          fm.rank AS member_rank
        FROM faction_members fm
-       INNER JOIN factions f ON f.id = fm.faction_id AND ${NOT_SECRET}
+       INNER JOIN factions f ON f.id = fm.faction_id
        WHERE fm.player_uuid = :uuid
        LIMIT 1`,
       { uuid: key },

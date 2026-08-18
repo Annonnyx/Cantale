@@ -378,10 +378,10 @@ export const ITEMS: CatalogItem[] = [
     rarity: "epique",
     tagline: "Un chunk imprenable pour ta faction — tant que la taxe est payée.",
     description:
-      "Plantée d'un clic-droit dans un claim de ta faction, la rune fortifie le chunk entier : seuls les membres de la faction peuvent y casser des blocs, et les explosions n'y font aucun dégât. Chaque chunk fortifié coûte 50 Cantox par jour en taxe de territoire — une faction qui ne paie plus perd ses runes. Sneak + clic-droit retire la fortification et rend la rune.",
+      "Plantée d'un clic-droit dans un claim de ta faction, la rune fortifie le chunk entier : seuls les membres de la faction peuvent y casser des blocs, et rien n'y explose (TNT, cristaux, wither, lits, ancres, minecarts…). Chaque chunk fortifié coûte 50 Cantox par jour en taxe de territoire — une faction qui ne paie plus perd ses runes. Sneak + clic-droit retire la fortification et rend la rune.",
     stats: [
       { label: "Effet", value: "Fortifie un chunk entier d'un claim" },
-      { label: "Protection", value: "Casse réservée aux membres, explosions sans effet" },
+      { label: "Protection", value: "Casse réservée aux membres, aucune explosion" },
       { label: "Coût", value: "50 Cantox / jour / chunk fortifié" },
       { label: "Récupération", value: "Sneak + clic-droit rend la rune" },
       { label: "Craft", value: "Non-craftable" },

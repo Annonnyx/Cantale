@@ -225,9 +225,9 @@ type ActionRow = {
 
 /**
  * Statut d'une action bridge, pour le polling client.
- * Jointure factions sans filtre NOT_SECRET : il ne s'agit pas d'affichage
- * public mais d'autorisation (le leader d'une faction secrète doit pouvoir
- * suivre ses propres actions).
+ * Jointure factions sans filtre secret : il ne s'agit pas d'affichage
+ * de position mais d'autorisation (le leader d'une faction secrète doit
+ * pouvoir suivre ses propres actions).
  */
 export async function getActionStatus(id: number): Promise<FactionActionStatus | null> {
   const rows = await query<ActionRow>(

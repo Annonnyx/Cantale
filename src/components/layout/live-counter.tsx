@@ -16,13 +16,13 @@ async function fetchStatus(): Promise<Status | null> {
 }
 
 export function LiveCounter() {
-  const [status, setStatus] = useState<Status | null>(null);
+  const [status, setStatus] = useState<Status>({ online: 0, max: null });
 
   useEffect(() => {
     let cancelled = false;
     const load = async () => {
       const s = await fetchStatus();
-      if (!cancelled) setStatus(s);
+      if (!cancelled && s) setStatus(s);
     };
     load();
     const id = setInterval(load, 30_000);
@@ -31,8 +31,6 @@ export function LiveCounter() {
       clearInterval(id);
     };
   }, []);
-
-  if (!status) return null;
 
   return (
     <span className="flex items-center gap-2 font-tech text-[11px] uppercase tracking-[0.2em] text-steel-light">

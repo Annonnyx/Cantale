@@ -130,8 +130,9 @@ function MemberRow({ member, lives }: { member: FactionMember; lives: number | u
 export default async function FactionPage({ params }: FactionPageProps) {
   const { slug } = await params;
 
-  // Base injoignable → page gracieuse (jamais de 404 ambigu); faction absente
-  // ou secrète → 404 propre, sans rien révéler.
+  // Base injoignable → page gracieuse (jamais de 404 ambigu) ; faction absente
+  // → 404 propre. Une faction /f secret a sa page publique normale — seuls
+  // ses claims sont masqués (sur /carte, cf. repo/map.ts).
   let faction: FactionSummary | null = null;
   let available = true;
   try {

@@ -5,9 +5,9 @@ import { requireLinked, type SessionUser } from "@/server/session";
  * Garde commune des routes d'administration de faction.
  *
  * Chaîne complète à chaque appel : session liée → faction lisible (les
- * factions /f secret renvoient 404, comme si elles n'existaient pas) →
- * l'uuid Minecraft de la session est bien le leader_uuid en DB — la vraie
- * propriété, pas un rôle Discord.
+ * factions /f secret restent gérables par leur leader — seuls leurs claims
+ * sont masqués, cf. repo/map.ts) → l'uuid Minecraft de la session est bien
+ * le leader_uuid en DB — la vraie propriété, pas un rôle Discord.
  */
 export type FactionLeaderCheck =
   | { ok: true; user: SessionUser; faction: FactionSummary }

@@ -10,9 +10,12 @@ import {
 /**
  * Tables `claims`, `factions` et `warps` du plugin CANTALE — lecture seule.
  *
- * RÈGLE ABSOLUE (cf. repo/factions.ts) : les factions en /f secret sont
- * exclues au niveau SQL via `NOT_SECRET` — aucune ne transite vers le client,
- * même masquée.
+ * RÈGLE /f secret (cf. repo/factions.ts) : une faction secrète reste visible
+ * partout sur le site, mais ses CLAIMS ne doivent jamais transiter vers le
+ * client — exclusion au niveau SQL via `NOT_SECRET`, même masqués. C'est le
+ * seul endroit du site où le secret masque quelque chose (pas de notion de
+ * membre côté site → claims cachés pour tous, comme la map in-game pour les
+ * non-membres).
  *
  * Les deux lectures renvoient null si la base ne répond pas : la page /carte
  * et les routes API affichent alors un état gracieux plutôt qu'une 500.

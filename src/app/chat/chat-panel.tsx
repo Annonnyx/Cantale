@@ -66,12 +66,14 @@ export function ChatPanel({
 
   const canSpeak = scope === "global" ? canSpeakGlobal : hasFaction;
 
-  useEffect(() => {
-    scopeRef.current = scope;
-    lastIdRef.current = 0;
+  // Réinitialisation au changement d'onglet : pattern React « ajuster l'état
+  // pendant le rendu » plutôt qu'un setState dans un effet (cascade de rendus).
+  const [trackedScope, setTrackedScope] = useState<Scope>(scope);
+  if (trackedScope !== scope) {
+    setTrackedScope(scope);
     setMessages([]);
     setError(null);
-  }, [scope]);
+  }
 
   useEffect(() => {
     lastIdRef.current = messages.at(-1)?.id ?? lastIdRef.current;
@@ -96,6 +98,8 @@ export function ChatPanel({
   }, [messages]);
 
   useEffect(() => {
+    scopeRef.current = scope;
+    lastIdRef.current = 0;
     let cancelled = false;
     let timer: ReturnType<typeof setTimeout>;
 

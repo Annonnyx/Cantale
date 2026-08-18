@@ -19,11 +19,16 @@ export function SkinViewer({ uuid, username }: { uuid: string; username: string 
     minecraftAvatarUrl(uuid || username, 160),
   );
 
-  useEffect(() => {
+  // Réinitialisation quand l'identité change : pattern React « ajuster l'état
+  // pendant le rendu » plutôt qu'un setState dans un effet (cascade de rendus).
+  const identity = `${uuid}|${username}`;
+  const [trackedIdentity, setTrackedIdentity] = useState(identity);
+  if (trackedIdentity !== identity) {
+    setTrackedIdentity(identity);
     setAvatarSrc(minecraftAvatarUrl(uuid || username, 160));
     setFallback(false);
     setReady3d(false);
-  }, [uuid, username]);
+  }
 
   useEffect(() => {
     const canvas = canvasRef.current;

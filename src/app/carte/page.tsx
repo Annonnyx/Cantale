@@ -32,8 +32,8 @@ export default async function CartePage() {
         <p className="max-w-2xl text-base leading-relaxed text-steel">
           Relief live Squaremap et territoires du registre : claims, zones
           PASDIC protégées et warps publics — sans positions de joueurs. Les
-          factions en /f secret n&apos;y figurent pas. Vue centrée sur le spawn
-          (−67 · −144).
+          claims des factions en /f secret n&apos;y figurent pas. Vue centrée
+          sur le spawn (−67 · −144).
         </p>
       </header>
 
